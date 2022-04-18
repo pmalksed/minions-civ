@@ -46,6 +46,7 @@ http://stackoverflow.com/questions/28565837/filename-too-long-sbt
   * $ sdk install sbt 1.3.9
 3. Compile + Run
   * $ cd minions (go to directory where you cloned the repo)
+  * $ mkdir games
   * $ sbt
   * $ buildEverything (in sbt console)
   * $ minionsJVM/run
