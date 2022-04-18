@@ -593,6 +593,17 @@ object Units {
     isPersistent = true,
   )
 
+  val city = createPieceStats(
+    name = "city",
+    shortDisplayName = "City",
+    cost = 0,
+    rebate = 0,
+    moveRange = 0,
+    attackRange = 2,
+    attackEffect = Some(Damage(3)),
+    defense = Some(15),
+  )
+
   //All pieces
   val pieces: Array[PieceStats] = Array(
     necromancer,
@@ -606,7 +617,7 @@ object Units {
     zombie, acolyte,
     initiate, skeleton, serpent, bat, ghost, wight, haunt, shrieker,
     fog, ooze, witch, vampire, mummy, lich, sorcerer, void, hell_hound,
-    wraith, fiend, banshee, elemental, fallen_angel, shadowlord
+    wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
 
   //Necromancers awarded after a board resets

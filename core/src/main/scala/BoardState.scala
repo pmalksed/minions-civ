@@ -794,22 +794,14 @@ case class BoardState private (
     //Set up initial pieces
     Side.foreach { side =>
       val startLoc = startLocs(side)
-      val necroName = necroNames(side)(0)
-      val necroStats = externalInfo.pieceMap(necroName)
-      val necroSwarmMax = necroStats.swarmMax
-      for(i <- 0 until necroSwarmMax) {
-        spawnPieceInitial(side,necroStats,startLoc) match {
-          case Failure(_) => assertUnreachable()
-          case Success(piece) =>
-            if(allowedNecros(side).size > 1) {
-              val necroPick = PieceModWithDuration(PieceMods.NecroPick, turnsLeft=None)
-              piece.modsWithDuration = piece.modsWithDuration :+ necroPick
-            }
-        }
-      }
-
-      tiles.topology.forEachAdj(startLoc) { loc =>
-        val (_: Try[Piece]) = spawnPieceInitial(side,Units.zombie,loc)
+      val cityStats = externalInfo.pieceMap("city")
+      spawnPieceInitial(side,cityStats,startLoc) match {
+        case Failure(_) => assertUnreachable()
+        case Success(piece) =>
+          if(allowedNecros(side).size > 1) {
+            val necroPick = PieceModWithDuration(PieceMods.NecroPick, turnsLeft=None)
+            piece.modsWithDuration = piece.modsWithDuration :+ necroPick
+          }
       }
     }
 
