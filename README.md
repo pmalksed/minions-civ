@@ -50,7 +50,7 @@ http://stackoverflow.com/questions/28565837/filename-too-long-sbt
   * $ sbt
   * $ buildEverything (in sbt console)
   * $ minionsJVM/run
-4. Visit localhost:8080. Your local copy should be running there.
+4. In a browser, visit localhost. Your local copy should be running there.
 
 ## AWS Setup
 1. Reserve a medium instance (in AWS console)
