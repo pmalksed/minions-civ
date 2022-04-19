@@ -188,6 +188,9 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
         if(curTarget == prevTarget && doubleClickTimeOkay(prevTime)) Some((curTarget,prevTime,true))
         else Some((curTarget,getNow(),false))
     }
+    board.selectedCity = curTarget.findPiece(board)
+
+    println(board.selectedCity)
 
     clearPath()
   }
