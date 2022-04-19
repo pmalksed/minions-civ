@@ -598,7 +598,7 @@ object Units {
     shortDisplayName = "City",
     cost = 0,
     rebate = 0,
-    moveRange = 0,
+    moveRange = 1,
     attackRange = 2,
     attackEffect = Some(Damage(3)),
     defense = Some(15),

@@ -1422,7 +1422,13 @@ object Drawing {
       case (mode: NormalMouseMode) =>
         //Highlight mouse's target on mouse hover
         mouseState.hovered match {
-          case MouseNone => ()
+          case MouseNone => 
+            mouseState.selectedCity match {
+              case None => ()
+              case Some(piece) => 
+                val stats = piece.baseStats
+                drawSidebar(piece=Some(piece), stats=Some(stats))
+            }
           case MouseSpellHand(spellId,side,_) =>
             drawSidebar(side=Some(side), spell=Some(spellId))
           case MouseSpellChoice(spellId,side,_) =>
