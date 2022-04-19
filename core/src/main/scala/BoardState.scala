@@ -313,7 +313,8 @@ object BoardState {
       turnEndingImmediately = false,
       soulsThisRound = SideArray.create(0),
       totalSouls = SideArray.create(0),
-      totalCosts = SideArray.create(0)
+      totalCosts = SideArray.create(0),
+      selectedCity = None,
     )
     board
   }
@@ -362,7 +363,8 @@ case class BoardStateFragment1 (
   var turnEndingImmediately: Boolean,
   val soulsThisRound: SideArray[Int],
   val totalSouls: SideArray[Int],
-  val totalCosts: SideArray[Int]
+  val totalCosts: SideArray[Int],
+  var selectedCity: Option[Piece],
 )
 
 object BoardStateOfFragments {
@@ -392,7 +394,8 @@ object BoardStateOfFragments {
       turnEndingImmediately = f1.turnEndingImmediately,
       soulsThisRound = f1.soulsThisRound,
       totalSouls = f1.totalSouls,
-      totalCosts = f1.totalCosts
+      totalCosts = f1.totalCosts,
+      selectedCity = f1.selectedCity
     )
   }
 }
@@ -458,7 +461,8 @@ case class BoardState private (
   //Same, but never clears - summed over the whole board's lifetime.
   val totalSouls: SideArray[Int],
   //Total cost of units added to reinforcements of this board over the board's lifetime
-  val totalCosts: SideArray[Int]
+  val totalCosts: SideArray[Int],
+  var selectedCity: Option[Piece],
 ) {
   val xSize: Int = tiles.xSize
   val ySize: Int = tiles.ySize
@@ -493,7 +497,8 @@ case class BoardState private (
         turnEndingImmediately = turnEndingImmediately,
         soulsThisRound = soulsThisRound,
         totalSouls = totalSouls,
-        totalCosts = totalCosts
+        totalCosts = totalCosts,
+        selectedCity = selectedCity
       )
     )
   }
@@ -524,7 +529,8 @@ case class BoardState private (
       turnEndingImmediately = turnEndingImmediately,
       soulsThisRound = soulsThisRound.copy(),
       totalSouls = totalSouls.copy(),
-      totalCosts = totalCosts.copy()
+      totalCosts = totalCosts.copy(),
+      selectedCity = selectedCity, // Maybe it's bad that I didn't do .copy(), but I couldn't figure out the typing
     )
     val newPieceById = pieceById.transform({ (_k, piece) => piece.copy() })
     val newPiecesSpawnedThisTurn = piecesSpawnedThisTurn.transform { (_k, piece) => newPieceById(piece.id) }
