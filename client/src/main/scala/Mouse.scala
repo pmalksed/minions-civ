@@ -82,6 +82,8 @@ case class MouseState(val ourSide: Option[Side], val ui: UI, val client: Client)
   //Current mode that the mouse is operating in.
   var mode: MouseMode = NormalMouseMode(this)
 
+  var selectedCity: Option[Piece] = None
+
   def clear() = {
     hovered = MouseNone
     dragTarget = MouseNone
@@ -115,6 +117,7 @@ case class MouseState(val ourSide: Option[Side], val ui: UI, val client: Client)
     lastPixelLoc = Some(pixelLoc)
     if(!client.gotFatalError) {
       val curTarget = getTarget(pixelLoc,game,board)
+      selectedCity = curTarget.findPiece(board)
       dragTarget = curTarget
 
       mode.handleMouseDown(curTarget,game,board, undo, ourSide)

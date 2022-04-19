@@ -230,7 +230,7 @@ object Piece {
     )
   }
 }
-case class Piece private (
+case class Piece (
   val side: Side,
   val baseStats: PieceStats,
   val id: Int,
