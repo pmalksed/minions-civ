@@ -920,17 +920,17 @@ if(!username || username.length == 0) {
   // javaStream: java.util.stream.Stream[java.nio.file.Path] = java.util.stream.ReferencePipeline$3@51b1d486
   // javaStream.toScala(LazyList)
 
-  val old_games = Files.list(Paths.get(rundir)).iterator().asScala
-  old_games.foreach { filename =>
-    val oldGameStr = Files.readAllLines(filename).get(0)
-    val oldGameid = filename.getFileName().toString
-    val oldGameState = Json.parse(oldGameStr).as[GameState]
-    val oldActor = actorSystem.actorOf(Props(classOf[GameActor], oldGameState, oldGameid))
-    games = games + (oldGameid -> ((oldActor, oldGameState)))
-    if(oldGameid.contains("ai")) {
-      addAI(oldGameState, oldGameid, false)
-    }
-  }
+  // val old_games = Files.list(Paths.get(rundir)).iterator().asScala
+  // old_games.foreach { filename =>
+  //   val oldGameStr = Files.readAllLines(filename).get(0)
+  //   val oldGameid = filename.getFileName().toString
+  //   val oldGameState = Json.parse(oldGameStr).as[GameState]
+  //   val oldActor = actorSystem.actorOf(Props(classOf[GameActor], oldGameState, oldGameid))
+  //   games = games + (oldGameid -> ((oldActor, oldGameState)))
+  //   if(oldGameid.contains("ai")) {
+  //     addAI(oldGameState, oldGameid, false)
+  //   }
+  // }
 
   // Create test game
   val secondsPerTurn = SideArray.create(120.0)

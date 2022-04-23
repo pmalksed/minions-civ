@@ -230,6 +230,7 @@ object Drawing {
       }
       if(showLoc) {
         text(loc.toString, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/2.0), "black")
+        text("" + tile.foodYield + "/" + tile.productionYield + "/" + tile.scienceYield, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, 0), "black")
       }
     }
 
