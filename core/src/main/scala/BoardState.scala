@@ -1,6 +1,6 @@
 package minionsgame.core
 
-import scala.util.{Try,Success,Failure}
+import scala.util.{Try,Success,Failure,Random}
 import scala.collection.immutable.Vector
 
 import RichImplicits._
@@ -198,12 +198,24 @@ case class GainSpell(spellId: SpellId) extends GeneralBoardAction
  *  Possibly enchanted due to spells. Later in list -> spells were played later.
  */
 object Tile {
-  def apply(terrain: Terrain): Tile = { new Tile(terrain, terrain, List()) }
+  def apply(terrain: Terrain): Tile = { 
+    return new Tile(
+      terrain, 
+      terrain, 
+      List(), 3,0,0,0,0,0,
+    ) 
+  }
 }
 case class Tile(
   val terrain: Terrain,
   val startingTerrain: Terrain,
-  val modsWithDuration: List[PieceModWithDuration]
+  val modsWithDuration: List[PieceModWithDuration],
+  val foodYield: Int,
+  val food: Int,  
+  val productionYield: Int,
+  val production: Int,
+  val scienceYield: Int,
+  val science: Int,
 )
 
 /**
@@ -226,7 +238,13 @@ object Piece {
       hasMoved = false,
       hasAttacked = false,
       attackedPiecesThisTurn = List(),
-      spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc))
+      spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
+      // carriedFood = 0,
+      // food = 0,
+      // carriedProduction = 0,
+      // production = 0,
+      // carriedScience = 0,
+      // science = 0
     )
   }
 }
@@ -246,7 +264,13 @@ case class Piece (
   var hasAttacked: Boolean,
   var attackedPiecesThisTurn: List[Piece],
   //If the piece was newly spawned this turn
-  var spawnedThisTurn: Option[SpawnedThisTurn]
+  var spawnedThisTurn: Option[SpawnedThisTurn],
+  // val carriedFood: Int,
+  // val food: Int,
+  // val carriedProduction: Int,
+  // val production: Int,
+  // val carriedScience: Int,
+  // val science: Int,
 ) {
   def copy() = {
     new Piece(
@@ -260,7 +284,13 @@ case class Piece (
       actState = actState,
       hasAttacked = hasAttacked,
       attackedPiecesThisTurn = attackedPiecesThisTurn,
-      spawnedThisTurn = spawnedThisTurn
+      spawnedThisTurn = spawnedThisTurn,
+      // carriedFood = carriedFood,
+      // food = food,
+      // carriedProduction = carriedProduction,
+      // production = production,
+      // carriedScience = carriedScience,
+      // science = science,
     )
   }
 
@@ -287,8 +317,27 @@ case class Piece (
 object BoardState {
   def create(terrain: Plane[Terrain], startLocs: SideArray[Loc]): BoardState = {
     val board = new BoardState(
-      tiles = terrain.map { terrain =>
-        Tile(terrain = terrain, terrain, modsWithDuration = Nil)
+      tiles = terrain.map { terrain => {
+          val rand = Random;
+          val randomFloat = rand.nextFloat;
+          var foodYield: Int = 0;
+          var productionYield: Int = 0;
+          var scienceYield: Int = 0;
+          val food: Int = 0;
+          val production: Int = 0;
+          val science: Int = 0;
+          if(randomFloat >= 0.4 && randomFloat < 0.8){
+            foodYield = foodYield + 1;
+          }          
+          if(randomFloat < 0.4){
+            productionYield = productionYield + 1;
+          }
+          if(randomFloat >= 0.8) {
+            scienceYield = scienceYield + 1;
+          }    
+          Tile(terrain = terrain, terrain, modsWithDuration = Nil, foodYield, productionYield, scienceYield,
+            food,production,science);
+        }
       },
       startLocs = startLocs,
       pieces = Plane.create(terrain.xSize,terrain.ySize,terrain.topology,Nil),
@@ -772,7 +821,27 @@ case class BoardState private (
     }
 
     // Reset terrain and remove tile modifiers
-    tiles.transform { tile => Tile(tile.startingTerrain) }
+    tiles.transform { tile => {
+        val rand = Random;
+        val randomFloat = rand.nextFloat;
+        var foodYield: Int = 0;
+        var productionYield: Int = 0;
+        var scienceYield: Int = 0;
+        val food: Int = 0;
+        val production: Int = 0;
+        val science: Int = 0;
+        if(randomFloat >= 0.4 && randomFloat < 0.8){
+          foodYield = foodYield + 1;
+        }          
+        if(randomFloat < 0.4){
+          productionYield = productionYield + 1;
+        }
+        if(randomFloat >= 0.8) {
+          scienceYield = scienceYield + 1;
+        }    
+        Tile(tile.startingTerrain, tile.startingTerrain, List(), foodYield,productionYield,scienceYield,food,production,science)
+      } 
+    }
 
     //Remove all pieces and reinforcements
     pieces.transform { _ => Nil }
@@ -1363,12 +1432,12 @@ case class BoardState private (
   def moveTerrain(terrain: Terrain, loc: Loc) = {
     tiles.transform { tile =>
       if(tile.terrain == terrain) {
-        Tile(Ground, tile.startingTerrain, modsWithDuration = tile.modsWithDuration)
+        Tile(Ground, tile.startingTerrain, modsWithDuration = tile.modsWithDuration,0,0,0,0,0,0)
       } else {
         tile
       }
     }
-    tiles(loc) = Tile(terrain, tiles(loc).startingTerrain, modsWithDuration = tiles(loc).modsWithDuration)
+    tiles(loc) = Tile(terrain, tiles(loc).startingTerrain, modsWithDuration = tiles(loc).modsWithDuration,0,0,0,0,0,0)
   }
 
   private def killAttackingWailingUnits(externalInfo: ExternalInfo, otherThan: Option[PieceSpec] = None): Unit = {
