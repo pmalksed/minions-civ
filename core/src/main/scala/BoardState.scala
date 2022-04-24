@@ -202,7 +202,7 @@ object Tile {
     return new Tile(
       terrain, 
       terrain, 
-      List(), 3,0,0,0,0,0,
+      List(), 0,0,0,0,0,0,
     ) 
   }
 }
@@ -211,10 +211,10 @@ case class Tile(
   val startingTerrain: Terrain,
   val modsWithDuration: List[PieceModWithDuration],
   val foodYield: Int,
-  val food: Int,  
   val productionYield: Int,
-  val production: Int,
   val scienceYield: Int,
+  val food: Int,  
+  val production: Int,
   val science: Int,
 )
 
@@ -239,12 +239,15 @@ object Piece {
       hasAttacked = false,
       attackedPiecesThisTurn = List(),
       spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
-      // carriedFood = 0,
-      // food = 0,
-      // carriedProduction = 0,
-      // production = 0,
-      // carriedScience = 0,
-      // science = 0
+      food = 0,
+      production = 0,
+      science = 0,
+      carriedFood = 0,
+      carriedProduction = 0,
+      carriedScience = 0,
+      productionQueue = List(),
+      scienceQueue = List(),
+      buildings = List(),
     )
   }
 }
@@ -265,12 +268,17 @@ case class Piece (
   var attackedPiecesThisTurn: List[Piece],
   //If the piece was newly spawned this turn
   var spawnedThisTurn: Option[SpawnedThisTurn],
-  // val carriedFood: Int,
-  // val food: Int,
-  // val carriedProduction: Int,
-  // val production: Int,
-  // val carriedScience: Int,
-  // val science: Int,
+  var food: Int,
+  var production: Int,
+  var science: Int,
+  var carriedFood: Float,
+  var carriedProduction: Float,
+  var carriedScience: Float,
+
+  //Properties of cities but not other units
+  var productionQueue: List[PieceName],
+  var scienceQueue: List[PieceName],
+  var buildings: List[PieceName],
 ) {
   def copy() = {
     new Piece(
@@ -285,12 +293,15 @@ case class Piece (
       hasAttacked = hasAttacked,
       attackedPiecesThisTurn = attackedPiecesThisTurn,
       spawnedThisTurn = spawnedThisTurn,
-      // carriedFood = carriedFood,
-      // food = food,
-      // carriedProduction = carriedProduction,
-      // production = production,
-      // carriedScience = carriedScience,
-      // science = science,
+      food = food,
+      production = production,
+      science = science,
+      carriedFood = carriedFood,
+      carriedProduction = carriedProduction,
+      carriedScience = carriedScience,
+      productionQueue = productionQueue,
+      scienceQueue = scienceQueue,
+      buildings = buildings,
     )
   }
 
