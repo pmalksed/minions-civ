@@ -1964,7 +1964,6 @@ case class BoardState private (
   }
 
   private def refreshPieceForStartOfTurn(piece: Piece): Unit = {
-    piece.damage = 0
     piece.actState = Moving(0)
     piece.hasMoved = false
     piece.hasAttacked = false
