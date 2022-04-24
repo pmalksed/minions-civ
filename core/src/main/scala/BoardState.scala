@@ -1971,5 +1971,9 @@ case class BoardState private (
 
     piece.spawnedThisTurn.foreach { spawnedThisTurn => piecesSpawnedThisTurn = piecesSpawnedThisTurn - spawnedThisTurn }
     piece.spawnedThisTurn = None
+
+    if (piece.baseStats.name == "city") {
+      piece.damage = (piece.damage - 1).max(0);
+    }
   }
 }
