@@ -1974,6 +1974,13 @@ case class BoardState private (
 
     if (piece.baseStats.name == "city") {
       piece.damage = (piece.damage - 1).max(0);
+      tiles.topology.forEachAdj(piece.loc) {
+        loc => {
+          piece.carriedFood = piece.carriedFood + tiles(loc).foodYield;          
+          piece.carriedProduction = piece.carriedProduction + tiles(loc).productionYield;
+          piece.carriedScience = piece.carriedScience + tiles(loc).scienceYield;
+        }
+      }
     }
   }
 }

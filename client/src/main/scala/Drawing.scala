@@ -528,6 +528,19 @@ object Drawing {
           if(stats.extraMana > 0) {
             show("Produces " + stats.extraMana + " mana/turn.")
           }
+          piece match {
+            case None => show("")
+            case Some(p) => {
+              show("Food: " + p.food)
+              show("Production: " + p.production)
+              if (p.baseStats.name == "city" || p.baseStats.name == "salvager") {
+                show("Science: " + p.science)
+                show("Stored food: " + p.carriedFood)
+                show("Stored production: " + p.carriedProduction)
+                show("Stored science: " + p.carriedScience)
+              }
+            }
+          }
           stats.perTurnReinforcement match {
             case None => ()
             case Some(pieceName) =>
