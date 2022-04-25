@@ -150,7 +150,7 @@ case class GameState (
   }
 
   private def maybeDoEndOfTurn(scheduleEndOfTurn: ScheduleReason => Unit): Unit = {
-    if(game.isBoardDone.forall { isDone => isDone })
+    if(game.isBoardDone.exists { isDone => isDone })
       doEndOfTurn(scheduleEndOfTurn)
   }
 
@@ -344,8 +344,8 @@ case class GameState (
               out ! Protocol.QueryError("Invalid boardIdx")
             else if(game.winner.nonEmpty)
               out ! Protocol.QueryError("Game is over")
-            else if(boards(boardIdx).curState().side != side)
-              out ! Protocol.QueryError("Currently the other team's turn")
+            else if(game.curSide != side)
+              printf("Hi")
             else {
               changeUserBoardViewed(sessionId,boardIdx)
               //Some board actions are special and are meant to be server -> client only, or need extra checks
@@ -429,11 +429,9 @@ case class GameState (
         side match {
           case None =>
             out ! Protocol.QueryError("Cannot perform actions as a spectator")
-          case Some(side) =>
+          case Some(_) =>
             if(game.winner.nonEmpty)
-              out ! Protocol.QueryError("Game is over")
-            else if(game.curSide != side)
-              out ! Protocol.QueryError("Currently the other team's turn")
+              out ! Protocol.QueryError("Game is over")         
             else {
               //Some game actions are special and are meant to be server -> client only, or need extra checks
               val specialResult: Try[Unit] = gameAction match {

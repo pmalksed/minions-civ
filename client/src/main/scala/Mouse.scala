@@ -449,7 +449,7 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
 
       case MouseEndTurn(_) =>
         //Require mouse down and up on the same target
-        if(ourSide == Some(game.curSide) && curTarget == dragTarget)
+        if(curTarget == dragTarget)
           mouseState.client.doGameAction(SetBoardDone(boardIdx,!game.isBoardDone(boardIdx)))
 
       case MouseResignBoard(_) =>
