@@ -271,14 +271,14 @@ case class Piece (
   var food: Int,
   var production: Int,
   var science: Int,
-  var carriedFood: Float,
-  var carriedProduction: Float,
-  var carriedScience: Float,
+  var carriedFood: Double,
+  var carriedProduction: Double,
+  var carriedScience: Double,
 
   //Properties of cities but not other units
-  var productionQueue: List[PieceName],
-  var scienceQueue: List[PieceName],
-  var buildings: List[PieceName],
+  var productionQueue: List[PieceStats],
+  var scienceQueue: List[PieceStats],
+  var buildings: List[PieceStats],
 ) {
   def copy() = {
     new Piece(
@@ -1963,6 +1963,21 @@ case class BoardState private (
     }
   }
 
+  private def buildBuildings(piece: Piece): Unit = {
+    if (piece.scienceQueue.size > 0) {
+      val scienceQueue = piece.scienceQueue;
+      val nextScienceUnit = scienceQueue.head;
+      val scienceCost = nextScienceUnit.scienceCost;
+      if (scienceCost <= piece.carriedScience) {
+        piece.buildings = piece.buildings ::: List(nextScienceUnit);
+        piece.scienceQueue = scienceQueue.slice(1, scienceQueue.size);
+        piece.carriedScience = piece.carriedScience - scienceCost;
+        piece.science = piece.science + scienceCost;
+        buildBuildings(piece);
+      }
+    }
+  }
+
   private def refreshPieceForStartOfTurn(piece: Piece): Unit = {
     piece.actState = Moving(0)
     piece.hasMoved = false
@@ -1974,12 +1989,20 @@ case class BoardState private (
 
     if (piece.baseStats.name == "city") {
       piece.damage = (piece.damage - 1).max(0);
+      // Collect yields
       tiles.topology.forEachAdj(piece.loc) {
         loc => {
           piece.carriedFood = piece.carriedFood + tiles(loc).foodYield;          
           piece.carriedProduction = piece.carriedProduction + tiles(loc).productionYield;
           piece.carriedScience = piece.carriedScience + tiles(loc).scienceYield;
         }
+      }
+      // Allocate production and science to their respective queues
+      buildBuildings(piece);
+
+      // Penalize unallocated production and science
+      if (piece.scienceQueue.size == 0) {
+        piece.carriedScience = piece.carriedScience * 0.75
       }
     }
   }

@@ -77,6 +77,8 @@ object Units {
     deathSpawn : Option[PieceName] = None,
     perTurnReinforcement : Option[PieceName] = None,
     abilities : List[PieceAbility] = List.empty,
+    productionCost: Int = 3,
+    scienceCost: Int = 6,
   ) : PieceStats = {
     PieceStats(
       name = name,
@@ -106,7 +108,9 @@ object Units {
       extraMana = extraMana,
       deathSpawn = deathSpawn,
       perTurnReinforcement = perTurnReinforcement,
-      abilities = abilities
+      abilities = abilities,
+      productionCost = productionCost,
+      scienceCost = scienceCost,
     )
   }
 

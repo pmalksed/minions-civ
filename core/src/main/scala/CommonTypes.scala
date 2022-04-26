@@ -97,6 +97,8 @@ case class PieceStats(
   val attackRange: Int,
   val attackRangeVsFlying: Int,
   val numAttacks: Int,
+  val productionCost: Int,
+  val scienceCost: Int,
 
   val cost: Int,
   val rebate: Int,
@@ -138,7 +140,9 @@ case class PieceStats(
         cost = cost,
         rebate = rebate,
         canBlink = canBlink,
-        canHurtNecromancer = canHurtNecromancer
+        canHurtNecromancer = canHurtNecromancer,
+        productionCost = productionCost,
+        scienceCost = scienceCost,
       ),
       PieceStatsFragment1(
         swarmMax = swarmMax,
@@ -175,7 +179,9 @@ case class PieceStatsFragment0 (
   val cost: Int,
   val rebate: Int,
   val canBlink: Boolean,
-  val canHurtNecromancer: Boolean
+  val canHurtNecromancer: Boolean,
+  val productionCost: Int,
+  val scienceCost: Int,
 )
 case class PieceStatsFragment1 (
   val swarmMax: Int,
@@ -211,6 +217,8 @@ object PieceStatsOfFragments {
       rebate = f0.rebate,
       canBlink = f0.canBlink,
       canHurtNecromancer = f0.canHurtNecromancer,
+      productionCost = f0.productionCost,
+      scienceCost = f0.scienceCost,
       swarmMax = f1.swarmMax,
       spawnRange = f1.spawnRange,
       extraSouls = f1.extraSouls,

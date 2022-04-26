@@ -539,6 +539,11 @@ object Drawing {
                 show("Stored production: " + p.carriedProduction)
                 show("Stored science: " + p.carriedScience)
               }
+              if (p.baseStats.name == "city") {
+                show("Production queue: " + p.productionQueue.map(u => u.displayName))
+                show("Science queue: " + p.scienceQueue.map(u => u.displayName))
+                show("Buildings: " + p.buildings.map(u => u.displayName))
+              }
             }
           }
           stats.perTurnReinforcement match {

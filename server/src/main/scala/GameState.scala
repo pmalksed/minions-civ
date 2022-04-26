@@ -445,7 +445,7 @@ case class GameState (
                   game.tryIsLegal(gameAction).map { case () =>
                     //And if so, reset the board
                     doResetBoard(boardIdx, canMoveFirstTurn = true, turnEndingImmediatelyAfterReset = false)
-                    allMessages = allMessages :+ ("GAME: Team " + game.curSide.toColorName + " resigned board " + (boardIdx+1) + "!")
+                    allMessages = allMessages :+ ("GAME: Team  " + game.curSide.toColorName + " resigned board " + (boardIdx+1) + "!")
                     broadcastMessages()
                   }
                 case (_: PayForReinforcement) | (_: UnpayForReinforcement) | (_: AddWin) | (_: AddUpcomingSpells) |
