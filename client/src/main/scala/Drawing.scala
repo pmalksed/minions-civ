@@ -1343,6 +1343,8 @@ object Drawing {
           }
         case DiscardSpell(_) =>
           ()
+        case AddToQueue(_,_) => 
+          ()
       }
     }
 
@@ -1368,6 +1370,7 @@ object Drawing {
             strokeHex(hexLoc, "black", tileScale, alpha=0.5, rectangle=true)
             highlightHex(hexLoc,scale=spellScale, rectangle=true)
           }
+        case AddToScienceQueue(_,_) => ()
       }
     }
 
@@ -1719,7 +1722,7 @@ object Drawing {
                           //If teleporting, highlight the teleport location
                           strokeHex(ui.MainBoard.hexLoc(hoverLoc), "cyan", scale, alpha=0.3, lineWidth=2)
                           fillHex(ui.MainBoard.hexLoc(hoverLoc), "cyan", scale, alpha=0.05)
-                        case (_ : Blink) | (_ : Attack) | (_ : Spawn) | (_ : ActivateTile) | (_ : ActivateAbility) | (_ : PlaySpell) | (_ : DiscardSpell) =>
+                        case (_ : Blink) | (_ : Attack) | (_ : Spawn) | (_ : ActivateTile) | (_ : ActivateAbility) | (_ : PlaySpell) | (_ : DiscardSpell) | (_: AddToQueue) =>
                           ()
                       }
                     }

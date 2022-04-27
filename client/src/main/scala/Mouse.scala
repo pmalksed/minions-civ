@@ -117,7 +117,7 @@ case class MouseState(val ourSide: Option[Side], val ui: UI, val client: Client)
     lastPixelLoc = Some(pixelLoc)
     if(!client.gotFatalError) {
       val curTarget = getTarget(pixelLoc,game,board)
-      selectedCity = curTarget.findPiece(board)
+      // selectedCity = curTarget.findPiece(board)
       dragTarget = curTarget
 
       mode.handleMouseDown(curTarget,game,board, undo, ourSide)
@@ -498,63 +498,20 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
 
       case MouseTech(techIdx,_) =>
         //Require mouse down and up on the same target
-        if(ourSide == Some(game.curSide) && curTarget == dragTarget) {
-          val techState = game.techLine(techIdx)
-          if(undo) {
-            (techState.level(game.curSide), techState.startingLevelThisTurn(game.curSide)) match {
-              case (TechAcquired,TechAcquired) =>
-                techState.tech match {
-                  case PieceTech(pieceName) =>
-                    mouseState.client.doActionOnCurBoard(BuyReinforcementUndo(pieceName,makeActionId()))
-                  case Copycat | Metamagic => ()
-                  case TechSeller =>
-                    mouseState.client.doGameAction(UnsellTech(game.curSide))
-                }
-              case _ =>
-                if(techState.level(game.curSide) != techState.startingLevelThisTurn(game.curSide)) {
-                  mouseState.client.doGameAction(UndoTech(game.curSide,techIdx))
-                }
-                else {
-                  //Possibly attempt to undo any free-bought piece, just in case somehow we free-bought a piece
-                  //that we don't have tech for
-                  techState.tech match {
-                    case PieceTech(pieceName) =>
-                      if(board.couldFreeBuyPieceThisTurn(game.curSide,pieceName))
-                        mouseState.client.doActionOnCurBoard(BuyReinforcementUndo(pieceName,makeActionId()))
-                    case _ => ()
+        val techState = game.techLine(techIdx)
+        if(curTarget == dragTarget) {
+          techState.tech match {
+            case PieceTech(pieceName) =>
+              mouseState.selectedCity match {
+                case None => ()
+                case Some(selectedCity) => 
+                  def makeAction() = {
+                    AddToQueue(pieceName,selectedCity.id)
                   }
-                }
+                  mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+                  // mouseState.client.doActionOnCurBoard(DoGeneralBoardAction(AddToScienceQueue(pieceName,selectedCity.id),makeActionId()))
             }
-          }
-          else {
-            val freeBuyingPiece: Option[PieceName] = {
-              techState.tech match {
-                case PieceTech(pieceName) =>
-                  if(board.canFreeBuyPiece(game.curSide,pieceName))
-                    Some(pieceName)
-                  else
-                    None
-                case _ => None
-              }
-            }
-            freeBuyingPiece match {
-              case Some(pieceName) =>
-                mouseState.client.doActionOnCurBoard(DoGeneralBoardAction(BuyReinforcement(pieceName,free=true),makeActionId()))
-              case None =>
-                techState.level(game.curSide) match {
-                  case TechLocked | TechUnlocked =>
-                    mouseState.client.doGameAction(PerformTech(game.curSide,techIdx))
-                  case TechAcquired =>
-                    techState.tech match {
-                      case PieceTech(pieceName) =>
-                        mouseState.client.doActionOnCurBoard(DoGeneralBoardAction(BuyReinforcement(pieceName,free=false),makeActionId()))
-                      case Copycat | Metamagic => ()
-                      case TechSeller =>
-                        mouseState.client.doGameAction(SellTech(game.curSide))
-
-                    }
-                }
-            }
+            case Copycat | Metamagic | TechSeller => ()
           }
         }
 
@@ -596,125 +553,127 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
         }
 
       case MouseTile(loc) =>
-        if(ourSide == Some(game.curSide)) {
-          if(undo) ()
-          else {
-            board.tiles(loc).terrain match {
-              case Wall | Ground | Water(_) | Graveyard | SorceryNode | Teleporter |
-                   Earthquake(_) | Firestorm(_) | Whirlwind(_) | Mist => ()
-              case Spawner(_) =>
-                mouseState.client.doActionOnCurBoard(PlayerActions(List(ActivateTile(loc)),makeActionId()))
-            }
+        mouseState.selectedCity = None;
+        if(undo) ()
+        else {
+          board.tiles(loc).terrain match {
+            case Wall | Ground | Water(_) | Graveyard | SorceryNode | Teleporter |
+                 Earthquake(_) | Firestorm(_) | Whirlwind(_) | Mist => ()
+            case Spawner(_) =>
+              mouseState.client.doActionOnCurBoard(PlayerActions(List(ActivateTile(loc)),makeActionId()))
           }
         }
 
       case MousePiece(dragSpec,_) =>
-        if(ourSide == Some(game.curSide)) {
-          if(undo) {
-            //Require mouse down and up on the same target
-            if(curTarget == dragTarget) {
-              mouseState.client.doActionOnCurBoard(LocalPieceUndo(dragSpec,makeActionId()))
-            }
+        if(undo) {
+          //Require mouse down and up on the same target
+          if(curTarget == dragTarget) {
+            mouseState.client.doActionOnCurBoard(LocalPieceUndo(dragSpec,makeActionId()))
           }
-          else {
-            board.findPiece(dragSpec) match {
-              case None => ()
-              case Some(piece) =>
-                if(piece.side == game.curSide) {
-                  //Double-clicking on a piece activates its ability
-                  if(didDoubleClick) {
-                    val pieceStats = piece.curStats(board)
-                    val abilities = pieceStats.abilities
-                    if(abilities.length > 0) {
-                      //TODO disambiguate which action if there's more than one?
-                      val ability = abilities(0)
-                      val spec = piece.spec
-                      ability match {
-                        case Suicide | SpawnZombies | KillAdjacent | NecroPickAbility | (_:SelfEnchantAbility) =>
-                          val abilityActions = List(ActivateAbility(spec,ability,SpellOrAbilityTargets.none))
-                          mouseState.client.doActionOnCurBoard(PlayerActions(abilityActions,makeActionId()))
-                        case MoveEarthquake | MoveFlood | MoveWhirlwind | MoveFirestorm =>
-                          def makeAction(loc:Loc) = {
-                            ActivateAbility(spec, ability, SpellOrAbilityTargets.singleLoc(loc))
-                          }
-                          val locTargets = board.tiles.filterLocs { loc =>
-                            board.tryLegality(makeAction(loc), mouseState.client.externalInfo.get).isSuccess
-                          }
-                          // TODO: It would be nice to distinguish:
-                          // 1) "This is illegal regardless of the target" (e.g. no mana)
-                          // 2) "There happen to be no legal targets right now"
-                          if(locTargets.isEmpty) { // No legal targets, get error message
-                            mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction(piece.loc)), makeActionId()))
-                          } else {
-                            mouseState.mode = SelectTargetMouseMode(mouseState, List(), locTargets) { (target:MouseTarget) =>
-                              target.getLoc() match {
-                                case None => ()
-                                case Some(loc) =>
-                                  mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction(loc)), makeActionId()))
-                              }
-                            }
-                          }
-                        case MoveTerrain =>
-                          def makeAction(terrain:Terrain, loc:Loc) = {
-                            ActivateAbility(spec, ability, SpellOrAbilityTargets.terrainAndLoc(terrain,loc))
-                          }
-                          val arbitraryTerrain = Whirlwind(true)
-                          def isLegal(loc:Loc) = {
-                            board.tryLegality(makeAction(arbitraryTerrain, loc), mouseState.client.externalInfo.get).isSuccess
-                          }
-                          def doIllegalAction(loc: Loc) = {
-                            assert(!isLegal(loc))
-                            mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction(arbitraryTerrain, loc)), makeActionId()))
-                          }
-                          val locTargets = board.tiles.filterLocs { loc => isLegal(loc) }
-                          if(locTargets.isEmpty) {
-                            doIllegalAction(piece.loc)
-                          } else {
-                            mouseState.mode = SelectTargetMouseMode(mouseState, List(), locTargets) { (target:MouseTarget) =>
-                              target.getLoc() match {
-                                case None => ()
-                                case Some(loc) =>
-                                  println(loc)
-                                  if(isLegal(loc)) {
-                                    mouseState.mode = SelectTerrainMouseMode(mouseState) { (terrainOpt: Option[Terrain]) =>
-                                      terrainOpt match {
-                                        case None => ()
-                                        case Some(terrain) =>
-                                          mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction(terrain, loc)), makeActionId()))
-                                      }
-                                    }
-                                  } else {
-                                    println(loc)
-                                    doIllegalAction(loc)
-                                  }
-                              }
-                            }
-                          }
-
-                        case (_:TargetedAbility) =>
-                          val pieceTargets = List() // TODO: FIXME
-                          mouseState.mode = SelectTargetMouseMode(mouseState, pieceTargets, List()) { (target:MouseTarget) =>
-                            target.findPiece(board) match {
+        }
+        else {
+          board.findPiece(dragSpec) match {
+            case None => ()
+            case Some(piece) =>
+              if (piece.baseStats.name == "city") {
+                mouseState.selectedCity = Some(piece);
+              } else {
+                mouseState.selectedCity = None;
+              }
+              if(piece.side == game.curSide) {
+                //Double-clicking on a piece activates its ability
+                if(didDoubleClick) {
+                  val pieceStats = piece.curStats(board)
+                  val abilities = pieceStats.abilities
+                  if(abilities.length > 0) {
+                    //TODO disambiguate which action if there's more than one?
+                    val ability = abilities(0)
+                    val spec = piece.spec
+                    ability match {
+                      case Suicide | SpawnZombies | KillAdjacent | NecroPickAbility | (_:SelfEnchantAbility) =>
+                        val abilityActions = List(ActivateAbility(spec,ability,SpellOrAbilityTargets.none))
+                        mouseState.client.doActionOnCurBoard(PlayerActions(abilityActions,makeActionId()))
+                      case MoveEarthquake | MoveFlood | MoveWhirlwind | MoveFirestorm =>
+                        def makeAction(loc:Loc) = {
+                          ActivateAbility(spec, ability, SpellOrAbilityTargets.singleLoc(loc))
+                        }
+                        val locTargets = board.tiles.filterLocs { loc =>
+                          board.tryLegality(makeAction(loc), mouseState.client.externalInfo.get).isSuccess
+                        }
+                        // TODO: It would be nice to distinguish:
+                        // 1) "This is illegal regardless of the target" (e.g. no mana)
+                        // 2) "There happen to be no legal targets right now"
+                        if(locTargets.isEmpty) { // No legal targets, get error message
+                          mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction(piece.loc)), makeActionId()))
+                        } else {
+                          mouseState.mode = SelectTargetMouseMode(mouseState, List(), locTargets) { (target:MouseTarget) =>
+                            target.getLoc() match {
                               case None => ()
-                              case Some(targetPiece) =>
-                                val abilityActions = List(ActivateAbility(spec,ability,SpellOrAbilityTargets.singlePiece(targetPiece.spec)))
-                                mouseState.client.doActionOnCurBoard(PlayerActions(abilityActions,makeActionId()))
+                              case Some(loc) =>
+                                mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction(loc)), makeActionId()))
                             }
                           }
-                      }
-                    }
-                  }
-                  //Otherwise, normal click-and-drag
-                  else {
-                    curTarget.getLoc().foreach { curLoc =>
-                      val actions = dragPieceMouseUpActions(curTarget, curLoc, piece, board)
-                      actions.foreach { action =>
-                        mouseState.client.doActionOnCurBoard(PlayerActions(List(action),makeActionId()))
-                      }
+                        }
+                      case MoveTerrain =>
+                        def makeAction(terrain:Terrain, loc:Loc) = {
+                          ActivateAbility(spec, ability, SpellOrAbilityTargets.terrainAndLoc(terrain,loc))
+                        }
+                        val arbitraryTerrain = Whirlwind(true)
+                        def isLegal(loc:Loc) = {
+                          board.tryLegality(makeAction(arbitraryTerrain, loc), mouseState.client.externalInfo.get).isSuccess
+                        }
+                        def doIllegalAction(loc: Loc) = {
+                          assert(!isLegal(loc))
+                          mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction(arbitraryTerrain, loc)), makeActionId()))
+                        }
+                        val locTargets = board.tiles.filterLocs { loc => isLegal(loc) }
+                        if(locTargets.isEmpty) {
+                          doIllegalAction(piece.loc)
+                        } else {
+                          mouseState.mode = SelectTargetMouseMode(mouseState, List(), locTargets) { (target:MouseTarget) =>
+                            target.getLoc() match {
+                              case None => ()
+                              case Some(loc) =>
+                                println(loc)
+                                if(isLegal(loc)) {
+                                  mouseState.mode = SelectTerrainMouseMode(mouseState) { (terrainOpt: Option[Terrain]) =>
+                                    terrainOpt match {
+                                      case None => ()
+                                      case Some(terrain) =>
+                                        mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction(terrain, loc)), makeActionId()))
+                                    }
+                                  }
+                                } else {
+                                  println(loc)
+                                  doIllegalAction(loc)
+                                }
+                            }
+                          }
+                        }
+
+                      case (_:TargetedAbility) =>
+                        val pieceTargets = List() // TODO: FIXME
+                        mouseState.mode = SelectTargetMouseMode(mouseState, pieceTargets, List()) { (target:MouseTarget) =>
+                          target.findPiece(board) match {
+                            case None => ()
+                            case Some(targetPiece) =>
+                              val abilityActions = List(ActivateAbility(spec,ability,SpellOrAbilityTargets.singlePiece(targetPiece.spec)))
+                              mouseState.client.doActionOnCurBoard(PlayerActions(abilityActions,makeActionId()))
+                          }
+                        }
                     }
                   }
                 }
-            }
+                //Otherwise, normal click-and-drag
+                else {
+                  curTarget.getLoc().foreach { curLoc =>
+                    val actions = dragPieceMouseUpActions(curTarget, curLoc, piece, board)
+                    actions.foreach { action =>
+                      mouseState.client.doActionOnCurBoard(PlayerActions(List(action),makeActionId()))
+                    }
+                  }
+                }
+              }
           }
         }
     }

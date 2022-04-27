@@ -281,6 +281,7 @@ object Protocol {
   implicit val teleportFormat = Json.format[Teleport]
   implicit val playSpellFormat = Json.format[PlaySpell]
   implicit val discardSpellFormat = Json.format[DiscardSpell]
+  implicit val addToQueueFormat = Json.format[AddToQueue]
   implicit val playerActionFormat = {
     val reads: Reads[PlayerAction] = readsFromPair[PlayerAction]("PlayerAction",Map(
       "Movements" -> ((json:JsValue) => movementsFormat.reads(json)),
@@ -291,7 +292,8 @@ object Protocol {
       "Blink" -> ((json:JsValue) => blinkFormat.reads(json)),
       "Teleport" -> ((json:JsValue) => teleportFormat.reads(json)),
       "PlaySpell" -> ((json:JsValue) => playSpellFormat.reads(json)),
-      "DiscardSpell" -> ((json:JsValue) => discardSpellFormat.reads(json))
+      "DiscardSpell" -> ((json:JsValue) => discardSpellFormat.reads(json)),
+      "AddToQueue" -> ((json:JsValue) => addToQueueFormat.reads(json)),
     ))
     val writes: Writes[PlayerAction] = new Writes[PlayerAction] {
       def writes(t: PlayerAction): JsValue = t match {
@@ -304,6 +306,7 @@ object Protocol {
         case (t:Teleport) => jsPair("Teleport",teleportFormat.writes(t))
         case (t:PlaySpell) => jsPair("PlaySpell",playSpellFormat.writes(t))
         case (t:DiscardSpell) => jsPair("DiscardSpell",discardSpellFormat.writes(t))
+        case (t:AddToQueue) => jsPair("AddToQueue",addToQueueFormat.writes(t))
       }
     }
     Format(reads,writes)
@@ -311,15 +314,18 @@ object Protocol {
 
   implicit val buyReinforcementFormat = Json.format[BuyReinforcement]
   implicit val gainSpellFormat = Json.format[GainSpell]
+  implicit val addToScienceQueueFormat = Json.format[AddToScienceQueue]
   implicit val generalBoardActionFormat = {
     val reads: Reads[GeneralBoardAction] = readsFromPair[GeneralBoardAction]("GeneralBoardAction",Map(
       "BuyReinforcement" -> ((json:JsValue) => buyReinforcementFormat.reads(json)),
       "GainSpell" -> ((json:JsValue) => gainSpellFormat.reads(json)),
+      "AddToScienceQueue" -> ((json:JsValue) => addToScienceQueueFormat.reads(json)),
     ))
     val writes: Writes[GeneralBoardAction] = new Writes[GeneralBoardAction] {
       def writes(t: GeneralBoardAction): JsValue = t match {
         case (t:BuyReinforcement) => jsPair("BuyReinforcement",buyReinforcementFormat.writes(t))
         case (t:GainSpell) => jsPair("GainSpell",gainSpellFormat.writes(t))
+        case (t:AddToScienceQueue) => jsPair("AddToScienceQueue",addToScienceQueueFormat.writes(t))
       }
     }
     Format(reads,writes)

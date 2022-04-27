@@ -91,6 +91,8 @@ sealed trait PlayerAction {
         pieceSpec == targets.target1
       case DiscardSpell(_) =>
         false
+      case AddToQueue(_,_) =>
+        false
     }
   }
 
@@ -106,6 +108,7 @@ sealed trait PlayerAction {
       case Blink(_,_) => false
       case PlaySpell(id,_) => spellId == id
       case DiscardSpell(id) => spellId == id
+      case AddToQueue(_,_) => false
     }
   }
 
@@ -121,6 +124,7 @@ sealed trait PlayerAction {
       case Teleport(spec,_,_) => List(spec)
       case PlaySpell(_,_) => List()
       case DiscardSpell(_) => List()
+      case AddToQueue(_,_) => List()        
     }
   }
 }
@@ -134,6 +138,7 @@ case class Blink(pieceSpec: PieceSpec, src:Loc) extends PlayerAction
 case class Teleport(pieceSpec: PieceSpec, src: Loc, dest: Loc) extends PlayerAction
 case class PlaySpell(spellId: SpellId, targets: SpellOrAbilityTargets) extends PlayerAction
 case class DiscardSpell(spellId: SpellId) extends PlayerAction
+case class AddToQueue(pieceName: PieceName, selectedCityId: Int) extends PlayerAction
 
 //Note: path should contain both the start and ending location
 case class Movement(pieceSpec: PieceSpec, path: Vector[Loc])
@@ -176,6 +181,7 @@ sealed trait GeneralBoardAction {
   def involvesBuyPiece(pieceName: PieceName): Boolean = {
     this match {
       case BuyReinforcement(name,_) => pieceName == name
+      case AddToScienceQueue(_,_) => false
       case GainSpell(_) => false
     }
   }
@@ -184,6 +190,7 @@ sealed trait GeneralBoardAction {
   def involvesGainSpell(spellId: SpellId): Boolean = {
     this match {
       case GainSpell(id) => spellId == id
+      case AddToScienceQueue(_,_) => false
       case BuyReinforcement(_,_) => false
     }
   }
@@ -191,6 +198,7 @@ sealed trait GeneralBoardAction {
 }
 
 case class BuyReinforcement(pieceName: PieceName, free: Boolean) extends GeneralBoardAction
+case class AddToScienceQueue(pieceName: PieceName, selectedCity: Int) extends GeneralBoardAction
 case class GainSpell(spellId: SpellId) extends GeneralBoardAction
 
 /** Tile:
@@ -899,6 +907,8 @@ case class BoardState private (
           Success(())
       case GainSpell(_) =>
           Success(())
+      case AddToScienceQueue(_,_) => 
+          Success(())
     }
   }
 
@@ -929,6 +939,10 @@ case class BoardState private (
 
       case GainSpell(spellId) =>
         spellsInHand(side) = spellsInHand(side) :+ spellId
+
+      case AddToScienceQueue(pieceName, selectedCityId) =>
+        val selectedCity = pieceById(selectedCityId)
+        selectedCity.scienceQueue = selectedCity.scienceQueue ::: List(externalInfo.pieceMap(pieceName))
     }
   }
 
@@ -1684,6 +1698,8 @@ case class BoardState private (
           case false => fail("Spell not in hand or already played or discarded")
           case true => ()
         }
+      case AddToQueue(_,_) => 
+        ()
     }
   }
 
@@ -1859,6 +1875,10 @@ case class BoardState private (
         mana += manaOfDiscard(spell.spellType)
         spellsInHand(side) = spellsInHand(side).filterNot { i => i == spellId }
         spellsPlayed = spellsPlayed :+ SpellPlayedInfo(spellId, side, None)
+      case AddToQueue(pieceName, selectedCityId) => 
+        val selectedCity = pieceById(selectedCityId)
+        selectedCity.scienceQueue = selectedCity.scienceQueue ::: List(externalInfo.pieceMap(pieceName))
+
     }
   }
 

@@ -93,6 +93,7 @@ case class ChooseSpell(side: Side, spellId: SpellId, boardIdx: Int) extends Game
 case class UnchooseSpell(side: Side, spellId: SpellId, boardIdx: Int) extends GameAction
 case class AddWin(side: Side, boardIdx: Int) extends GameAction
 case class AddUpcomingSpells(side: Side, spellIds: Array[SpellId]) extends GameAction
+// case class AddToScienceQueueAction(pieceName: PieceName, selectedCityId: Int) extends GameAction
 
 case object Game {
   def apply(
@@ -672,4 +673,12 @@ case class Game (
     }
   }
 
+  // private def tryCanAddToScienceQueue(pieceName: PieceName, selectedCityId: Int): Try[Unit] = {
+  //   Success(())
+  // }
+
+  // private def addToScienceQueue(pieceName: PieceName, selectedCityId: Int): Try[Unit] = {
+  //   val selectedCity = externalInfo.pieceById(selectedCityId);
+  //   selectedCity.scienceQueue = selectedCity.scienceQueue ::: List(externalInfo.pieceMap(pieceName));
+  // }
 }

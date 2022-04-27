@@ -344,8 +344,6 @@ case class GameState (
               out ! Protocol.QueryError("Invalid boardIdx")
             else if(game.winner.nonEmpty)
               out ! Protocol.QueryError("Game is over")
-            else if(game.curSide != side)
-              printf("Hi")
             else {
               changeUserBoardViewed(sessionId,boardIdx)
               //Some board actions are special and are meant to be server -> client only, or need extra checks
@@ -396,6 +394,8 @@ case class GameState (
                         val gameAction: GameAction = ChooseSpell(side,spellId,boardIdx)
                         performAndBroadcastGameActionIfLegal(gameAction)
                       }
+                    case AddToScienceQueue(_,_) => 
+                      Success(())
                   }
               }
 
@@ -409,7 +409,7 @@ case class GameState (
                       actions.foreach {
                         case PlaySpell(spellId,_) => revealSpellsToSide(game.curSide.opp,Array(spellId), revealToSpectators = true)
                         case DiscardSpell(spellId) => revealSpellsToSide(game.curSide.opp,Array(spellId), revealToSpectators = true)
-                        case (_: Movements) | (_: Attack) | (_: Spawn) | (_: ActivateTile) | (_: ActivateAbility) | (_: Blink) | (_: Teleport) => ()
+                        case (_: Movements) | (_: Attack) | (_: Spawn) | (_: ActivateTile) | (_: ActivateAbility) | (_: Blink) | (_: Teleport) | (_: AddToQueue) => ()
                       }
                     case (_: LocalPieceUndo) | (_: SpellUndo) | (_: BuyReinforcementUndo) | (_: GainSpellUndo) | (_: DoGeneralBoardAction) | (_: Redo) => ()
                   }
