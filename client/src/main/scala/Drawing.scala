@@ -231,6 +231,14 @@ object Drawing {
       if(showLoc) {
         text(loc.toString, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/2.0), "black")
         text("" + tile.foodYield + "/" + tile.productionYield + "/" + tile.scienceYield, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, 0), "black")
+        mouseState.selectedCity match {
+          case None => 
+          case Some(piece) => {
+            if (piece.target == loc) {
+              text("TARGET", PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/2.0), "red")
+            }
+          }
+        }
       }
     }
 
