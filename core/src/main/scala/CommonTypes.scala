@@ -593,6 +593,8 @@ class Plane[T:ClassTag] (
 sealed trait PlaneTopology {
   def adj(loc: Loc): Seq[Loc]
   def forEachAdj(loc: Loc)(f: Loc => Unit) : Unit
+  def forEachAdjRange2(loc: Loc)(f: Loc => Unit) : Unit
+  def forEachAdjRange3(loc: Loc)(f: Loc => Unit) : Unit
   def distance(loc0: Loc, loc1: Loc): Int
 
   def forEachReachable(loc: Loc)(f: (Loc,Int) => Boolean) : Unit = {
@@ -641,6 +643,8 @@ object PlaneTopology {
  */
 sealed trait RegularTopology extends PlaneTopology {
   val adjOffsets: List[Vec]
+  val adjOffsetsRange2: List[Vec]
+  val adjOffsetsRange3: List[Vec]
   def distance(loc0: Loc, loc1: Loc): Int
 
   def adj(loc: Loc): Seq[Loc] = {
@@ -649,22 +653,37 @@ sealed trait RegularTopology extends PlaneTopology {
   def forEachAdj(loc: Loc)(f: Loc => Unit) = {
     adjOffsets.foreach { vec => f(loc+vec) }
   }
+  def forEachAdjRange2(loc: Loc)(f: Loc => Unit) = {
+    adjOffsetsRange2.foreach { vec => f(loc+vec) }
+  }
+  def forEachAdjRange3(loc: Loc)(f: Loc => Unit) = {
+    adjOffsetsRange3.foreach { vec => f(loc+vec) }
+  }
 }
 
 case object SquareTopology extends RegularTopology {
   val adjOffsets: List[Vec] = List(Vec(-1,-1),Vec(0,-1),Vec(1,-1),Vec(-1,0),Vec(1,0),Vec(-1,1),Vec(0,1),Vec(1,1))
+  val adjOffsetsRange2: List[Vec] = adjOffsets
+  val adjOffsetsRange3: List[Vec] = adjOffsets
   def distance(loc0: Loc, loc1: Loc): Int = {
     Math.max(Math.abs(loc1.x-loc0.x),Math.abs(loc1.y-loc0.y))
   }
 }
 case object ManhattanTopology extends RegularTopology {
   val adjOffsets: List[Vec] = List(Vec(0,-1),Vec(-1,0),Vec(1,0),Vec(0,1))
+  val adjOffsetsRange2: List[Vec] = adjOffsets
+  val adjOffsetsRange3: List[Vec] = adjOffsets
   def distance(loc0: Loc, loc1: Loc): Int = {
     Math.abs(loc1.x-loc0.x) + Math.abs(loc1.y-loc0.y)
   }
 }
 case object HexTopology extends RegularTopology {
   val adjOffsets: List[Vec] = List(Vec(0,-1),Vec(1,-1),Vec(1,0),Vec(0,1),Vec(-1,1),Vec(-1,0))
+  val adjOffsetsRange2: List[Vec] = adjOffsets ::: List(Vec(0,-2),Vec(1,-2),Vec(2,-2),Vec(2,-1),Vec(2,0),Vec(1,1),
+                                                        Vec(0,2),Vec(-1,2),Vec(-2,2),Vec(-2,1),Vec(-2,0),Vec(-1,-1))
+  val adjOffsetsRange3: List[Vec] = adjOffsetsRange2 ::: List(Vec(0,-3),Vec(1,-3),Vec(2,-3),Vec(3,-3),Vec(3,-2),Vec(3,-1),
+                                                              Vec(3,0),Vec(2,1),Vec(1,2),Vec(0,3),Vec(-1,3),Vec(-2,3),
+                                                              Vec(-3,3),Vec(-3,2),Vec(-3,1),Vec(-3,0),Vec(-2,-1),Vec(-1,-2))
   def distance(loc0: Loc, loc1: Loc): Int = {
     Math.max(Math.max(Math.abs(loc1.x-loc0.x),Math.abs(loc1.y-loc0.y)),Math.abs((loc1.y-loc0.y) + (loc1.x-loc0.x)))
   }

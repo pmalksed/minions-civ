@@ -2103,15 +2103,15 @@ case class BoardState private (
   }
 
   def smartDistance(loc1: Loc, loc2: Loc): Double = {
-    return tiles.topology.distance(loc1, loc2) - 0.001 * smartDistanceTiebreaker(loc1, loc2)
+    return tiles.topology.distance(loc1, loc2) - 0.01 * smartDistanceTiebreaker(loc1, loc2)
   }
 
   private def buildUnit(city: Piece, unit: PieceStats): Boolean = {
     var bestLoc: Option[Loc] = None
     var bestDistance: Double = 100.0
     var currentDistance: Double = 0.0
-    tiles.topology.forEachAdj(city.loc) { loc =>
-      currentDistance = smartDistance(city.target, loc)
+    tiles.topology.forEachAdjRange2(city.loc) { loc =>
+      currentDistance = tiles.topology.distance(city.loc, loc) + 0.01 * smartDistance(city.target, loc)
       if (!locIsOccupied(loc) && currentDistance < bestDistance) {
         bestDistance = currentDistance
         bestLoc = Some(loc)
@@ -2155,6 +2155,12 @@ case class BoardState private (
       }
     }
   }
+
+  // private def canAttack(piece: Piece): 
+
+  // private def attackMove(piece: Piece): Unit = {
+  //   val totalMovement = piece.pieceStats.movement
+  // }
 
   private def refreshPieceForStartOfTurn(piece: Piece): Unit = {
     piece.actState = Moving(0)
