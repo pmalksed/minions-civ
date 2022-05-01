@@ -407,6 +407,8 @@ case class Board private (
                   }
                 case AddToQueue(_, _, _) => 
                   newMoveAttackState.doAction(playerAction, externalInfo)
+                case ClearQueue(_,_,_) => 
+                  newMoveAttackState.doAction(playerAction, externalInfo)
                 case DiscardSpell(_) =>
                   //When spells or abilities fail, it may be because they are targeting units only placed during spawn
                   newMoveAttackState.doAction(playerAction,externalInfo) match {

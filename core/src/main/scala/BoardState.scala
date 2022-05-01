@@ -48,6 +48,11 @@ object PieceSpec {
   val none: PieceSpec = StartedTurnWithID(-1)
 }
 
+package object Constants {
+  val PRODUCTION_DECAY_RATE = 0.75;
+  val SCIENCE_DECAY_RATE = 0.75
+}
+
 /**
   * PlayerAction:
   * A single action taken by a player. Does not include "GeneralBoard" actions of gaining spells or buying pieces.
@@ -93,6 +98,8 @@ sealed trait PlayerAction {
         false
       case AddToQueue(_,_,_) =>
         false
+      case ClearQueue(_,_,_) =>
+        false
     }
   }
 
@@ -109,6 +116,7 @@ sealed trait PlayerAction {
       case PlaySpell(id,_) => spellId == id
       case DiscardSpell(id) => spellId == id
       case AddToQueue(_,_,_) => false
+      case ClearQueue(_,_,_) => false
     }
   }
 
@@ -124,7 +132,8 @@ sealed trait PlayerAction {
       case Teleport(spec,_,_) => List(spec)
       case PlaySpell(_,_) => List()
       case DiscardSpell(_) => List()
-      case AddToQueue(_,_,_) => List()        
+      case AddToQueue(_,_,_) => List() 
+      case ClearQueue(_,_,_) => List()       
     }
   }
 }
@@ -139,6 +148,7 @@ case class Teleport(pieceSpec: PieceSpec, src: Loc, dest: Loc) extends PlayerAct
 case class PlaySpell(spellId: SpellId, targets: SpellOrAbilityTargets) extends PlayerAction
 case class DiscardSpell(spellId: SpellId) extends PlayerAction
 case class AddToQueue(pieceName: PieceName, selectedCityId: Int, isScience: Boolean) extends PlayerAction
+case class ClearQueue(selectedCityId: Int, isScience: Boolean, clearEntireQueue: Boolean) extends PlayerAction
 
 //Note: path should contain both the start and ending location
 case class Movement(pieceSpec: PieceSpec, path: Vector[Loc])
@@ -1698,6 +1708,8 @@ case class BoardState private (
         }
       case AddToQueue(_,_,_) => 
         ()
+      case ClearQueue(_,_,_) =>
+        ()
     }
   }
 
@@ -1881,7 +1893,22 @@ case class BoardState private (
         else {
           selectedCity.productionQueue = selectedCity.productionQueue :+ externalInfo.pieceMap(pieceName)
         }
-
+      case ClearQueue(selectedCityId, isScience, clearEntireQueue) =>
+        val selectedCity = pieceById(selectedCityId)
+        if (isScience) {
+          selectedCity.scienceQueue = List(selectedCity.scienceQueue.head)
+          if (clearEntireQueue) {
+            selectedCity.carriedScience = selectedCity.carriedScience * Constants.SCIENCE_DECAY_RATE
+            selectedCity.scienceQueue = List()
+          }
+        }
+        else {
+          selectedCity.productionQueue = List(selectedCity.productionQueue.head)
+          if (clearEntireQueue) {
+            selectedCity.carriedProduction = selectedCity.carriedProduction * Constants.PRODUCTION_DECAY_RATE
+            selectedCity.productionQueue = List()
+          }
+        }
     }
   }
 
@@ -2025,7 +2052,7 @@ case class BoardState private (
 
       // Penalize unallocated production and science
       if (piece.scienceQueue.size == 0) {
-        piece.carriedScience = piece.carriedScience * 0.75
+        piece.carriedScience = piece.carriedScience * Constants.SCIENCE_DECAY_RATE
       }
     }
   }

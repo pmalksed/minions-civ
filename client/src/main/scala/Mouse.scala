@@ -440,11 +440,14 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
 
       case MouseExtraTechAndSpell(_) =>
         if(curTarget == dragTarget) {
-          if(undo) {
-            mouseState.client.doGameAction(UnbuyExtraTechAndSpell(game.curSide))
-          } else {
-            mouseState.client.doGameAction(BuyExtraTechAndSpell(game.curSide))
-          }
+          mouseState.selectedCity match {
+            case None => ()
+            case Some(selectedCity) => 
+              def makeAction() = {
+                ClearQueue(selectedCity.id,undo,didDoubleClick)
+              }
+              mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+            }
         }
 
       case MouseEndTurn(_) =>
