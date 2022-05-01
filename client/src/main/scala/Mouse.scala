@@ -83,6 +83,7 @@ case class MouseState(val ourSide: Option[Side], val ui: UI, val client: Client)
   var mode: MouseMode = NormalMouseMode(this)
 
   var selectedCity: Option[Piece] = None
+  var selectedPiece: Option[Piece] = None
 
   def clear() = {
     hovered = MouseNone
@@ -597,13 +598,13 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
         }
         else {
           board.findPiece(dragSpec) match {
-            case None => ()
+            case None => 
+              mouseState.selectedCity = None;
             case Some(piece) =>
               if (piece.baseStats.name == "city") {
                 mouseState.selectedCity = Some(piece);
-              } else {
-                mouseState.selectedCity = None;
               }
+              mouseState.selectedPiece = Some(piece);
               if(piece.side == game.curSide) {
                 //Double-clicking on a piece activates its ability
                 if(didDoubleClick) {

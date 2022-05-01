@@ -231,7 +231,7 @@ object Drawing {
       if(showLoc) {
         text(loc.toString, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/2.0), "black")
         text("" + tile.foodYield + "/" + tile.productionYield + "/" + tile.scienceYield, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, 0), "black")
-        mouseState.selectedCity match {
+        mouseState.selectedPiece match {
           case None => 
           case Some(piece) => {
             if (piece.target == loc) {
@@ -1230,7 +1230,7 @@ object Drawing {
           strokeHex(loc, "orange", scale, lineWidth=2.5, alpha = alpha)
       }
 
-      mouseState.selectedCity match {
+      mouseState.selectedPiece match {
         case None =>
         case Some(selectedPieceNotNull) =>
           if (piece == selectedPieceNotNull) {
@@ -1465,7 +1465,7 @@ object Drawing {
         //Highlight mouse's target on mouse hover
         mouseState.hovered match {
           case MouseNone => 
-            mouseState.selectedCity match {
+            mouseState.selectedPiece match {
               case None => ()
               case Some(piece) => 
                 val stats = piece.baseStats
