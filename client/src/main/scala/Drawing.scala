@@ -236,6 +236,8 @@ object Drawing {
           case Some(piece) => {
             if (piece.target == loc) {
               text("TARGET", PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/2.0), "red")
+            } else {
+              text(board.smartDistance(piece.loc, loc).toString(), PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/2.0), "black")
             }
           }
         }

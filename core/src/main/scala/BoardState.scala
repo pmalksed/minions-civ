@@ -2027,17 +2027,79 @@ case class BoardState private (
     }
   }
 
-  private def buildBuildings(piece: Piece): Unit = {
-    if (piece.scienceQueue.size > 0) {
-      val scienceQueue = piece.scienceQueue;
+  private def locIsOccupied(loc: Loc): Boolean = {
+    if (pieces(loc).length > 0) {
+      return true
+    }
+    return false
+  }
+
+  private def smartDistanceTiebreaker(loc1: Loc, loc2: Loc): Int = {
+    val xDifference = loc1.x - loc2.x
+    val yDifference = loc1.y - loc2.y
+
+    val maxVal = tiles.topology.distance(loc1, loc2)
+    return java.lang.Math.max(java.lang.Math.min(
+      java.lang.Math.abs(xDifference + maxVal),
+      java.lang.Math.min(java.lang.Math.abs(xDifference),
+      java.lang.Math.abs(xDifference - maxVal)),
+    ),java.lang.Math.min(
+      java.lang.Math.abs(yDifference + maxVal),
+      java.lang.Math.min(java.lang.Math.abs(yDifference),
+      java.lang.Math.abs(yDifference - maxVal)),
+    ))
+  }
+
+  def smartDistance(loc1: Loc, loc2: Loc): Double = {
+    return tiles.topology.distance(loc1, loc2) - 0.001 * smartDistanceTiebreaker(loc1, loc2)
+  }
+
+  private def buildUnit(city: Piece, unit: PieceStats): Boolean = {
+    var bestLoc: Option[Loc] = None
+    var bestDistance: Int = 100
+    var currentDistance: Int = 0
+    tiles.topology.forEachAdj(city.loc) { loc =>
+      currentDistance = tiles.topology.distance(city.target, loc)
+      if (!locIsOccupied(loc) && currentDistance < bestDistance) {
+        bestDistance = currentDistance
+        bestLoc = Some(loc)
+      }
+    }
+    bestLoc match {
+      case None => return false
+      case Some(locToSpawnOn) => 
+        spawnPieceInitial(city.side,unit,locToSpawnOn)
+        return true
+    }
+  }
+
+  private def buildUnits(city: Piece): Unit = {
+    if (city.productionQueue.size > 0) {
+      val productionQueue = city.productionQueue;
+      val nextProductionUnit = productionQueue.head
+      val productionCost = nextProductionUnit.productionCost;
+      if (productionCost <= city.carriedProduction) {
+        if (buildUnit(city, nextProductionUnit)) {
+          city.productionQueue = productionQueue.slice(1, productionQueue.size);
+          city.carriedProduction = city.carriedProduction - productionCost;
+          city.production = city.production + productionCost;
+          buildUnits(city);
+        }
+      }
+    }
+  }
+
+  private def buildBuildings(city: Piece): Unit = {
+    if (city.scienceQueue.size > 0) {
+      val scienceQueue = city.scienceQueue;
       val nextScienceUnit = scienceQueue.head;
       val scienceCost = nextScienceUnit.scienceCost;
-      if (scienceCost <= piece.carriedScience) {
-        piece.buildings = piece.buildings ::: List(nextScienceUnit);
-        piece.scienceQueue = scienceQueue.slice(1, scienceQueue.size);
-        piece.carriedScience = piece.carriedScience - scienceCost;
-        piece.science = piece.science + scienceCost;
-        buildBuildings(piece);
+      if (scienceCost <= city.carriedScience) {
+        city.buildings = city.buildings ::: List(nextScienceUnit);
+        city.scienceQueue = scienceQueue.slice(1, scienceQueue.size);
+        city.carriedScience = city.carriedScience - scienceCost;
+        city.science = city.science + scienceCost;
+        buildBuildings(city);
       }
     }
   }
@@ -2062,6 +2124,7 @@ case class BoardState private (
         }
       }
       // Allocate production and science to their respective queues
+      buildUnits(piece);
       buildBuildings(piece);
 
       // Penalize unallocated production and science
