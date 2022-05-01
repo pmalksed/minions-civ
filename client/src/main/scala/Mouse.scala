@@ -439,7 +439,7 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
         }
 
       case MouseExtraTechAndSpell(_) =>
-        if(ourSide == Some(game.curSide) && curTarget == dragTarget) {
+        if(curTarget == dragTarget) {
           if(undo) {
             mouseState.client.doGameAction(UnbuyExtraTechAndSpell(game.curSide))
           } else {

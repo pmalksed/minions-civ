@@ -837,9 +837,7 @@ object Drawing {
     fillHex(ui.ExtraTechAndSpell.origin, "#dddddd", tileScale)
     strokeHex(ui.ExtraTechAndSpell.origin, "#666666", tileScale, lineWidth=1.0)
     val extra_ploc = PixelLoc.ofHexLoc(ui.ExtraTechAndSpell.origin, gridSize)
-    text("Buy Extra", extra_ploc + PixelVec(0,-6.0), "black")
-    text("Tech+Spell", extra_ploc + PixelVec(0,5.0), "black")
-    text("(" + game.extraTechCost + " souls)", extra_ploc + PixelVec(0, 16.0), "black")
+    text("Clear queue", extra_ploc + PixelVec(0,5.0), "black")
 
     //Reinforcements
     Side.foreach { side =>
