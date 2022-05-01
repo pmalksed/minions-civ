@@ -2183,6 +2183,9 @@ case class BoardState private (
       if (piece.scienceQueue.size == 0) {
         piece.carriedScience = piece.carriedScience * Constants.SCIENCE_DECAY_RATE
       }
+      if (piece.productionQueue.size == 0) {
+        piece.carriedProduction = piece.carriedProduction * Constants.PRODUCTION_DECAY_RATE
+      }
     }
   }
 }
