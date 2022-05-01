@@ -283,6 +283,7 @@ object Protocol {
   implicit val discardSpellFormat = Json.format[DiscardSpell]
   implicit val addToQueueFormat = Json.format[AddToQueue]
   implicit val clearQueueFormat = Json.format[ClearQueue]
+  implicit val setTargetFormat = Json.format[SetTarget]
   implicit val playerActionFormat = {
     val reads: Reads[PlayerAction] = readsFromPair[PlayerAction]("PlayerAction",Map(
       "Movements" -> ((json:JsValue) => movementsFormat.reads(json)),
@@ -296,6 +297,7 @@ object Protocol {
       "DiscardSpell" -> ((json:JsValue) => discardSpellFormat.reads(json)),
       "AddToQueue" -> ((json:JsValue) => addToQueueFormat.reads(json)),
       "ClearQueue" -> ((json:JsValue) => clearQueueFormat.reads(json)),
+      "SetTarget" -> ((json:JsValue) => setTargetFormat.reads(json)),
     ))
     val writes: Writes[PlayerAction] = new Writes[PlayerAction] {
       def writes(t: PlayerAction): JsValue = t match {
@@ -310,6 +312,7 @@ object Protocol {
         case (t:DiscardSpell) => jsPair("DiscardSpell",discardSpellFormat.writes(t))
         case (t:AddToQueue) => jsPair("AddToQueue",addToQueueFormat.writes(t))
         case (t:ClearQueue) => jsPair("ClearQueue",clearQueueFormat.writes(t))  
+        case (t:SetTarget) => jsPair("SetTarget",setTargetFormat.writes(t))  
       }
     }
     Format(reads,writes)

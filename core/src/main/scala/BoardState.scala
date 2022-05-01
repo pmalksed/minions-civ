@@ -100,6 +100,8 @@ sealed trait PlayerAction {
         false
       case ClearQueue(_,_,_) =>
         false
+      case SetTarget(_,_) =>
+        false
     }
   }
 
@@ -117,6 +119,7 @@ sealed trait PlayerAction {
       case DiscardSpell(id) => spellId == id
       case AddToQueue(_,_,_) => false
       case ClearQueue(_,_,_) => false
+      case SetTarget(_,_) => false
     }
   }
 
@@ -133,7 +136,8 @@ sealed trait PlayerAction {
       case PlaySpell(_,_) => List()
       case DiscardSpell(_) => List()
       case AddToQueue(_,_,_) => List() 
-      case ClearQueue(_,_,_) => List()       
+      case ClearQueue(_,_,_) => List()   
+      case SetTarget(_,_) => List()    
     }
   }
 }
@@ -149,6 +153,8 @@ case class PlaySpell(spellId: SpellId, targets: SpellOrAbilityTargets) extends P
 case class DiscardSpell(spellId: SpellId) extends PlayerAction
 case class AddToQueue(pieceName: PieceName, selectedCityId: Int, isScience: Boolean) extends PlayerAction
 case class ClearQueue(selectedCityId: Int, isScience: Boolean, clearEntireQueue: Boolean) extends PlayerAction
+case class SetTarget(selectedCityId: Int, target: Loc) extends PlayerAction
+
 
 //Note: path should contain both the start and ending location
 case class Movement(pieceSpec: PieceSpec, path: Vector[Loc])
@@ -1713,6 +1719,8 @@ case class BoardState private (
         ()
       case ClearQueue(_,_,_) =>
         ()
+      case SetTarget(_,_) =>
+        ()
     }
   }
 
@@ -1912,6 +1920,9 @@ case class BoardState private (
             selectedCity.productionQueue = List()
           }
         }
+      case SetTarget(selectedCityId, target) =>
+        val selectedCity = pieceById(selectedCityId)
+        selectedCity.target = target
     }
   }
 

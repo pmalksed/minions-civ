@@ -1227,6 +1227,14 @@ object Drawing {
         else if(pieceCanStillDoThings(piece))
           strokeHex(loc, "orange", scale, lineWidth=2.5, alpha = alpha)
       }
+
+      mouseState.selectedCity match {
+        case None =>
+        case Some(selectedPieceNotNull) =>
+          if (piece == selectedPieceNotNull) {
+            strokeHex(loc, "blue", scale, lineWidth=3, alpha = alpha)
+          }
+      }
     }
 
     board.pieces.foreach { pieces =>
@@ -1352,6 +1360,8 @@ object Drawing {
         case AddToQueue(_,_,_) => 
           ()
         case ClearQueue(_,_,_) => 
+          ()
+        case SetTarget(_,_) =>
           ()
       }
     }
@@ -1730,7 +1740,7 @@ object Drawing {
                           //If teleporting, highlight the teleport location
                           strokeHex(ui.MainBoard.hexLoc(hoverLoc), "cyan", scale, alpha=0.3, lineWidth=2)
                           fillHex(ui.MainBoard.hexLoc(hoverLoc), "cyan", scale, alpha=0.05)
-                        case (_ : Blink) | (_ : Attack) | (_ : Spawn) | (_ : ActivateTile) | (_ : ActivateAbility) | (_ : PlaySpell) | (_ : DiscardSpell) | (_: AddToQueue) | (_: ClearQueue) =>
+                        case (_ : Blink) | (_ : Attack) | (_ : Spawn) | (_ : ActivateTile) | (_ : ActivateAbility) | (_ : PlaySpell) | (_ : DiscardSpell) | (_: AddToQueue) | (_: ClearQueue) | (_: SetTarget) =>
                           ()
                       }
                     }
