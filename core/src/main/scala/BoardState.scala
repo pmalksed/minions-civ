@@ -250,6 +250,7 @@ object Piece {
       baseStats = pieceStats,
       id = id,
       loc = loc,
+      target = loc,
       modsWithDuration = List(),
       damage = 0,
       actState = DoneActing,
@@ -275,6 +276,7 @@ case class Piece (
   val id: Int,
   var loc: Loc, //BoardState is responsible for updating this as the piece moves
   //Modifiers from spells, etc, along with the number of turns they will last
+  var target: Loc, //Where the piece is going for non-cities, where children will go for cities
   var modsWithDuration: List[PieceModWithDuration],
   //Damage dealt to this piece
   var damage: Int,
@@ -304,6 +306,7 @@ case class Piece (
       baseStats = baseStats,
       id = id,
       loc = loc,
+      target = target,
       modsWithDuration = modsWithDuration,
       damage = damage,
       hasMoved = hasMoved,
