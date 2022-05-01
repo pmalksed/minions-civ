@@ -566,9 +566,20 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
         }
 
       case MouseTile(loc) =>
-        mouseState.selectedCity = None;
-        if(undo) ()
+        if(undo) (
+          if ((curTarget == dragTarget)) {
+            mouseState.selectedCity match {
+              case None => ()
+              case Some(selectedCity) => 
+                def makeAction() = {
+                  SetTarget(selectedCity.id,loc)
+                }
+                mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+              }
+          }  
+        )
         else {
+          mouseState.selectedCity = None;
           board.tiles(loc).terrain match {
             case Wall | Ground | Water(_) | Graveyard | SorceryNode | Teleporter |
                  Earthquake(_) | Firestorm(_) | Whirlwind(_) | Mist => ()
