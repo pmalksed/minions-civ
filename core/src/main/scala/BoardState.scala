@@ -275,6 +275,31 @@ object Piece {
       buildings = List(),
     )
   }
+  def createInternal(side: Side, pieceStats: PieceStats, id: Int, loc: Loc, nthAtLoc: Int, target: Loc): Piece = {
+    new Piece(
+      side = side,
+      baseStats = pieceStats,
+      id = id,
+      loc = loc,
+      target = target,
+      modsWithDuration = List(),
+      damage = 0,
+      actState = DoneActing,
+      hasMoved = false,
+      hasAttacked = false,
+      attackedPiecesThisTurn = List(),
+      spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
+      food = 0,
+      production = 0,
+      science = 0,
+      carriedFood = 0,
+      carriedProduction = 0,
+      carriedScience = 0,
+      productionQueue = List(),
+      scienceQueue = List(),
+      buildings = List(),
+    )
+  }  
 }
 case class Piece (
   val side: Side,
@@ -969,6 +994,17 @@ case class BoardState private (
       case Failure(err) => Failure(err)
       case Success(()) =>
         val piece = spawnPieceInternal(side,pieceStats,loc).get
+        refreshPieceForStartOfTurn(piece)
+        Success(piece)
+    }
+  }
+
+  //Directly spawn a piece if it possible to do so. Exposed for use to set up initial boards.
+  def spawnPieceInitial(side: Side, pieceStats: PieceStats, loc: Loc, target: Loc): Try[Piece] = {
+    trySpawnIsLegal(side, pieceStats, loc) match {
+      case Failure(err) => Failure(err)
+      case Success(()) =>
+        val piece = spawnPieceInternal(side,pieceStats,loc,target).get
         refreshPieceForStartOfTurn(piece)
         Success(piece)
     }
@@ -2027,6 +2063,22 @@ case class BoardState private (
     }
   }
 
+  //Does check for legality of spawn, returning the piece on success
+  def spawnPieceInternal(spawnSide: Side, spawnStats: PieceStats, spawnLoc: Loc, target: Loc): Option[Piece] = {
+    if(!spawnIsLegal(spawnSide, spawnStats, spawnLoc))
+      None
+    else {
+      val nthAtLoc = numPiecesSpawnedThisTurnAt.get(spawnLoc).getOrElse(0)
+      val piece = Piece.createInternal(spawnSide, spawnStats, nextPieceId, spawnLoc, nthAtLoc, target)
+      pieces(spawnLoc) = pieces(spawnLoc) :+ piece
+      pieceById += (piece.id -> piece)
+      nextPieceId += 1
+      piecesSpawnedThisTurn += (piece.spawnedThisTurn.get -> piece)
+      numPiecesSpawnedThisTurnAt += (spawnLoc -> (nthAtLoc+1))
+      Some(piece)
+    }
+  }
+
   private def locIsOccupied(loc: Loc): Boolean = {
     if (pieces(loc).length > 0) {
       return true
@@ -2068,7 +2120,7 @@ case class BoardState private (
     bestLoc match {
       case None => return false
       case Some(locToSpawnOn) => 
-        spawnPieceInitial(city.side,unit,locToSpawnOn)
+        spawnPieceInitial(city.side,unit,locToSpawnOn,city.target)
         return true
     }
   }
