@@ -2056,10 +2056,10 @@ case class BoardState private (
 
   private def buildUnit(city: Piece, unit: PieceStats): Boolean = {
     var bestLoc: Option[Loc] = None
-    var bestDistance: Int = 100
-    var currentDistance: Int = 0
+    var bestDistance: Double = 100.0
+    var currentDistance: Double = 0.0
     tiles.topology.forEachAdj(city.loc) { loc =>
-      currentDistance = tiles.topology.distance(city.target, loc)
+      currentDistance = smartDistance(city.target, loc)
       if (!locIsOccupied(loc) && currentDistance < bestDistance) {
         bestDistance = currentDistance
         bestLoc = Some(loc)
