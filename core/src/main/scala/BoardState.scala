@@ -940,9 +940,7 @@ case class BoardState private (
       case GainSpell(spellId) =>
         spellsInHand(side) = spellsInHand(side) :+ spellId
 
-      case AddToScienceQueue(pieceName, selectedCityId) =>
-        val selectedCity = pieceById(selectedCityId)
-        selectedCity.scienceQueue = selectedCity.scienceQueue ::: List(externalInfo.pieceMap(pieceName))
+      case AddToScienceQueue(_,_) =>
     }
   }
 
@@ -1877,7 +1875,7 @@ case class BoardState private (
         spellsPlayed = spellsPlayed :+ SpellPlayedInfo(spellId, side, None)
       case AddToQueue(pieceName, selectedCityId) => 
         val selectedCity = pieceById(selectedCityId)
-        selectedCity.scienceQueue = selectedCity.scienceQueue ::: List(externalInfo.pieceMap(pieceName))
+        selectedCity.scienceQueue = selectedCity.scienceQueue :+ externalInfo.pieceMap(pieceName)
 
     }
   }

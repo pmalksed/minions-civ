@@ -405,9 +405,8 @@ case class Board private (
                       case Failure(_) => delayedToSpawnRev = playerAction :: delayedToSpawnRev
                     }
                   }
-                case AddToQueue(pieceName, selectedCityId) => 
-                  val selectedCity = curState().pieceById(selectedCityId)
-                  selectedCity.scienceQueue = selectedCity.scienceQueue ::: List(externalInfo.pieceMap(pieceName))
+                case AddToQueue(_, _) => 
+                  newMoveAttackState.doAction(playerAction, externalInfo)
                 case DiscardSpell(_) =>
                   //When spells or abilities fail, it may be because they are targeting units only placed during spawn
                   newMoveAttackState.doAction(playerAction,externalInfo) match {
