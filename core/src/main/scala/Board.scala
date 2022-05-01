@@ -405,7 +405,7 @@ case class Board private (
                       case Failure(_) => delayedToSpawnRev = playerAction :: delayedToSpawnRev
                     }
                   }
-                case AddToQueue(_, _) => 
+                case AddToQueue(_, _, _) => 
                   newMoveAttackState.doAction(playerAction, externalInfo)
                 case DiscardSpell(_) =>
                   //When spells or abilities fail, it may be because they are targeting units only placed during spawn

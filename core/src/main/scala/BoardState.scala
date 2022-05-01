@@ -91,7 +91,7 @@ sealed trait PlayerAction {
         pieceSpec == targets.target1
       case DiscardSpell(_) =>
         false
-      case AddToQueue(_,_) =>
+      case AddToQueue(_,_,_) =>
         false
     }
   }
@@ -108,7 +108,7 @@ sealed trait PlayerAction {
       case Blink(_,_) => false
       case PlaySpell(id,_) => spellId == id
       case DiscardSpell(id) => spellId == id
-      case AddToQueue(_,_) => false
+      case AddToQueue(_,_,_) => false
     }
   }
 
@@ -124,7 +124,7 @@ sealed trait PlayerAction {
       case Teleport(spec,_,_) => List(spec)
       case PlaySpell(_,_) => List()
       case DiscardSpell(_) => List()
-      case AddToQueue(_,_) => List()        
+      case AddToQueue(_,_,_) => List()        
     }
   }
 }
@@ -138,7 +138,7 @@ case class Blink(pieceSpec: PieceSpec, src:Loc) extends PlayerAction
 case class Teleport(pieceSpec: PieceSpec, src: Loc, dest: Loc) extends PlayerAction
 case class PlaySpell(spellId: SpellId, targets: SpellOrAbilityTargets) extends PlayerAction
 case class DiscardSpell(spellId: SpellId) extends PlayerAction
-case class AddToQueue(pieceName: PieceName, selectedCityId: Int) extends PlayerAction
+case class AddToQueue(pieceName: PieceName, selectedCityId: Int, isScience: Boolean) extends PlayerAction
 
 //Note: path should contain both the start and ending location
 case class Movement(pieceSpec: PieceSpec, path: Vector[Loc])
@@ -1696,7 +1696,7 @@ case class BoardState private (
           case false => fail("Spell not in hand or already played or discarded")
           case true => ()
         }
-      case AddToQueue(_,_) => 
+      case AddToQueue(_,_,_) => 
         ()
     }
   }
@@ -1873,9 +1873,14 @@ case class BoardState private (
         mana += manaOfDiscard(spell.spellType)
         spellsInHand(side) = spellsInHand(side).filterNot { i => i == spellId }
         spellsPlayed = spellsPlayed :+ SpellPlayedInfo(spellId, side, None)
-      case AddToQueue(pieceName, selectedCityId) => 
+      case AddToQueue(pieceName, selectedCityId, isScience) => 
         val selectedCity = pieceById(selectedCityId)
-        selectedCity.scienceQueue = selectedCity.scienceQueue :+ externalInfo.pieceMap(pieceName)
+        if (isScience) {
+          selectedCity.scienceQueue = selectedCity.scienceQueue :+ externalInfo.pieceMap(pieceName)
+        }
+        else {
+          selectedCity.productionQueue = selectedCity.productionQueue :+ externalInfo.pieceMap(pieceName)
+        }
 
     }
   }

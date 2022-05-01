@@ -506,7 +506,7 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
                 case None => ()
                 case Some(selectedCity) => 
                   def makeAction() = {
-                    AddToQueue(pieceName,selectedCity.id)
+                    AddToQueue(pieceName,selectedCity.id,undo)
                   }
                   mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
                   // mouseState.client.doActionOnCurBoard(DoGeneralBoardAction(AddToScienceQueue(pieceName,selectedCity.id),makeActionId()))

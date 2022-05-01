@@ -1343,7 +1343,7 @@ object Drawing {
           }
         case DiscardSpell(_) =>
           ()
-        case AddToQueue(_,_) => 
+        case AddToQueue(_,_,_) => 
           ()
       }
     }
