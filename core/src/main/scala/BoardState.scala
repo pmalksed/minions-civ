@@ -642,7 +642,9 @@ case class BoardState private (
     val newPiecesSpawnedThisTurn = piecesSpawnedThisTurn.transform { (_k, piece) => newPieceById(piece.id) }
     newBoard.pieceById = newPieceById
     newBoard.piecesSpawnedThisTurn = newPiecesSpawnedThisTurn
-    newBoard.pieces.transform { pieceList => pieceList.map { piece => newPieceById(piece.id) } }
+    newBoard.pieces.transform { pieceList => pieceList.filter(piece => newPieceById.contains(piece.id)).map { 
+      piece => newPieceById(piece.id) 
+    } }
     newBoard
   }
 
