@@ -804,7 +804,7 @@ case class BoardState private (
     }
     //Heal damage, reset piece state, decay modifiers
     pieceById.values.foreach { piece =>
-      refreshPieceForStartOfTurn(piece, externalInfo)
+      refreshPieceForStartOfTurnWithAttackMove(piece, externalInfo)
       piece.modsWithDuration = piece.modsWithDuration.flatMap(_.decay)
     }
     //Decay tile modifiers
@@ -2173,6 +2173,13 @@ case class BoardState private (
     }
   }
 
+  private def locIsValid(loc: Loc): Boolean = {
+    if (loc.x >= 0 && loc.x < xSize && loc.y >= 0 && loc.y < ySize) {
+      return true
+    }
+    return false
+  }
+
   private def getAttackOfPiece(piece: Piece): Int = {
     return getBaseAttackOfPiece(piece)
   }
@@ -2235,14 +2242,16 @@ case class BoardState private (
 
     offsets.foreach {vec => 
       val loc = piece.loc + vec
-      val piecesOnLoc = pieces(loc)
-      if (piecesOnLoc.length > 0) {
-        val target = piecesOnLoc.head
-        if (target.side != piece.side) {
-          val score = getScoreForAttack(piece, target)
-          if (score > bestScore) {
-            bestScore = score
-            bestTarget = Some(target)
+      if (locIsValid(loc)) {
+        val piecesOnLoc = pieces(loc)
+        if (piecesOnLoc.length > 0) {
+          val target = piecesOnLoc.head
+          if (target.side != piece.side) {
+            val score = getScoreForAttack(piece, target)
+            if (score > bestScore) {
+              bestScore = score
+              bestTarget = Some(target)
+            }
           }
         }
       }
@@ -2271,14 +2280,16 @@ case class BoardState private (
 
     offsets.foreach {vec =>
       val loc = piece.loc + vec
-      val piecesOnLoc = pieces(loc)
-      if (piecesOnLoc.length > 0) {
-        val target = piecesOnLoc.head
-        if (target.side != piece.side) {
-          val score = getScoreForMoveTowards(piece, target)
-          if (score > bestScore) {
-            bestScore = score
-            bestTarget = Some(target)
+      if (locIsValid(loc)) {
+        val piecesOnLoc = pieces(loc)
+        if (piecesOnLoc.length > 0) {
+          val target = piecesOnLoc.head
+          if (target.side != piece.side) {
+            val score = getScoreForMoveTowards(piece, target)
+            if (score > bestScore) {
+              bestScore = score
+              bestTarget = Some(target)
+            }
           }
         }
       }
@@ -2292,7 +2303,7 @@ case class BoardState private (
     var bestDistance: Double = smartDistance(piece.loc, target)
     var currentDistance: Double = 0.0
     tiles.topology.forEachAdj(piece.loc) { loc =>
-      currentDistance = smartDistance(piece.loc, target)
+      currentDistance = smartDistance(loc, target)
       if (!locIsOccupied(loc) && currentDistance < bestDistance) {
         bestDistance = currentDistance
         bestLoc = loc
@@ -2366,7 +2377,7 @@ case class BoardState private (
     }
   }
 
-  private def refreshPieceForStartOfTurn(piece: Piece, externalInfo: ExternalInfo): Unit = {
+  private def refreshPieceForStartOfTurnWithAttackMove(piece: Piece, externalInfo: ExternalInfo): Unit = {
     refreshPieceForStartOfTurn(piece)
     attackMove(piece, externalInfo)
   }
