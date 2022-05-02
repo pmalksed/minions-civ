@@ -804,7 +804,7 @@ case class BoardState private (
     }
     //Heal damage, reset piece state, decay modifiers
     pieceById.values.foreach { piece =>
-      refreshPieceForStartOfTurn(piece)
+      refreshPieceForStartOfTurn(piece, externalInfo)
       piece.modsWithDuration = piece.modsWithDuration.flatMap(_.decay)
     }
     //Decay tile modifiers
@@ -2156,11 +2156,182 @@ case class BoardState private (
     }
   }
 
-  // private def canAttack(piece: Piece): 
+  private def getBaseAttackOfPiece(piece: Piece): Int = {
+    piece.baseStats.attackEffect match {
+      case None =>
+        return 0
+      case Some(Damage(n)) =>
+        return n
+      case Some(Unsummon) =>
+        return 0
+      case Some(Kill) =>
+        return 0
+      case Some(Enchant(_)) =>
+        return 0
+      case Some(TransformInto(_)) =>
+        return 0
+    }
+  }
 
-  // private def attackMove(piece: Piece): Unit = {
-  //   val totalMovement = piece.pieceStats.movement
-  // }
+  private def getAttackOfPiece(piece: Piece): Int = {
+    return getBaseAttackOfPiece(piece)
+  }
+
+  private def getRemainingHealthOfPiece(piece: Piece): Int = {
+    val stats = piece.curStats(this)
+    stats.defense match {
+      case None => 
+        return 0
+      case Some(defense) =>
+        return defense - piece.damage
+      }
+  }
+
+  private def juiciness(piece: Piece): Int = {
+    return (piece.food + piece.production) / (getRemainingHealthOfPiece(piece))
+  }
+
+  private def getScoreForDamageToTarget(damage: Int, target: Piece): Double ={
+    var totalScore: Double = 0.0
+    val targetRemainingHealth = getRemainingHealthOfPiece(target)
+    val damageWouldBeDealt = java.lang.Math.min(damage, targetRemainingHealth)
+
+    // Increase the score by the amount of the damage you would deal
+    totalScore = totalScore + damageWouldBeDealt
+
+    // Increase the score by 5 if you would kill the target
+    if (damage >= targetRemainingHealth) {
+      totalScore = totalScore + 5.0
+    }
+
+    // If all else is equal, attack the juicier target
+    totalScore = totalScore + 0.001 * damage * juiciness(target)
+
+    return totalScore
+  }
+
+  private def getScoreForAttack(piece: Piece, target: Piece): Double = {
+    var totalScore: Double = 0.0
+
+    // Increase the score by the amount of the damage you would deal
+    totalScore = totalScore + getScoreForDamageToTarget(getAttackOfPiece(piece), target)
+
+    return totalScore
+  }
+
+  private def getBestTargetForAttack(piece: Piece): Option[Piece] = {
+    val range = piece.baseStats.attackRange;
+    var offsets = List(Vec(0,0))
+    if (range == 1) {
+      offsets = tiles.topology.adjOffsets;
+    } else if (range == 2) {
+      offsets = tiles.topology.adjOffsetsRange2;
+    } else if (range == 3) {
+      offsets = tiles.topology.adjOffsetsRange3;
+    }
+
+    var bestTarget: Option[Piece] = None
+    var bestScore: Double = -1000.0
+
+    offsets.foreach {vec => 
+      val loc = piece.loc + vec
+      val piecesOnLoc = pieces(loc)
+      if (piecesOnLoc.length > 0) {
+        val target = piecesOnLoc.head
+        if (target.side != piece.side) {
+          val score = getScoreForAttack(piece, target)
+          if (score > bestScore) {
+            bestScore = score
+            bestTarget = Some(target)
+          }
+        }
+      }
+    }
+
+    return bestTarget
+  }
+
+  private def getScoreForMoveTowards(piece: Piece, target: Piece): Double = {
+    var totalScore: Double = 0.0
+
+    // Decrease the score by how far the target is from our target hex
+    totalScore = totalScore - smartDistance(target.loc, piece.target)
+
+    // If all else is equal, chase the juicier target
+    totalScore = totalScore + 0.001 * juiciness(target)    
+
+    return totalScore
+  }
+
+  private def getBestTargetForMoveTowards(piece: Piece): Option[Piece] = {
+    val offsets = tiles.topology.adjOffsetsRange3;
+
+    var bestTarget: Option[Piece] = None
+    var bestScore: Double = -1000.0
+
+    offsets.foreach {vec =>
+      val loc = piece.loc + vec
+      val piecesOnLoc = pieces(loc)
+      if (piecesOnLoc.length > 0) {
+        val target = piecesOnLoc.head
+        if (target.side != piece.side) {
+          val score = getScoreForMoveTowards(piece, target)
+          if (score > bestScore) {
+            bestScore = score
+            bestTarget = Some(target)
+          }
+        }
+      }
+    }    
+
+    return bestTarget
+  }
+
+  private def moveTowards(piece: Piece, target: Loc): Boolean = {
+    var bestLoc: Loc = piece.loc
+    var bestDistance: Double = smartDistance(piece.loc, target)
+    var currentDistance: Double = 0.0
+    tiles.topology.forEachAdj(piece.loc) { loc =>
+      currentDistance = smartDistance(piece.loc, target)
+      if (!locIsOccupied(loc) && currentDistance < bestDistance) {
+        bestDistance = currentDistance
+        bestLoc = loc
+      }
+    }
+    if (bestLoc != piece.loc) {
+      doMovePieceToLoc(piece, bestLoc)
+      return true
+    }
+    return false
+  }
+
+  private def attackMoveInner(piece: Piece, externalInfo: ExternalInfo, remainingMovement: Int): Unit = {
+    if (remainingMovement > 0) {
+      val targetForAttack = getBestTargetForAttack(piece)
+      targetForAttack match {
+        case Some(target) =>
+          val attackerStats = piece.curStats(this)
+          val attackEffect = attackerStats.attackEffect.get
+          applyEffect(attackEffect,target,externalInfo)
+        case None => 
+          val targetForMoveTowards = getBestTargetForMoveTowards(piece)
+          var targetLoc = piece.loc
+          targetForMoveTowards match {
+            case Some(target) =>
+              targetLoc = target.loc
+            case None =>
+              targetLoc = piece.target
+          }
+          if (moveTowards(piece, targetLoc)) {
+            attackMoveInner(piece, externalInfo, remainingMovement - 1)
+          }
+      }
+    }
+  }
+
+  private def attackMove(piece: Piece, externalInfo: ExternalInfo): Unit = {
+    attackMoveInner(piece, externalInfo, piece.baseStats.moveRange)
+  }
 
   private def refreshPieceForStartOfTurn(piece: Piece): Unit = {
     piece.actState = Moving(0)
@@ -2193,5 +2364,10 @@ case class BoardState private (
         piece.carriedProduction = piece.carriedProduction * Constants.PRODUCTION_DECAY_RATE
       }
     }
+  }
+
+  private def refreshPieceForStartOfTurn(piece: Piece, externalInfo: ExternalInfo): Unit = {
+    refreshPieceForStartOfTurn(piece)
+    attackMove(piece, externalInfo)
   }
 }

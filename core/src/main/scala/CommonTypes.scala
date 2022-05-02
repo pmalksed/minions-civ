@@ -591,6 +591,9 @@ class Plane[T:ClassTag] (
  * Specifies the topology of Plane - i.e. the distance metric and adjacency relationships
  */
 sealed trait PlaneTopology {
+  val adjOffsets: List[Vec]
+  val adjOffsetsRange2: List[Vec]
+  val adjOffsetsRange3: List[Vec]  
   def adj(loc: Loc): Seq[Loc]
   def forEachAdj(loc: Loc)(f: Loc => Unit) : Unit
   def forEachAdjRange2(loc: Loc)(f: Loc => Unit) : Unit
