@@ -2320,30 +2320,42 @@ case class BoardState private (
 
   private def attackMoveInner(piece: Piece, externalInfo: ExternalInfo, remainingMovement: Int): Unit = {
     if (remainingMovement > 0) {
-      val targetForAttack = getBestTargetForAttack(piece)
-      targetForAttack match {
-        case Some(target) =>
-          val attackerStats = piece.curStats(this)
-          val attackEffect = attackerStats.attackEffect.get
-          applyEffect(attackEffect,target,externalInfo)
-        case None => 
-          val targetForMoveTowards = getBestTargetForMoveTowards(piece)
-          var targetLoc = piece.loc
-          targetForMoveTowards match {
-            case Some(target) =>
-              targetLoc = target.loc
-            case None =>
-              targetLoc = piece.target
-          }
-          if (moveTowards(piece, targetLoc)) {
-            attackMoveInner(piece, externalInfo, remainingMovement - 1)
-          }
+      if (!tryAttacking(piece, externalInfo)) {
+        val targetForMoveTowards = getBestTargetForMoveTowards(piece)
+        var targetLoc = piece.loc
+        targetForMoveTowards match {
+          case Some(target) =>
+            targetLoc = target.loc
+          case None =>
+            targetLoc = piece.target
+        }
+        if (moveTowards(piece, targetLoc)) {
+          attackMoveInner(piece, externalInfo, remainingMovement - 1)
+        }
       }
     }
   }
 
+  private def tryAttacking(piece: Piece, externalInfo: ExternalInfo): Boolean = {
+    val targetForAttack = getBestTargetForAttack(piece)
+    targetForAttack match {
+      case Some(target) =>
+        val attackerStats = piece.curStats(this)
+        val attackEffect = attackerStats.attackEffect.get
+        applyEffect(attackEffect,target,externalInfo)
+        return true
+      case None => 
+        return false
+    }
+  }
+
   private def attackMove(piece: Piece, externalInfo: ExternalInfo): Unit = {
-    attackMoveInner(piece, externalInfo, piece.baseStats.moveRange)
+    val moveRange = piece.baseStats.moveRange
+    if (moveRange == 0) {
+      val _ = tryAttacking(piece, externalInfo)
+    } else {
+      attackMoveInner(piece, externalInfo, piece.baseStats.moveRange)
+    }
   }
 
   private def refreshPieceForStartOfTurn(piece: Piece): Unit = {
