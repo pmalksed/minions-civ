@@ -1966,17 +1966,25 @@ case class BoardState private (
       case ClearQueue(selectedCityId, isScience, clearEntireQueue) =>
         val selectedCity = pieceById(selectedCityId)
         if (isScience) {
-          selectedCity.scienceQueue = List(selectedCity.scienceQueue.head)
-          if (clearEntireQueue) {
-            selectedCity.carriedScience = selectedCity.carriedScience * Constants.SCIENCE_DECAY_RATE
-            selectedCity.scienceQueue = List()
+          if (selectedCity.scienceQueue.length > 0) {
+            selectedCity.scienceQueue = List(selectedCity.scienceQueue.head)
+            if (clearEntireQueue) {
+              selectedCity.carriedScience = selectedCity.carriedScience * Constants.SCIENCE_DECAY_RATE
+              selectedCity.scienceQueue = List()
+            }
           }
         }
         else {
-          selectedCity.productionQueue = List(selectedCity.productionQueue.head)
-          if (clearEntireQueue) {
-            selectedCity.carriedProduction = selectedCity.carriedProduction * Constants.PRODUCTION_DECAY_RATE
-            selectedCity.productionQueue = List()
+          if (selectedCity.productionQueue.length > 0) {
+            selectedCity.productionQueue = List(selectedCity.productionQueue.head)
+            if (clearEntireQueue) {
+              // The below is equivalent to just applying Constants.PRODUCTION_DECAY_RATE to the carriedProduction,
+              // unless you have an unbuild unit sitting around, in which case it's applied only to the cost of the
+              // unbuilt unit
+              selectedCity.carriedProduction = selectedCity.carriedProduction 
+                - java.lang.Math.min(selectedCity.carriedProduction, selectedCity.productionQueue.head.productionCost.asInstanceOf[Double]) * (1 - Constants.PRODUCTION_DECAY_RATE)
+              selectedCity.productionQueue = List()
+            }
           }
         }
       case SetTarget(selectedCityId, target) =>
@@ -2180,6 +2188,9 @@ case class BoardState private (
           city.population = city.population - 1;
           city.food = city.food - foodCost;
           buildUnits(city);
+        } else {
+          // Decay the city's excess production if the build failed
+          city.carriedProduction = city.carriedProduction - (city.carriedProduction - productionCost) * (1 - Constants.PRODUCTION_DECAY_RATE)
         }
       }
     }
