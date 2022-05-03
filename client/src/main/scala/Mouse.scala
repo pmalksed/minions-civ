@@ -462,7 +462,16 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
           mouseState.client.showResignConfirm()
         }
       case MouseRedo(_) =>
-        mouseState.client.doActionOnCurBoard(Redo(makeActionId()))
+        if(curTarget == dragTarget) {
+          mouseState.selectedPiece match {
+            case None => ()
+            case Some(selectedPiece) => 
+              def makeAction() = {
+                PieceSuicide(selectedPiece.id)
+              }
+              mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+            }
+          }
 
       case MousePause(_) =>
         //Require mouse down and up on the same target

@@ -105,6 +105,8 @@ sealed trait PlayerAction {
         false
       case SetFocus(_,_) =>
         false
+      case PieceSuicide(_) =>
+        false
     }
   }
 
@@ -124,6 +126,7 @@ sealed trait PlayerAction {
       case ClearQueue(_,_,_) => false
       case SetTarget(_,_) => false
       case SetFocus(_,_) => false
+      case PieceSuicide(_) => false
     }
   }
 
@@ -143,6 +146,7 @@ sealed trait PlayerAction {
       case ClearQueue(_,_,_) => List()   
       case SetTarget(_,_) => List()
       case SetFocus(_,_) => List() 
+      case PieceSuicide(_) => List()
     }
   }
 }
@@ -160,6 +164,7 @@ case class AddToQueue(pieceName: PieceName, selectedCityId: Int, isScience: Bool
 case class ClearQueue(selectedCityId: Int, isScience: Boolean, clearEntireQueue: Boolean) extends PlayerAction
 case class SetTarget(selectedCityId: Int, target: Loc) extends PlayerAction
 case class SetFocus(selectedCityId: Int, focus: String) extends PlayerAction
+case class PieceSuicide(selectedPieceId: Int) extends PlayerAction
 
 
 //Note: path should contain both the start and ending location
@@ -1774,6 +1779,8 @@ case class BoardState private (
         ()
       case SetFocus(_,_) =>
         ()
+      case PieceSuicide(_) =>
+        ()
     }
   }
 
@@ -1978,6 +1985,9 @@ case class BoardState private (
       case SetFocus(selectedCityId, focus) =>
         val selectedCity = pieceById(selectedCityId)
         selectedCity.focus = focus
+      case PieceSuicide(selectedPieceId) =>
+        val selectedPiece = pieceById(selectedPieceId)
+        killPiece(selectedPiece, externalInfo, true)
     }
   }
 
