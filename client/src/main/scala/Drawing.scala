@@ -553,6 +553,8 @@ object Drawing {
                 show("Production queue: " + p.productionQueue.map(u => u.displayName))
                 show("Science queue: " + p.scienceQueue.map(u => u.displayName))
                 show("Buildings: " + p.buildings.map(u => u.displayName))
+                show("Population: " + p.population)
+                show("Focus: " + p.focus)
               }
             }
           }
