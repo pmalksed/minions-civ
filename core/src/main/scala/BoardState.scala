@@ -103,6 +103,8 @@ sealed trait PlayerAction {
         false
       case SetTarget(_,_) =>
         false
+      case SetFocus(_,_) =>
+        false
     }
   }
 
@@ -121,6 +123,7 @@ sealed trait PlayerAction {
       case AddToQueue(_,_,_) => false
       case ClearQueue(_,_,_) => false
       case SetTarget(_,_) => false
+      case SetFocus(_,_) => false
     }
   }
 
@@ -138,7 +141,8 @@ sealed trait PlayerAction {
       case DiscardSpell(_) => List()
       case AddToQueue(_,_,_) => List() 
       case ClearQueue(_,_,_) => List()   
-      case SetTarget(_,_) => List()    
+      case SetTarget(_,_) => List()
+      case SetFocus(_,_) => List() 
     }
   }
 }
@@ -155,6 +159,7 @@ case class DiscardSpell(spellId: SpellId) extends PlayerAction
 case class AddToQueue(pieceName: PieceName, selectedCityId: Int, isScience: Boolean) extends PlayerAction
 case class ClearQueue(selectedCityId: Int, isScience: Boolean, clearEntireQueue: Boolean) extends PlayerAction
 case class SetTarget(selectedCityId: Int, target: Loc) extends PlayerAction
+case class SetFocus(selectedCityId: Int, focus: String) extends PlayerAction
 
 
 //Note: path should contain both the start and ending location
@@ -1767,6 +1772,8 @@ case class BoardState private (
         ()
       case SetTarget(_,_) =>
         ()
+      case SetFocus(_,_) =>
+        ()
     }
   }
 
@@ -1968,6 +1975,9 @@ case class BoardState private (
       case SetTarget(selectedCityId, target) =>
         val selectedCity = pieceById(selectedCityId)
         selectedCity.target = target
+      case SetFocus(selectedCityId, focus) =>
+        val selectedCity = pieceById(selectedCityId)
+        selectedCity.focus = focus
     }
   }
 

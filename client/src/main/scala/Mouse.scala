@@ -523,9 +523,34 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
                     AddToQueue(pieceName,selectedCity.id,undo)
                   }
                   mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
-                  // mouseState.client.doActionOnCurBoard(DoGeneralBoardAction(AddToScienceQueue(pieceName,selectedCity.id),makeActionId()))
             }
-            case Copycat | Metamagic | TechSeller => ()
+            case Copycat => 
+              mouseState.selectedCity match {
+                case None => ()
+                case Some(selectedCity) =>
+                  def makeAction() = {
+                    SetFocus(selectedCity.id,"food")
+                  }
+                  mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+              }
+            case TechSeller => 
+              mouseState.selectedCity match {
+                case None => ()
+                case Some(selectedCity) =>
+                  def makeAction() = {
+                    SetFocus(selectedCity.id,"production")
+                  }
+                  mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+              }   
+            case Metamagic => 
+              mouseState.selectedCity match {
+                case None => ()
+                case Some(selectedCity) =>
+                  def makeAction() = {
+                    SetFocus(selectedCity.id,"science")
+                  }
+                  mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+              }                              
           }
         }
 

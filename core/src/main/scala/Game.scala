@@ -43,17 +43,17 @@ sealed trait Tech {
   def shortDisplayName(pieceMap: Map[PieceName, PieceStats]): String = {
     this match {
       case PieceTech(pieceName) => pieceMap(pieceName).shortDisplayName
-      case Copycat => "Copycat"
-      case Metamagic => "Metamagic"
-      case TechSeller => "Thaum"
+      case Copycat => "Food"
+      case Metamagic => "Science"
+      case TechSeller => "Production"
     }
   }
   def displayName(pieceMap: Map[PieceName, PieceStats]): String = {
     this match {
       case PieceTech(pieceName) => pieceMap(pieceName).displayName
-      case Copycat => "Copycat"
-      case Metamagic => "Metamagic"
-      case TechSeller => "Thaumaturgy"
+      case Copycat => "Food"
+      case Metamagic => "Science"
+      case TechSeller => "Production"
     }
   }
 }

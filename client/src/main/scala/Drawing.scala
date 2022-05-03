@@ -1367,6 +1367,8 @@ object Drawing {
           ()
         case SetTarget(_,_) =>
           ()
+        case SetFocus(_,_) =>
+          ()
       }
     }
 
@@ -1744,7 +1746,7 @@ object Drawing {
                           //If teleporting, highlight the teleport location
                           strokeHex(ui.MainBoard.hexLoc(hoverLoc), "cyan", scale, alpha=0.3, lineWidth=2)
                           fillHex(ui.MainBoard.hexLoc(hoverLoc), "cyan", scale, alpha=0.05)
-                        case (_ : Blink) | (_ : Attack) | (_ : Spawn) | (_ : ActivateTile) | (_ : ActivateAbility) | (_ : PlaySpell) | (_ : DiscardSpell) | (_: AddToQueue) | (_: ClearQueue) | (_: SetTarget) =>
+                        case (_ : Blink) | (_ : Attack) | (_ : Spawn) | (_ : ActivateTile) | (_ : ActivateAbility) | (_ : PlaySpell) | (_ : DiscardSpell) | (_: AddToQueue) | (_: ClearQueue) | (_: SetTarget) | (_: SetFocus) =>
                           ()
                       }
                     }
