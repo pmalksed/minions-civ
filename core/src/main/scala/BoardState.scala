@@ -263,7 +263,6 @@ object Piece {
       actState = DoneActing,
       hasMoved = false,
       hasAttacked = false,
-      attackedPiecesThisTurn = List(),
       spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
       food = 0,
       production = 0,
@@ -274,6 +273,8 @@ object Piece {
       productionQueue = List(),
       scienceQueue = List(),
       buildings = List(),
+      population = 0,
+      focus = "food",
     )
   }
   def createInternal(side: Side, pieceStats: PieceStats, id: Int, loc: Loc, nthAtLoc: Int, target: Loc,
@@ -289,7 +290,6 @@ object Piece {
       actState = DoneActing,
       hasMoved = false,
       hasAttacked = false,
-      attackedPiecesThisTurn = List(),
       spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
       food = food,
       production = production,
@@ -300,6 +300,8 @@ object Piece {
       productionQueue = List(),
       scienceQueue = List(),
       buildings = List(),
+      population = 0,
+      focus = "food",      
     )
   }  
 }
@@ -318,7 +320,6 @@ case class Piece (
   //Indicates what this piece actually DID do this turn so far.
   var hasMoved: Boolean,
   var hasAttacked: Boolean,
-  var attackedPiecesThisTurn: List[Piece],
   //If the piece was newly spawned this turn
   var spawnedThisTurn: Option[SpawnedThisTurn],
   var food: Double,
@@ -332,6 +333,8 @@ case class Piece (
   var productionQueue: List[PieceStats],
   var scienceQueue: List[PieceStats],
   var buildings: List[PieceStats],
+  var population: Int,
+  var focus: String,
 ) {
   def copy() = {
     new Piece(
@@ -345,7 +348,6 @@ case class Piece (
       hasMoved = hasMoved,
       actState = actState,
       hasAttacked = hasAttacked,
-      attackedPiecesThisTurn = attackedPiecesThisTurn,
       spawnedThisTurn = spawnedThisTurn,
       food = food,
       production = production,
@@ -356,6 +358,8 @@ case class Piece (
       productionQueue = productionQueue,
       scienceQueue = scienceQueue,
       buildings = buildings,
+      population = population,
+      focus = focus,
     )
   }
 
@@ -1797,7 +1801,6 @@ case class BoardState private (
         val attackerStats = attacker.curStats(this)
         val attackEffect = attackerStats.attackEffect.get
         applyEffect(attackEffect,target,externalInfo)
-        attacker.attackedPiecesThisTurn = attacker.attackedPiecesThisTurn :+ target
         attacker.hasAttacked = true
         attacker.actState = attacker.actState match {
           case Moving(_) => Attacking(1)
@@ -2149,10 +2152,13 @@ case class BoardState private (
       val productionQueue = city.productionQueue;
       val nextProductionUnit = productionQueue.head
       val productionCost = nextProductionUnit.productionCost.asInstanceOf[Double];
-      if (productionCost <= city.carriedProduction) {
-        if (buildUnit(city, nextProductionUnit, 0.0, productionCost)) {
+      if ((productionCost <= city.carriedProduction) && (city.population > 0)) {
+        val foodCost = getCostOfLastPopulation(city)
+        if (buildUnit(city, nextProductionUnit, foodCost, productionCost)) {
           city.productionQueue = productionQueue.slice(1, productionQueue.size);
           city.carriedProduction = city.carriedProduction - productionCost;
+          city.population = city.population - 1;
+          city.food = city.food - foodCost;
           buildUnits(city);
         }
       }
@@ -2374,11 +2380,27 @@ case class BoardState private (
     }
   }
 
+  private def getCostOfLastPopulation(piece: Piece): Double = {
+    return (piece.population + 2).asInstanceOf[Double];
+  }
+
+  private def getCostOfNextPopulation(piece: Piece): Double = {
+    return (piece.population + 3).asInstanceOf[Double];
+  }
+
+  private def growPopulation(piece: Piece): Unit = {
+    val costOfNextPopulation = getCostOfNextPopulation(piece);
+    if (piece.carriedFood >= costOfNextPopulation) {
+      piece.carriedFood = piece.carriedFood - costOfNextPopulation;
+      piece.food = piece.food + costOfNextPopulation;
+      piece.population = piece.population + 1;
+    }
+  }
+
   private def refreshPieceForStartOfTurn(piece: Piece): Unit = {
     piece.actState = Moving(0)
     piece.hasMoved = false
     piece.hasAttacked = false
-    piece.attackedPiecesThisTurn = List()
 
     piece.spawnedThisTurn.foreach { spawnedThisTurn => piecesSpawnedThisTurn = piecesSpawnedThisTurn - spawnedThisTurn }
     piece.spawnedThisTurn = None
@@ -2394,6 +2416,7 @@ case class BoardState private (
         }
       }
       // Allocate production and science to their respective queues
+      growPopulation(piece);
       buildUnits(piece);
       buildBuildings(piece);
 

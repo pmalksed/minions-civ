@@ -28,8 +28,7 @@ case object Spells {
         board.pieceById.values.exists { piece =>
           val areEnemies = piece.side != target.side
           val inRange = board.topology.distance(target.loc, piece.loc) <= piece.curStats(board).attackRange
-          val attackedAnother = piece.attackedPiecesThisTurn.exists { attacked => attacked.id != target.id }
-          areEnemies && inRange && attackedAnother && !piece.curStats(board).isNecromancer
+          areEnemies && inRange && !piece.curStats(board).isNecromancer
         }
       if(!existsCleaverInRange) Failure(new Exception("No friendly minion in range that attacked a different enemy this turn"))
       else Success(())
