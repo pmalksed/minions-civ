@@ -2130,6 +2130,9 @@ case class BoardState private (
   }
 
   private def locIsOccupied(loc: Loc): Boolean = {
+    if (!locIsValid(loc)) {
+      return true
+    }
     if (pieces(loc).length > 0) {
       return true
     }
