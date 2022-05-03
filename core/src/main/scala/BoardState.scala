@@ -51,6 +51,7 @@ object PieceSpec {
 package object Constants {
   val PRODUCTION_DECAY_RATE = 0.75;
   val SCIENCE_DECAY_RATE = 0.75
+  val SUICIDE_TAX = 0.75
 }
 
 /**
@@ -234,12 +235,12 @@ case class Tile(
   val terrain: Terrain,
   val startingTerrain: Terrain,
   val modsWithDuration: List[PieceModWithDuration],
-  val foodYield: Int,
-  val productionYield: Int,
-  val scienceYield: Int,
-  val food: Int,  
-  val production: Int,
-  val science: Int,
+  var foodYield: Int,
+  var productionYield: Int,
+  var scienceYield: Int,
+  var food: Double,  
+  var production: Double,
+  var science: Double,
 )
 
 /**
@@ -275,7 +276,8 @@ object Piece {
       buildings = List(),
     )
   }
-  def createInternal(side: Side, pieceStats: PieceStats, id: Int, loc: Loc, nthAtLoc: Int, target: Loc): Piece = {
+  def createInternal(side: Side, pieceStats: PieceStats, id: Int, loc: Loc, nthAtLoc: Int, target: Loc,
+    food: Double, production: Double, science: Double): Piece = {
     new Piece(
       side = side,
       baseStats = pieceStats,
@@ -289,9 +291,9 @@ object Piece {
       hasAttacked = false,
       attackedPiecesThisTurn = List(),
       spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
-      food = 0,
-      production = 0,
-      science = 0,
+      food = food,
+      production = production,
+      science = science,
       carriedFood = 0,
       carriedProduction = 0,
       carriedScience = 0,
@@ -319,9 +321,9 @@ case class Piece (
   var attackedPiecesThisTurn: List[Piece],
   //If the piece was newly spawned this turn
   var spawnedThisTurn: Option[SpawnedThisTurn],
-  var food: Int,
-  var production: Int,
-  var science: Int,
+  var food: Double,
+  var production: Double,
+  var science: Double,
   var carriedFood: Double,
   var carriedProduction: Double,
   var carriedScience: Double,
@@ -386,9 +388,9 @@ object BoardState {
           var foodYield: Int = 0;
           var productionYield: Int = 0;
           var scienceYield: Int = 0;
-          val food: Int = 0;
-          val production: Int = 0;
-          val science: Int = 0;
+          val food: Double = 0.0;
+          val production: Double = 0.0;
+          val science: Double = 0.0;
           if(randomFloat >= 0.4 && randomFloat < 0.8){
             foodYield = foodYield + 1;
           }          
@@ -892,9 +894,9 @@ case class BoardState private (
         var foodYield: Int = 0;
         var productionYield: Int = 0;
         var scienceYield: Int = 0;
-        val food: Int = 0;
-        val production: Int = 0;
-        val science: Int = 0;
+        val food: Double = 0.0;
+        val production: Double = 0.0;
+        val science: Double = 0.0;
         if(randomFloat >= 0.4 && randomFloat < 0.8){
           foodYield = foodYield + 1;
         }          
@@ -1002,11 +1004,13 @@ case class BoardState private (
   }
 
   //Directly spawn a piece if it possible to do so. Exposed for use to set up initial boards.
-  def spawnPieceInitial(side: Side, pieceStats: PieceStats, loc: Loc, target: Loc): Try[Piece] = {
+  def spawnPieceInitial(side: Side, pieceStats: PieceStats, loc: Loc, target: Loc, food: Double, 
+    production: Double, science: Double): Try[Piece] = {
+
     trySpawnIsLegal(side, pieceStats, loc) match {
       case Failure(err) => Failure(err)
       case Success(()) =>
-        val piece = spawnPieceInternal(side,pieceStats,loc,target).get
+        val piece = spawnPieceInternal(side,pieceStats,loc,target,food,production,science).get
         refreshPieceForStartOfTurn(piece)
         Success(piece)
     }
@@ -2024,13 +2028,23 @@ case class BoardState private (
   }
 
   //Kill a piece, for any reason
-  private def killPiece(piece: Piece, externalInfo: ExternalInfo): Unit = {
+  private def killPiece(piece: Piece, externalInfo: ExternalInfo, suicide: Boolean = false): Unit = {
     if(piece.curStats(this).isSoulbound) {
       unsummonPiece(piece)
     } else {
       removeFromBoard(piece)
       killedThisTurn = killedThisTurn :+ ((piece.spec, piece.baseStats.name, piece.side, piece.loc))
       updateAfterPieceKill(piece.side,piece.curStats(this),piece.loc,externalInfo)
+
+      var multiplier: Double = 1.0
+      if (suicide) {
+        multiplier = Constants.SUICIDE_TAX
+      }
+
+      val tile = tiles(piece.loc)
+      tile.food = tile.food + (piece.food + piece.carriedFood) * multiplier
+      tile.production = tile.production + (piece.production + piece.carriedProduction) * multiplier
+      tile.science = tile.science + (piece.science + piece.carriedScience) * multiplier
     }
   }
 
@@ -2066,12 +2080,15 @@ case class BoardState private (
   }
 
   //Does check for legality of spawn, returning the piece on success
-  def spawnPieceInternal(spawnSide: Side, spawnStats: PieceStats, spawnLoc: Loc, target: Loc): Option[Piece] = {
+  def spawnPieceInternal(spawnSide: Side, spawnStats: PieceStats, spawnLoc: Loc, target: Loc, food: Double, 
+    production: Double, science: Double): Option[Piece] = {
+
     if(!spawnIsLegal(spawnSide, spawnStats, spawnLoc))
       None
     else {
       val nthAtLoc = numPiecesSpawnedThisTurnAt.get(spawnLoc).getOrElse(0)
-      val piece = Piece.createInternal(spawnSide, spawnStats, nextPieceId, spawnLoc, nthAtLoc, target)
+      val piece = Piece.createInternal(spawnSide, spawnStats, nextPieceId, spawnLoc, nthAtLoc, target, food, production,
+        science)
       pieces(spawnLoc) = pieces(spawnLoc) :+ piece
       pieceById += (piece.id -> piece)
       nextPieceId += 1
@@ -2108,7 +2125,7 @@ case class BoardState private (
     return tiles.topology.distance(loc1, loc2) - 0.01 * smartDistanceTiebreaker(loc1, loc2)
   }
 
-  private def buildUnit(city: Piece, unit: PieceStats): Boolean = {
+  private def buildUnit(city: Piece, unit: PieceStats, foodCost: Double, productionCost: Double): Boolean = {
     var bestLoc: Option[Loc] = None
     var bestDistance: Double = 100.0
     var currentDistance: Double = 0.0
@@ -2122,7 +2139,7 @@ case class BoardState private (
     bestLoc match {
       case None => return false
       case Some(locToSpawnOn) => 
-        spawnPieceInitial(city.side,unit,locToSpawnOn,city.target)
+        spawnPieceInitial(city.side,unit,locToSpawnOn,city.target, foodCost, productionCost, 0.0)
         return true
     }
   }
@@ -2131,12 +2148,11 @@ case class BoardState private (
     if (city.productionQueue.size > 0) {
       val productionQueue = city.productionQueue;
       val nextProductionUnit = productionQueue.head
-      val productionCost = nextProductionUnit.productionCost;
+      val productionCost = nextProductionUnit.productionCost.asInstanceOf[Double];
       if (productionCost <= city.carriedProduction) {
-        if (buildUnit(city, nextProductionUnit)) {
+        if (buildUnit(city, nextProductionUnit, 0.0, productionCost)) {
           city.productionQueue = productionQueue.slice(1, productionQueue.size);
           city.carriedProduction = city.carriedProduction - productionCost;
-          city.production = city.production + productionCost;
           buildUnits(city);
         }
       }
@@ -2196,7 +2212,7 @@ case class BoardState private (
       }
   }
 
-  private def juiciness(piece: Piece): Int = {
+  private def juiciness(piece: Piece): Double = {
     return (piece.food + piece.production) / (getRemainingHealthOfPiece(piece))
   }
 
