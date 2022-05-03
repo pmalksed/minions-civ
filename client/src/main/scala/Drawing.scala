@@ -230,7 +230,10 @@ object Drawing {
       }
       if(showLoc) {
         text(loc.toString, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/2.0), "black")
-        text("" + tile.foodYield + "/" + tile.productionYield + "/" + tile.scienceYield, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, 0), "black")
+        text("" + tile.foodYield + "/" + tile.productionYield + "/" + tile.scienceYield, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/6.0), "black")
+        if (tile.food != 0.0 || tile.production != 0.0 || tile.science != 0.0) {
+          text("" + tile.food + "/" + tile.production + "/" + tile.science, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/6.0), "blue")
+        }
         mouseState.selectedPiece match {
           case None => 
           case Some(piece) => {
@@ -640,6 +643,9 @@ object Drawing {
               if(moveable)
                 show("This tile can be moved by certain abilities and spells.")
           }
+          show("Food: " + tile.food)
+          show("Production: " + tile.production)
+          show("Science: " + tile.science)
       }
       spell match {
         case None => ()
