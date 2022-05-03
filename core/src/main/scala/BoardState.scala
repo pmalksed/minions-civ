@@ -2415,9 +2415,9 @@ case class BoardState private (
           piece.carriedScience = piece.carriedScience + tiles(loc).scienceYield;
         }
       }
-      if (piece.focus == 'food') {
+      if (piece.focus == "food") {
         piece.carriedFood = piece.carriedFood + piece.population;
-      } else if (piece.focus == 'production') {
+      } else if (piece.focus == "production") {
         piece.carriedProduction = piece.carriedProduction + piece.population;
       } else {
         piece.carriedScience = piece.carriedScience + piece.population;
