@@ -84,6 +84,7 @@ case class MouseState(val ourSide: Option[Side], val ui: UI, val client: Client)
 
   var selectedCity: Option[Piece] = None
   var selectedPiece: Option[Piece] = None
+  var foundCityMode: Boolean = false
 
   def clear() = {
     hovered = MouseNone
@@ -458,8 +459,8 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
 
       case MouseResignBoard(_) =>
         //Require mouse down and up on the same target
-        if(ourSide == Some(game.curSide) && curTarget == dragTarget) {
-          mouseState.client.showResignConfirm()
+        if(curTarget == dragTarget) {
+          mouseState.foundCityMode = !mouseState.foundCityMode;
         }
       case MouseRedo(_) =>
         if(curTarget == dragTarget) {
@@ -613,6 +614,14 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
               }
           }  
         )
+        else {
+          if (mouseState.foundCityMode) {
+            def makeAction() = {
+              FoundCity(selectedCity.id,loc)
+            }
+            mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+          }
+        }
         else {
           mouseState.selectedCity = None;
           board.tiles(loc).terrain match {

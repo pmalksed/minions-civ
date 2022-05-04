@@ -442,6 +442,15 @@ object BoardState {
       soulsThisRound = SideArray.create(0),
       totalSouls = SideArray.create(0),
       totalCosts = SideArray.create(0)
+      cities = List(),
+      turnsTillNextCityTemporaryModifier = Map(),
+      turnsTillNextCityPermanentModifier = Map(),
+      citiesFounded = Map(),
+      Side.foreach(s => {
+        turnsTillNextCityTemporaryModifier(s) = 0
+        turnsTillNextCityPermanentModifier(s) = 0
+        citiesFounded(s) = 0
+      })
     )
     board
   }
@@ -476,7 +485,11 @@ case class BoardStateFragment0 (
   var allowedNecros: SideArray[List[PieceName]],
   var allowedFreeBuyPieces: SideArray[Set[PieceName]],
   var numFreeBuysAllowed: SideArray[Int],
-  var turnNumber: Int
+  var turnNumber: Int,
+  var cities: List[Piece],
+  var turnsTillNextCityTemporaryModifier: Map[Side, Int],
+  var turnsTillNextCityPermanentModifier: Map[Side, Int],
+  var citiesFounded: Map[Side, Int],
 )
 case class BoardStateFragment1 (
   val reinforcements: SideArray[Map[PieceName,Int]],
@@ -490,7 +503,7 @@ case class BoardStateFragment1 (
   var turnEndingImmediately: Boolean,
   val soulsThisRound: SideArray[Int],
   val totalSouls: SideArray[Int],
-  val totalCosts: SideArray[Int]
+  val totalCosts: SideArray[Int],
 )
 
 object BoardStateOfFragments {
@@ -509,6 +522,10 @@ object BoardStateOfFragments {
       allowedFreeBuyPieces = f0.allowedFreeBuyPieces,
       numFreeBuysAllowed = f0.numFreeBuysAllowed,
       turnNumber = f0.turnNumber,
+      cities = f0.cities,
+      turnsTillNextCityTemporaryModifier = f0.turnsTillNextCityTemporaryModifier,
+      turnsTillNextCityPermanentModifier = f0.turnsTillNextCityPermanentModifier,
+      citiesFounded = f0.citiesFounded,
       reinforcements = f1.reinforcements,
       spellsInHand = f1.spellsInHand,
       spellsPlayed = f1.spellsPlayed,
@@ -587,6 +604,11 @@ case class BoardState private (
   val totalSouls: SideArray[Int],
   //Total cost of units added to reinforcements of this board over the board's lifetime
   val totalCosts: SideArray[Int]
+
+  var cities: List[Piece]
+  var turnsTillNextCityTemporaryModifier: Map[Side, Int],
+  var turnsTillNextCityPermanentModifier: Map[Side, Int],
+  var citiesFounded: Map[Side, Int],
 ) {
   val xSize: Int = tiles.xSize
   val ySize: Int = tiles.ySize
@@ -608,6 +630,10 @@ case class BoardState private (
         allowedFreeBuyPieces = allowedFreeBuyPieces,
         numFreeBuysAllowed = numFreeBuysAllowed,
         turnNumber = turnNumber,
+        cities = cities,
+        turnsTillNextCityTemporaryModifier = turnsTillNextCityTemporaryModifier,
+        turnsTillNextCityPermanentModifier = turnsTillNextCityPermanentModifier,
+        citiesFounded = citiesFounded,
       ),
       BoardStateFragment1(
         reinforcements = reinforcements,
@@ -652,7 +678,11 @@ case class BoardState private (
       turnEndingImmediately = turnEndingImmediately,
       soulsThisRound = soulsThisRound.copy(),
       totalSouls = totalSouls.copy(),
-      totalCosts = totalCosts.copy()
+      totalCosts = totalCosts.copy(),
+      cities = cities.copy()
+      turnsTillNextCityTemporaryModifier = turnsTillNextCityTemporaryModifier.copy()
+      turnsTillNextCityPermanentModifier = turnsTillNextCityPermanentModifier.copy()
+      citiesFounded = citiesFounded.copy()
     )
     val newPieceById = pieceById.transform({ (_k, piece) => piece.copy() })
     val newPiecesSpawnedThisTurn = piecesSpawnedThisTurn.transform { (_k, piece) => newPieceById(piece.id) }
@@ -2107,12 +2137,15 @@ case class BoardState private (
       piecesSpawnedThisTurn += (piece.spawnedThisTurn.get -> piece)
       numPiecesSpawnedThisTurnAt += (spawnLoc -> (nthAtLoc+1))
       Some(piece)
+      if (spawnStats.name == 'city') {
+        cities = cities :+ piece
+      }
     }
   }
 
   //Does check for legality of spawn, returning the piece on success
   def spawnPieceInternal(spawnSide: Side, spawnStats: PieceStats, spawnLoc: Loc, target: Loc, food: Double, 
-    production: Double, science: Double): Option[Piece] = {
+    production: Double, science: Double, cityFoundingSlack: Int = 0): Option[Piece] = {
 
     if(!spawnIsLegal(spawnSide, spawnStats, spawnLoc))
       None
@@ -2126,6 +2159,11 @@ case class BoardState private (
       piecesSpawnedThisTurn += (piece.spawnedThisTurn.get -> piece)
       numPiecesSpawnedThisTurnAt += (spawnLoc -> (nthAtLoc+1))
       Some(piece)
+      if (spawnStats.name == "city") {
+        cities = cities :+ piece
+        citiesFounded(spawnSide) = citiesFounded(spawnSide) + 1
+        turnsTillNextCityTemporaryModifier(spawnSide) = -cityFoundingSlack
+      }      
     }
   }
 
@@ -2316,6 +2354,38 @@ case class BoardState private (
     }
 
     return bestTarget
+  }
+
+  private def canFoundCityAtLoc(side: Side, loc: Loc): Boolean = {
+    val (distanceToNearestFriendlyCity, distanceToNearestCity) = distanceToNearestCity(side, loc);
+    return (distanceToNearestFriendlyCity <= maximumFoundCityDistanceFromFriendlyCity(side)
+            && distanceToNearestCity >= minimumFoundCityDistanceFromCity(side))
+  }
+
+  // Returns tuple of (distance to nearest friendly city, distance to nearest city) 
+  private def distanceToNearestCity(side: Side, loc: Loc): Tuple[Int, Int] = {
+    var distanceToNearestFriendlyCity = 100
+    var distanceToNearestCity = 100
+    cities.foreach(city => {
+      distance = tiles.topology.distance(city.loc, loc)
+      distanceToNearestCity = java.lang.Math.min(distanceToNearestCity, distance)
+      if (city.side == side) {
+        distanceToNearestFriendlyCity = java.lang.Math.min(distanceToNearestFriendlyCity, distance)
+      }
+    })
+    return (distanceToNearestFriendlyCity, distanceToNearestCity)
+  }
+
+  private def minimumFoundCityDistanceFromCity(side: Side): Int = {
+    return 3
+  }
+
+  private def maximumFoundCityDistanceFromFriendlyCity(side: Side): Int = {
+    return cityPower(side) + 3
+  }
+
+  private def cityPower(side: Side): Int = {
+    return turnNumber - citiesFounded(side) * 10 - turnsTillNextCityTemporaryModifier(side) - turnsTillNextCityPermanentModifier(side)
   }
 
   private def getScoreForMoveTowards(piece: Piece, target: Piece): Double = {
