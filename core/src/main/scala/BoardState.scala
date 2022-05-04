@@ -2137,8 +2137,10 @@ case class BoardState private (
       piecesSpawnedThisTurn += (piece.spawnedThisTurn.get -> piece)
       numPiecesSpawnedThisTurnAt += (spawnLoc -> (nthAtLoc+1))
       Some(piece)
-      if (spawnStats.name == 'city') {
+      if (spawnStats.name == "city") {
         cities = cities :+ piece
+        citiesFounded(spawnSide) = citiesFounded(spawnSide) + 1
+        turnsTillNextCityTemporaryModifier(spawnSide) = -cityFoundingSlack
       }
     }
   }
