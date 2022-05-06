@@ -286,6 +286,7 @@ object Protocol {
   implicit val setTargetFormat = Json.format[SetTarget]
   implicit val setFocusFormat = Json.format[SetFocus]
   implicit val pieceSuicideFormat = Json.format[PieceSuicide]
+  implicit val foundCityFormat = Json.format[FoundCity]
   implicit val playerActionFormat = {
     val reads: Reads[PlayerAction] = readsFromPair[PlayerAction]("PlayerAction",Map(
       "Movements" -> ((json:JsValue) => movementsFormat.reads(json)),
@@ -302,6 +303,7 @@ object Protocol {
       "SetTarget" -> ((json:JsValue) => setTargetFormat.reads(json)),
       "SetFocus" -> ((json:JsValue) => setFocusFormat.reads(json)),
       "PieceSuicide" -> ((json:JsValue) => pieceSuicideFormat.reads(json)),
+      "FoundCity" -> ((json:JsValue) => foundCityFormat.reads(json))
     ))
     val writes: Writes[PlayerAction] = new Writes[PlayerAction] {
       def writes(t: PlayerAction): JsValue = t match {
@@ -319,6 +321,7 @@ object Protocol {
         case (t:SetTarget) => jsPair("SetTarget",setTargetFormat.writes(t))  
         case (t:SetFocus) => jsPair("SetFocus", setFocusFormat.writes(t))
         case (t:PieceSuicide) => jsPair("PieceSuicide", pieceSuicideFormat.writes(t))
+        case (t:FoundCity) => jsPair("FoundCity", foundCityFormat.writes(t))
       }
     }
     Format(reads,writes)

@@ -84,6 +84,7 @@ case class MouseState(val ourSide: Option[Side], val ui: UI, val client: Client)
 
   var selectedCity: Option[Piece] = None
   var selectedPiece: Option[Piece] = None
+  var foundCityMode: Boolean = false
 
   def clear() = {
     hovered = MouseNone
@@ -458,8 +459,8 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
 
       case MouseResignBoard(_) =>
         //Require mouse down and up on the same target
-        if(ourSide == Some(game.curSide) && curTarget == dragTarget) {
-          mouseState.client.showResignConfirm()
+        if(curTarget == dragTarget) {
+          mouseState.foundCityMode = !mouseState.foundCityMode;
         }
       case MouseRedo(_) =>
         if(curTarget == dragTarget) {
@@ -614,12 +615,24 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
           }  
         )
         else {
-          mouseState.selectedCity = None;
-          board.tiles(loc).terrain match {
-            case Wall | Ground | Water(_) | Graveyard | SorceryNode | Teleporter |
-                 Earthquake(_) | Firestorm(_) | Whirlwind(_) | Mist => ()
-            case Spawner(_) =>
-              mouseState.client.doActionOnCurBoard(PlayerActions(List(ActivateTile(loc)),makeActionId()))
+          if (mouseState.foundCityMode) {
+            mouseState.client.ourSide match {
+              case None =>
+              case Some(side) =>
+                def makeAction() = {
+                  FoundCity(side,loc)
+                }
+                mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+            }
+          }
+          else {
+            mouseState.selectedCity = None;
+            board.tiles(loc).terrain match {
+              case Wall | Ground | Water(_) | Graveyard | SorceryNode | Teleporter |
+                   Earthquake(_) | Firestorm(_) | Whirlwind(_) | Mist => ()
+              case Spawner(_) =>
+                mouseState.client.doActionOnCurBoard(PlayerActions(List(ActivateTile(loc)),makeActionId()))
+              }
           }
         }
 

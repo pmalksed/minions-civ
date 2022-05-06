@@ -767,7 +767,7 @@ object Drawing {
     for((terrain, i) <- ui.Terrain.terrains.zipWithIndex) {
       val loc = Loc(i,0)
       val alpha = if(board.tiles.find({ tile => tile.terrain == terrain}).isEmpty) 1.0 else 0.2
-      drawTile(ui.Terrain.hexLoc(loc), loc, Tile(terrain), ui.Terrain.gridSizeScale*0.8, alpha=alpha)
+      drawTile(ui.Terrain.hexLoc(loc), loc, Tile(terrain), ui.Terrain.gridSizeScale*0.8, alpha=alpha) 
     }
 
     //Board-specific info text
@@ -842,8 +842,13 @@ object Drawing {
     fillHex(resign, "#dddddd", tileScale)
     strokeHex(resign, "#666666", tileScale, lineWidth=1.0)
     val resign_ploc = PixelLoc.ofHexLoc(resign, gridSize)
-    text("Resign", resign_ploc + PixelVec(0,-4.0), "black")
-    text("Board", resign_ploc + PixelVec(0,7.0), "black")
+    text("Found", resign_ploc + PixelVec(0,-4.0), "black")
+    text("City", resign_ploc + PixelVec(0,7.0), "black")
+    client.ourSide match {
+      case None =>
+      case Some(side) =>
+        text("In " + (-1 * board.cityPower(side)) + " turns", resign_ploc + PixelVec(0,18.0), "black")
+    }    
 
     // Redo hex
     val redo = ui.Actions.hexLoc(2)
@@ -1022,6 +1027,17 @@ object Drawing {
     board.tiles.foreachi {case (loc, tile) =>
       val hexLoc = ui.MainBoard.hexLoc(loc)
       drawTile(hexLoc,loc,tile, 1.0,showLoc=client.showCoords)
+      if (mouseState.foundCityMode) {
+        client.ourSide match {
+          case None =>
+          case Some(side) =>
+            if (board.canFoundCityAtLoc(side, loc)) {
+              fillHex(hexLoc, "blue", tileScale, 1.0, false)
+            } else {
+              fillHex(hexLoc, "red", tileScale, 1.0, false)
+            }
+        }
+      }   
     }
 
     val preSpawnBoard = boards(boardIdx).preSpawnState()
@@ -1262,7 +1278,7 @@ object Drawing {
 
     // Draw translucent special tiles
     board.tiles.foreachi { case (loc, tile) =>
-      val hexLoc = ui.MainBoard.hexLoc(loc)
+      val hexLoc = ui.MainBoard.hexLoc(loc)  
       tile.terrain match {
         case Graveyard =>
           val img = "img_terrain_graveyard" + deterministicRandom(loc.x,loc.y,4)
@@ -1376,6 +1392,8 @@ object Drawing {
         case SetFocus(_,_) =>
           ()
         case PieceSuicide(_) =>
+          ()
+        case FoundCity(_,_) =>
           ()
       }
     }
@@ -1754,7 +1772,7 @@ object Drawing {
                           //If teleporting, highlight the teleport location
                           strokeHex(ui.MainBoard.hexLoc(hoverLoc), "cyan", scale, alpha=0.3, lineWidth=2)
                           fillHex(ui.MainBoard.hexLoc(hoverLoc), "cyan", scale, alpha=0.05)
-                        case (_ : Blink) | (_ : Attack) | (_ : Spawn) | (_ : ActivateTile) | (_ : ActivateAbility) | (_ : PlaySpell) | (_ : DiscardSpell) | (_: AddToQueue) | (_: ClearQueue) | (_: SetTarget) | (_: SetFocus) | (_: PieceSuicide) =>
+                        case (_ : Blink) | (_ : Attack) | (_ : Spawn) | (_ : ActivateTile) | (_ : ActivateAbility) | (_ : PlaySpell) | (_ : DiscardSpell) | (_: AddToQueue) | (_: ClearQueue) | (_: SetTarget) | (_: SetFocus) | (_: PieceSuicide) | (_: FoundCity) =>
                           ()
                       }
                     }

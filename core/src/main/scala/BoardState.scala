@@ -52,6 +52,7 @@ package object Constants {
   val PRODUCTION_DECAY_RATE = 0.75;
   val SCIENCE_DECAY_RATE = 0.75
   val SUICIDE_TAX = 0.75
+  val SCIENCE_FOR_NEW_CITY = 5.0
 }
 
 /**
@@ -107,6 +108,8 @@ sealed trait PlayerAction {
         false
       case PieceSuicide(_) =>
         false
+      case FoundCity(_,_) =>
+        false
     }
   }
 
@@ -127,6 +130,7 @@ sealed trait PlayerAction {
       case SetTarget(_,_) => false
       case SetFocus(_,_) => false
       case PieceSuicide(_) => false
+      case FoundCity(_,_) => false
     }
   }
 
@@ -147,6 +151,7 @@ sealed trait PlayerAction {
       case SetTarget(_,_) => List()
       case SetFocus(_,_) => List() 
       case PieceSuicide(_) => List()
+      case FoundCity(_,_) => List()
     }
   }
 }
@@ -165,6 +170,7 @@ case class ClearQueue(selectedCityId: Int, isScience: Boolean, clearEntireQueue:
 case class SetTarget(selectedCityId: Int, target: Loc) extends PlayerAction
 case class SetFocus(selectedCityId: Int, focus: String) extends PlayerAction
 case class PieceSuicide(selectedPieceId: Int) extends PlayerAction
+case class FoundCity(side: Side, loc: Loc) extends PlayerAction
 
 
 //Note: path should contain both the start and ending location
@@ -417,7 +423,7 @@ object BoardState {
           Tile(terrain = terrain, terrain, modsWithDuration = Nil, foodYield, productionYield, scienceYield,
             food,production,science);
         }
-      },
+      },  
       startLocs = startLocs,
       pieces = Plane.create(terrain.xSize,terrain.ySize,terrain.topology,Nil),
       pieceById = Map(),
@@ -441,7 +447,11 @@ object BoardState {
       turnEndingImmediately = false,
       soulsThisRound = SideArray.create(0),
       totalSouls = SideArray.create(0),
-      totalCosts = SideArray.create(0)
+      totalCosts = SideArray.create(0),
+      cities = List(),
+      turnsTillNextCityTemporaryModifier = Map(),
+      turnsTillNextCityPermanentModifier = Map(),
+      citiesFounded = Map(),
     )
     board
   }
@@ -476,7 +486,11 @@ case class BoardStateFragment0 (
   var allowedNecros: SideArray[List[PieceName]],
   var allowedFreeBuyPieces: SideArray[Set[PieceName]],
   var numFreeBuysAllowed: SideArray[Int],
-  var turnNumber: Int
+  var turnNumber: Int,
+  var cities: List[Piece],
+  var turnsTillNextCityTemporaryModifier: Map[Side, Int],
+  var turnsTillNextCityPermanentModifier: Map[Side, Int],
+  var citiesFounded: Map[Side, Int],
 )
 case class BoardStateFragment1 (
   val reinforcements: SideArray[Map[PieceName,Int]],
@@ -490,7 +504,7 @@ case class BoardStateFragment1 (
   var turnEndingImmediately: Boolean,
   val soulsThisRound: SideArray[Int],
   val totalSouls: SideArray[Int],
-  val totalCosts: SideArray[Int]
+  val totalCosts: SideArray[Int],
 )
 
 object BoardStateOfFragments {
@@ -509,6 +523,10 @@ object BoardStateOfFragments {
       allowedFreeBuyPieces = f0.allowedFreeBuyPieces,
       numFreeBuysAllowed = f0.numFreeBuysAllowed,
       turnNumber = f0.turnNumber,
+      cities = f0.cities,
+      turnsTillNextCityTemporaryModifier = f0.turnsTillNextCityTemporaryModifier,
+      turnsTillNextCityPermanentModifier = f0.turnsTillNextCityPermanentModifier,
+      citiesFounded = f0.citiesFounded,
       reinforcements = f1.reinforcements,
       spellsInHand = f1.spellsInHand,
       spellsPlayed = f1.spellsPlayed,
@@ -586,7 +604,12 @@ case class BoardState private (
   //Same, but never clears - summed over the whole board's lifetime.
   val totalSouls: SideArray[Int],
   //Total cost of units added to reinforcements of this board over the board's lifetime
-  val totalCosts: SideArray[Int]
+  val totalCosts: SideArray[Int],
+
+  var cities: List[Piece],
+  var turnsTillNextCityTemporaryModifier: Map[Side, Int],
+  var turnsTillNextCityPermanentModifier: Map[Side, Int],
+  var citiesFounded: Map[Side, Int],
 ) {
   val xSize: Int = tiles.xSize
   val ySize: Int = tiles.ySize
@@ -608,6 +631,10 @@ case class BoardState private (
         allowedFreeBuyPieces = allowedFreeBuyPieces,
         numFreeBuysAllowed = numFreeBuysAllowed,
         turnNumber = turnNumber,
+        cities = cities,
+        turnsTillNextCityTemporaryModifier = turnsTillNextCityTemporaryModifier,
+        turnsTillNextCityPermanentModifier = turnsTillNextCityPermanentModifier,
+        citiesFounded = citiesFounded,
       ),
       BoardStateFragment1(
         reinforcements = reinforcements,
@@ -621,7 +648,7 @@ case class BoardState private (
         turnEndingImmediately = turnEndingImmediately,
         soulsThisRound = soulsThisRound,
         totalSouls = totalSouls,
-        totalCosts = totalCosts
+        totalCosts = totalCosts,
       )
     )
   }
@@ -652,7 +679,11 @@ case class BoardState private (
       turnEndingImmediately = turnEndingImmediately,
       soulsThisRound = soulsThisRound.copy(),
       totalSouls = totalSouls.copy(),
-      totalCosts = totalCosts.copy()
+      totalCosts = totalCosts.copy(),
+      cities = cities,
+      turnsTillNextCityTemporaryModifier = turnsTillNextCityTemporaryModifier,
+      turnsTillNextCityPermanentModifier = turnsTillNextCityPermanentModifier,
+      citiesFounded = citiesFounded,
     )
     val newPieceById = pieceById.transform({ (_k, piece) => piece.copy() })
     val newPiecesSpawnedThisTurn = piecesSpawnedThisTurn.transform { (_k, piece) => newPieceById(piece.id) }
@@ -945,7 +976,7 @@ case class BoardState private (
     Side.foreach { side =>
       val startLoc = startLocs(side)
       val cityStats = externalInfo.pieceMap("city")
-      spawnPieceInitial(side,cityStats,startLoc) match {
+      spawnPieceInitial(side,cityStats,startLoc,startLoc,0,0,Constants.SCIENCE_FOR_NEW_CITY) match {
         case Failure(_) => assertUnreachable()
         case Success(piece) =>
           if(allowedNecros(side).size > 1) {
@@ -1781,6 +1812,8 @@ case class BoardState private (
         ()
       case PieceSuicide(_) =>
         ()
+      case FoundCity(_,_) =>
+        ()
     }
   }
 
@@ -1996,6 +2029,21 @@ case class BoardState private (
       case PieceSuicide(selectedPieceId) =>
         val selectedPiece = pieceById(selectedPieceId)
         killPiece(selectedPiece, externalInfo, true)
+      case FoundCity(side, loc) =>
+        foundCity(side, loc, externalInfo)
+    }
+  }
+
+//   def spawnPieceInternal(spawnSide: Side, spawnStats: PieceStats, spawnLoc: Loc, target: Loc, food: Double, 
+    // production: Double, science: Double, cityFoundingSlack: Int = 0): Option[Piece] = {
+
+  private def foundCity(side: Side, loc: Loc, externalInfo: ExternalInfo): Unit = {
+    val (distanceToNearestFriendlyCity, _) = distanceToNearestCity(side, loc);
+    val maximumPossibleDistance = maximumFoundCityDistanceFromFriendlyCity(side);
+    val cityFoundingSlack = maximumPossibleDistance - distanceToNearestFriendlyCity
+    if (canFoundCityAtLoc(side, loc)) {
+      val _ = spawnPieceInternal(side, externalInfo.pieceMap("city"), loc, loc, 0, 0, Constants.SCIENCE_FOR_NEW_CITY, 
+        cityFoundingSlack=cityFoundingSlack)
     }
   }
 
@@ -2105,14 +2153,19 @@ case class BoardState private (
       pieceById += (piece.id -> piece)
       nextPieceId += 1
       piecesSpawnedThisTurn += (piece.spawnedThisTurn.get -> piece)
-      numPiecesSpawnedThisTurnAt += (spawnLoc -> (nthAtLoc+1))
+      numPiecesSpawnedThisTurnAt += (spawnLoc -> (nthAtLoc+1))     
+      if (spawnStats.name == "city") {
+        cities = cities :+ piece
+        val citiesFoundedBySide = citiesFounded.get(spawnSide).getOrElse(0)
+        citiesFounded += (spawnSide -> (citiesFoundedBySide + 1))        
+      }
       Some(piece)
     }
   }
 
   //Does check for legality of spawn, returning the piece on success
   def spawnPieceInternal(spawnSide: Side, spawnStats: PieceStats, spawnLoc: Loc, target: Loc, food: Double, 
-    production: Double, science: Double): Option[Piece] = {
+    production: Double, science: Double, cityFoundingSlack: Int = 0): Option[Piece] = {
 
     if(!spawnIsLegal(spawnSide, spawnStats, spawnLoc))
       None
@@ -2125,6 +2178,12 @@ case class BoardState private (
       nextPieceId += 1
       piecesSpawnedThisTurn += (piece.spawnedThisTurn.get -> piece)
       numPiecesSpawnedThisTurnAt += (spawnLoc -> (nthAtLoc+1))
+      if (spawnStats.name == "city") {
+        cities = cities :+ piece
+        val citiesFoundedBySide = citiesFounded.get(spawnSide).getOrElse(0)
+        citiesFounded += (spawnSide -> (citiesFoundedBySide + 1))
+        turnsTillNextCityTemporaryModifier += (spawnSide -> (-1 * cityFoundingSlack))
+      }                
       Some(piece)
     }
   }
@@ -2316,6 +2375,38 @@ case class BoardState private (
     }
 
     return bestTarget
+  }
+
+  def canFoundCityAtLoc(side: Side, loc: Loc): Boolean = {
+    val (distanceToNearestFriendlyCity, distanceToNearestAnyCity) = distanceToNearestCity(side, loc);
+    return (distanceToNearestFriendlyCity <= maximumFoundCityDistanceFromFriendlyCity(side)
+            && distanceToNearestAnyCity >= minimumFoundCityDistanceFromCity())
+  }
+
+  // Returns tuple of (distance to nearest friendly city, distance to nearest city) 
+  def distanceToNearestCity(side: Side, loc: Loc): (Int, Int) = {
+    var distanceToNearestFriendlyCity = 100
+    var distanceToNearestAnyCity = 100
+    cities.foreach(city => {
+      val distance = tiles.topology.distance(city.loc, loc)
+      distanceToNearestAnyCity = java.lang.Math.min(distanceToNearestAnyCity, distance)
+      if (city.side == side) {
+        distanceToNearestFriendlyCity = java.lang.Math.min(distanceToNearestFriendlyCity, distance)
+      }
+    })
+    return (distanceToNearestFriendlyCity, distanceToNearestAnyCity)
+  }
+
+  private def minimumFoundCityDistanceFromCity(): Int = {
+    return 3
+  }
+
+  private def maximumFoundCityDistanceFromFriendlyCity(side: Side): Int = {
+    return cityPower(side) + 3
+  }
+
+  def cityPower(side: Side): Int = {
+    return turnNumber - citiesFounded.get(side).getOrElse(0) * 10 - turnsTillNextCityTemporaryModifier.get(side).getOrElse(0) - turnsTillNextCityPermanentModifier.get(side).getOrElse(0)
   }
 
   private def getScoreForMoveTowards(piece: Piece, target: Piece): Double = {
