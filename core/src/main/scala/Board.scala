@@ -414,6 +414,8 @@ case class Board private (
                 case SetFocus(_,_) =>
                   newMoveAttackState.doAction(playerAction, externalInfo)
                 case PieceSuicide(_) =>
+                  newMoveAttackState.doAction(playerAction, externalInfo)
+                case FoundCity(_,_) =>
                   newMoveAttackState.doAction(playerAction, externalInfo)                
                 case DiscardSpell(_) =>
                   //When spells or abilities fail, it may be because they are targeting units only placed during spawn

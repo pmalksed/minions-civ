@@ -616,19 +616,23 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
         )
         else {
           if (mouseState.foundCityMode) {
-            def makeAction() = {
-              FoundCity(selectedCity.id,loc)
+            mouseState.client.ourSide match {
+              case None =>
+              case Some(side) =>
+                def makeAction() = {
+                  FoundCity(side,loc)
+                }
+                mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
             }
-            mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
           }
-        }
-        else {
-          mouseState.selectedCity = None;
-          board.tiles(loc).terrain match {
-            case Wall | Ground | Water(_) | Graveyard | SorceryNode | Teleporter |
-                 Earthquake(_) | Firestorm(_) | Whirlwind(_) | Mist => ()
-            case Spawner(_) =>
-              mouseState.client.doActionOnCurBoard(PlayerActions(List(ActivateTile(loc)),makeActionId()))
+          else {
+            mouseState.selectedCity = None;
+            board.tiles(loc).terrain match {
+              case Wall | Ground | Water(_) | Graveyard | SorceryNode | Teleporter |
+                   Earthquake(_) | Firestorm(_) | Whirlwind(_) | Mist => ()
+              case Spawner(_) =>
+                mouseState.client.doActionOnCurBoard(PlayerActions(List(ActivateTile(loc)),makeActionId()))
+              }
           }
         }
 

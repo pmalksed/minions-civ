@@ -409,7 +409,7 @@ case class GameState (
                       actions.foreach {
                         case PlaySpell(spellId,_) => revealSpellsToSide(game.curSide.opp,Array(spellId), revealToSpectators = true)
                         case DiscardSpell(spellId) => revealSpellsToSide(game.curSide.opp,Array(spellId), revealToSpectators = true)
-                        case (_: Movements) | (_: Attack) | (_: Spawn) | (_: ActivateTile) | (_: ActivateAbility) | (_: Blink) | (_: Teleport) | (_: AddToQueue) | (_: ClearQueue) | (_: SetTarget) | (_: SetFocus) | (_: PieceSuicide) => ()
+                        case (_: Movements) | (_: Attack) | (_: Spawn) | (_: ActivateTile) | (_: ActivateAbility) | (_: Blink) | (_: Teleport) | (_: AddToQueue) | (_: ClearQueue) | (_: SetTarget) | (_: SetFocus) | (_: PieceSuicide) | (_: FoundCity) => ()
                       }
                     case (_: LocalPieceUndo) | (_: SpellUndo) | (_: BuyReinforcementUndo) | (_: GainSpellUndo) | (_: DoGeneralBoardAction) | (_: Redo) => ()
                   }
