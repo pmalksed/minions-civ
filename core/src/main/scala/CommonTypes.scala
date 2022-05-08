@@ -122,7 +122,8 @@ case class PieceStats(
   val perTurnReinforcement: Option[PieceName], //Automatic gain to reinforcements every turn
 
   //Abilities that a piece can use by discarding a spell
-  val abilities: List[PieceAbility]
+  val abilities: List[PieceAbility],
+  val notes: String,
 ) {
   def toFragments() : (PieceStatsFragment0,PieceStatsFragment1) = {
     (
@@ -143,6 +144,7 @@ case class PieceStats(
         canHurtNecromancer = canHurtNecromancer,
         productionCost = productionCost,
         scienceCost = scienceCost,
+        notes = notes,
       ),
       PieceStatsFragment1(
         swarmMax = swarmMax,
@@ -182,6 +184,7 @@ case class PieceStatsFragment0 (
   val canHurtNecromancer: Boolean,
   val productionCost: Int,
   val scienceCost: Int,
+  val notes: String,
 )
 case class PieceStatsFragment1 (
   val swarmMax: Int,
@@ -219,6 +222,7 @@ object PieceStatsOfFragments {
       canHurtNecromancer = f0.canHurtNecromancer,
       productionCost = f0.productionCost,
       scienceCost = f0.scienceCost,
+      notes = f0.notes,
       swarmMax = f1.swarmMax,
       spawnRange = f1.spawnRange,
       extraSouls = f1.extraSouls,
