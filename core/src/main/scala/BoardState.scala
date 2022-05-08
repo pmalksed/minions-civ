@@ -452,6 +452,7 @@ object BoardState {
       turnsTillNextCityTemporaryModifier = Map(),
       turnsTillNextCityPermanentModifier = Map(),
       citiesFounded = Map(),
+      salvagerBuildingsBuilt = Map(),
     )
     board
   }
@@ -491,6 +492,7 @@ case class BoardStateFragment0 (
   var turnsTillNextCityTemporaryModifier: Map[Side, Int],
   var turnsTillNextCityPermanentModifier: Map[Side, Int],
   var citiesFounded: Map[Side, Int],
+  var salvagerBuildingsBuilt: Map[Side, Int],
 )
 case class BoardStateFragment1 (
   val reinforcements: SideArray[Map[PieceName,Int]],
@@ -527,6 +529,7 @@ object BoardStateOfFragments {
       turnsTillNextCityTemporaryModifier = f0.turnsTillNextCityTemporaryModifier,
       turnsTillNextCityPermanentModifier = f0.turnsTillNextCityPermanentModifier,
       citiesFounded = f0.citiesFounded,
+      salvagerBuildingsBuilt = f0.salvagerBuildingsBuilt,
       reinforcements = f1.reinforcements,
       spellsInHand = f1.spellsInHand,
       spellsPlayed = f1.spellsPlayed,
@@ -610,6 +613,7 @@ case class BoardState private (
   var turnsTillNextCityTemporaryModifier: Map[Side, Int],
   var turnsTillNextCityPermanentModifier: Map[Side, Int],
   var citiesFounded: Map[Side, Int],
+  var salvagerBuildingsBuilt: Map[Side, Int],
 ) {
   val xSize: Int = tiles.xSize
   val ySize: Int = tiles.ySize
@@ -635,6 +639,7 @@ case class BoardState private (
         turnsTillNextCityTemporaryModifier = turnsTillNextCityTemporaryModifier,
         turnsTillNextCityPermanentModifier = turnsTillNextCityPermanentModifier,
         citiesFounded = citiesFounded,
+        salvagerBuildingsBuilt = salvagerBuildingsBuilt,
       ),
       BoardStateFragment1(
         reinforcements = reinforcements,
@@ -684,6 +689,7 @@ case class BoardState private (
       turnsTillNextCityTemporaryModifier = turnsTillNextCityTemporaryModifier,
       turnsTillNextCityPermanentModifier = turnsTillNextCityPermanentModifier,
       citiesFounded = citiesFounded,
+      salvagerBuildingsBuilt = salvagerBuildingsBuilt,
     )
     val newPieceById = pieceById.transform({ (_k, piece) => piece.copy() })
     val newPiecesSpawnedThisTurn = piecesSpawnedThisTurn.transform { (_k, piece) => newPieceById(piece.id) }
@@ -2198,6 +2204,17 @@ case class BoardState private (
     return false
   }
 
+  private def locIsOccupiedByCityOrCivilian(loc: Loc): Boolean = {
+    if (!locIsValid(loc)) {
+      return true
+    }
+    if (pieces(loc).length > 0 && (pieces(loc).head.baseStats.name == "city"
+                                   || getAttackOfPiece(pieces(loc).head) == 0)) {
+      return true
+    }
+    return false
+  }
+
   private def smartDistanceTiebreaker(loc1: Loc, loc2: Loc): Int = {
     val xDifference = loc1.x - loc2.x
     val yDifference = loc1.y - loc2.y
@@ -2268,9 +2285,30 @@ case class BoardState private (
         city.scienceQueue = scienceQueue.slice(1, scienceQueue.size);
         city.carriedScience = city.carriedScience - scienceCost;
         city.science = city.science + scienceCost;
+        if (nextScienceUnit.name == "salvager") {
+          val citySide = city.side
+          val salvagerBuildingsBuiltBySide = salvagerBuildingsBuilt.get(citySide).getOrElse(0)
+          citiesFounded += (citySide -> (salvagerBuildingsBuiltBySide + 1))
+        }
         buildBuildings(city);
       }
     }
+  }
+
+  private def totalResourcesOnLoc(tile: Tile): Double = {
+    return tile.food + tile.production + tile.science
+  }
+
+  private def capacity(salvager: Piece): Int = {
+    return 5 + salvagerBuildingsBuilt.get(salvager.side).getOrElse(0)
+  }
+
+  private def totalResourcesCarried(salvager: Piece): Double = {
+    return salvager.carriedFood + salvager.carriedProduction + salvager.carriedScience
+  }
+
+  private def remainingResourceSpace(salvager: Piece): Double = {
+    return capacity(salvager) - totalResourcesCarried(salvager)
   }
 
   private def getBaseAttackOfPiece(piece: Piece): Int = {
@@ -2360,14 +2398,16 @@ case class BoardState private (
     offsets.foreach {vec => 
       val loc = piece.loc + vec
       if (locIsValid(loc)) {
-        val piecesOnLoc = pieces(loc)
-        if (piecesOnLoc.length > 0) {
-          val target = piecesOnLoc.head
-          if (target.side != piece.side) {
-            val score = getScoreForAttack(piece, target)
-            if (score > bestScore) {
-              bestScore = score
-              bestTarget = Some(target)
+        if (getAttackOfPiece(piece) > 0) {
+          val piecesOnLoc = pieces(loc)
+          if (piecesOnLoc.length > 0) {
+            val target = piecesOnLoc.head
+            if (target.side != piece.side) {
+              val score = getScoreForAttack(piece, target)
+              if (score > bestScore) {
+                bestScore = score
+                bestTarget = Some(target)
+              }
             }
           }
         }
@@ -2381,6 +2421,19 @@ case class BoardState private (
     val (distanceToNearestFriendlyCity, distanceToNearestAnyCity) = distanceToNearestCity(side, loc);
     return (distanceToNearestFriendlyCity <= maximumFoundCityDistanceFromFriendlyCity(side)
             && distanceToNearestAnyCity >= minimumFoundCityDistanceFromCity())
+  }
+
+  def nearestFriendlyCity(side: Side, loc: Loc): Option[Piece] = {
+    var distanceToNearestFriendlyCity = 100.0
+    var nearestCity: Option[Piece] = None
+    cities.foreach(city => {
+      if (city.side == side) {
+        val distance = smartDistance(city.loc, loc)
+        distanceToNearestFriendlyCity = java.lang.Math.min(distanceToNearestFriendlyCity, distance)
+        nearestCity = Some(city)
+      }
+    })
+    return nearestCity
   }
 
   // Returns tuple of (distance to nearest friendly city, distance to nearest city) 
@@ -2447,6 +2500,36 @@ case class BoardState private (
     return bestTarget
   }
 
+  private def getBestTargetForSalvagerMoveTowards(piece: Piece): Loc = {
+    val resourceSpace = remainingResourceSpace(piece)
+    val offsets = tiles.topology.adjOffsetsRange3;    
+
+    if (resourceSpace > 0.01) {
+      var bestTarget: Loc = piece.target
+      var bestScore: Double = 0.0
+
+      offsets.foreach {vec =>
+        val loc = piece.loc + vec
+        if (locIsValid(loc)) {    
+            val potentialResourcesToGet = java.lang.Math.min(totalResourcesOnLoc(tiles(loc)), remainingResourceSpace(piece))
+            val score = potentialResourcesToGet / (tiles.topology.distance(loc, piece.target) + 1)
+            if (score > bestScore) {
+              bestScore = score
+              bestTarget = loc
+            }
+          }
+        }
+      return bestTarget
+    }
+    else {
+      val nearestCity = nearestFriendlyCity(piece.side, piece.loc)
+      nearestCity match {
+        case None => return piece.loc
+        case Some(city) => return city.loc
+      }
+    }
+  }
+
   private def moveTowards(piece: Piece, target: Loc): Boolean = {
     var bestLoc: Loc = piece.loc
     var bestDistance: Double = smartDistance(piece.loc, target)
@@ -2465,20 +2548,103 @@ case class BoardState private (
     return false
   }
 
+  private def civilianMoveTowards(piece: Piece, target: Loc): Boolean = {
+    var bestLoc: Loc = piece.loc
+    var bestDistance: Double = smartDistance(piece.loc, target)
+    var currentDistance: Double = 0.0
+    tiles.topology.forEachAdj(piece.loc) { loc =>
+      currentDistance = smartDistance(loc, target)
+      if (!locIsOccupiedByCityOrCivilian(loc) && currentDistance < bestDistance) {
+        bestDistance = currentDistance
+        bestLoc = loc
+      }
+    }
+    if (bestLoc != piece.loc) {
+      if (locIsOccupied(bestLoc)) {
+        val pieceAtBestLoc = pieces(bestLoc).head
+        doMovePieceToLoc(pieceAtBestLoc, piece.loc)
+        doMovePieceToLoc(piece, bestLoc)
+      } 
+      else {
+        doMovePieceToLoc(piece, bestLoc)       
+      }
+      return true 
+    }
+    return false
+  }
+
+  private def salvagerPickUpResourcesFromTile(salvager: Piece, tile: Tile): Unit = {
+    var remainingSpace = remainingResourceSpace(salvager)
+    if (remainingSpace > 0.01) {
+      val amountToPickUp = Math.min(remainingSpace, tile.science)
+      tile.science -= amountToPickUp
+      salvager.carriedScience += amountToPickUp
+      remainingSpace -= amountToPickUp
+    }
+    if (remainingSpace > 0.01) {
+      val amountToPickUp = Math.min(remainingSpace, tile.production)
+      tile.production -= amountToPickUp
+      salvager.carriedProduction += amountToPickUp
+      remainingSpace -= amountToPickUp
+    }
+    if (remainingSpace > 0.01) {
+      val amountToPickUp = Math.min(remainingSpace, tile.food)
+      tile.food -= amountToPickUp
+      salvager.carriedFood += amountToPickUp
+    }    
+  }
+
   private def attackMoveInner(piece: Piece, externalInfo: ExternalInfo, remainingMovement: Int): Unit = {
     if (remainingMovement > 0) {
-      if (!tryAttacking(piece, externalInfo)) {
-        val targetForMoveTowards = getBestTargetForMoveTowards(piece)
-        var targetLoc = piece.loc
-        targetForMoveTowards match {
-          case Some(target) =>
-            targetLoc = target.loc
-          case None =>
-            targetLoc = piece.target
+      if (getAttackOfPiece(piece) > 0) {
+        if (!tryAttacking(piece, externalInfo)) {
+          val targetForMoveTowards = getBestTargetForMoveTowards(piece)
+          var targetLoc = piece.loc
+          targetForMoveTowards match {
+            case Some(target) =>
+              targetLoc = target.loc
+            case None =>
+              targetLoc = piece.target
+          }
+          if (moveTowards(piece, targetLoc)) {
+            attackMoveInner(piece, externalInfo, remainingMovement - 1)
+          }
         }
-        if (moveTowards(piece, targetLoc)) {
-          attackMoveInner(piece, externalInfo, remainingMovement - 1)
+      }
+      else if (piece.baseStats.name == "salvager") {
+        val targetForMoveTowards = getBestTargetForSalvagerMoveTowards(piece)
+        civilianMoveTowards(piece, targetForMoveTowards) 
+        attackMoveInner(piece, externalInfo, remainingMovement - 1)
+      }
+    }
+    else if (piece.baseStats.name == "salvager") {
+      if (remainingResourceSpace(piece) <= 0.01) {
+        // Try to drop off
+        val nearestCity = nearestFriendlyCity(piece.side, piece.loc)
+          nearestCity match {
+            case None =>
+            case Some(city) => 
+              if (tiles.topology.distance(city.loc, piece.loc) <= 1) {
+                val carriedFood = piece.carriedFood
+                city.carriedFood += carriedFood
+                piece.carriedFood = 0.0
+                val carriedProduction = piece.carriedProduction
+                city.carriedProduction += carriedProduction
+                piece.carriedProduction = 0.0
+                val carriedScience = piece.carriedScience
+                city.carriedScience += carriedScience
+                piece.carriedScience = 0.0
+          }
         }
+      }
+      else {
+        // Try to pick up
+        val offsets = tiles.topology.adjOffsets;
+        var adjLocs = offsets.map({vec => piece.loc + vec})
+        adjLocs = adjLocs.filter(loc => locIsValid(loc))
+        adjLocs = adjLocs.sortWith(smartDistance(_, piece.loc) < smartDistance(_, piece.loc))
+        val adjTiles = adjLocs.map(loc => tiles(loc))
+        adjTiles.foreach(tile => salvagerPickUpResourcesFromTile(piece, tile))
       }
     }
   }

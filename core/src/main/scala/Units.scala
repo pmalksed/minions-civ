@@ -79,6 +79,7 @@ object Units {
     abilities : List[PieceAbility] = List.empty,
     productionCost: Int = 3,
     scienceCost: Int = 6,
+    notes: String = "",
   ) : PieceStats = {
     PieceStats(
       name = name,
@@ -111,6 +112,7 @@ object Units {
       abilities = abilities,
       productionCost = productionCost,
       scienceCost = scienceCost,
+      notes = notes,
     )
   }
 
@@ -319,16 +321,16 @@ object Units {
     spawnRange = Some(1),
   )
 
-  val initiate = createPieceStats(
-    name = "initiate",
-    cost = 3,
+  val salvager = createPieceStats(
+    name = "salvager",
+    cost = 1,
     rebate = 1,
-    moveRange = 2,
-    isLumbering = true,
+    moveRange = 1,
     attackRange = 1,
-    attackEffect = Some(Damage(2)),
-    defense = Some(3),
-    spawnRange = Some(1),
+    attackEffect = Some(Damage(0)),
+    defense = Some(5),
+    productionCost = 5,
+    scienceCost = 4,
   )
 
   val skeleton = createPieceStats(
@@ -619,7 +621,7 @@ object Units {
     battle_necromancer,
     zombie_necromancer,
     zombie, acolyte,
-    initiate, skeleton, serpent, bat, ghost, wight, haunt, shrieker,
+    salvager, skeleton, serpent, bat, ghost, wight, haunt, shrieker,
     fog, ooze, witch, vampire, mummy, lich, sorcerer, void, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
@@ -646,7 +648,7 @@ object Units {
 
   //Pieces that need to be unlocked, in order
   val techPieces: Array[PieceStats] = Array(
-    initiate,
+    salvager,
     skeleton,
     serpent,
     bat,
