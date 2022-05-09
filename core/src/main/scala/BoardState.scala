@@ -2288,7 +2288,7 @@ case class BoardState private (
         if (nextScienceUnit.name == "salvager") {
           val citySide = city.side
           val salvagerBuildingsBuiltBySide = salvagerBuildingsBuilt.get(citySide).getOrElse(0)
-          citiesFounded += (citySide -> (salvagerBuildingsBuiltBySide + 1))
+          salvagerBuildingsBuilt += (citySide -> (salvagerBuildingsBuiltBySide + 1))
         }
         buildBuildings(city);
       }
@@ -2623,16 +2623,18 @@ case class BoardState private (
         val nearestCity = nearestFriendlyCity(piece.side, piece.loc)
           nearestCity match {
             case None =>
-            case Some(city) => 
+            case Some(fakeCity) => 
+              val fakeCityId = fakeCity.id
+              val city = pieceById(fakeCityId)
               if (tiles.topology.distance(city.loc, piece.loc) <= 1) {
                 val carriedFood = piece.carriedFood
-                city.carriedFood += carriedFood
+                city.carriedFood = city.carriedFood + carriedFood
                 piece.carriedFood = 0.0
                 val carriedProduction = piece.carriedProduction
-                city.carriedProduction += carriedProduction
+                city.carriedProduction = city.carriedProduction + carriedProduction
                 piece.carriedProduction = 0.0
                 val carriedScience = piece.carriedScience
-                city.carriedScience += carriedScience
+                city.carriedScience = city.carriedScience + carriedScience
                 piece.carriedScience = 0.0
           }
         }
