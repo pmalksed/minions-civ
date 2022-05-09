@@ -59,8 +59,8 @@ object Units {
     attackRange : Int,
     attackRangeVsFlying: Int = 0,
     numAttacks : Int = 1,
-    cost : Int,
-    rebate : Int,
+    cost : Int = 1,
+    rebate : Int = 1,
     isNecromancer : Boolean = false,
     isFlying : Boolean = false,
     isLumbering : Boolean = false,
@@ -81,6 +81,9 @@ object Units {
     scienceCost: Int = 6,
     notes: String = "",
     notes2: String = "",
+    nimble: Boolean = false,
+    charge: Boolean = false,
+    retaliate: Boolean = false
   ) : PieceStats = {
     PieceStats(
       name = name,
@@ -115,6 +118,9 @@ object Units {
       scienceCost = scienceCost,
       notes = notes,
       notes2 = notes2,
+      nimble = nimble,
+      charge = charge,
+      retaliate = retaliate,
     )
   }
 
@@ -325,8 +331,6 @@ object Units {
 
   val salvager = createPieceStats(
     name = "salvager",
-    cost = 1,
-    rebate = 1,
     moveRange = 1,
     attackRange = 1,
     attackEffect = Some(Damage(0)),
@@ -337,48 +341,47 @@ object Units {
     notes2 = "Has 5 defense and 5 capacity by default and gets +1 of each per Salvager building you build.",
   )
 
-  val skeleton = createPieceStats(
-    name = "skeleton",
-    cost = 4,
-    rebate = 2,
+  val warrior = createPieceStats(
+    name = "warrior",
     moveRange = 1,
-    attackRange = 1,
-    attackEffect = Some(Damage(6)),
-    defense = Some(2),
-  )
-
-  val serpent = createPieceStats(
-    name = "serpent",
-    cost = 6,
-    rebate = 4,
-    moveRange = 2,
     attackRange = 1,
     attackEffect = Some(Damage(3)),
-    defense = Some(1),
-    isPersistent = true,
-    abilities = List(MoveFlood),
+    defense = Some(6),
+    productionCost = 2,
+    scienceCost = 2,
   )
 
-  val bat = createPieceStats(
-    name = "bat",
-    cost = 4,
-    rebate = 2,
-    moveRange = 3,
-    isFlying = true,
-    attackRange = 1,
-    attackEffect = Some(Damage(1)),
-    defense = Some(1),
-  )
-
-  val ghost = createPieceStats(
-    name = "ghost",
-    cost = 3,
-    rebate = 1,
+  val archer = createPieceStats(
+    name = "archer",
     moveRange = 1,
-    isFlying = true,
-    attackRange = 1,
-    attackEffect = Some(Damage(1)),
+    attackRange = 2,
+    attackEffect = Some(Damage(3)),
     defense = Some(4),
+    productionCost = 3,
+    scienceCost = 4,
+  )
+
+  val skirmisher = createPieceStats(
+    name = "skirmisher",
+    moveRange = 1,
+    charge = true,
+    nimble = true,
+    attackRange = 1,
+    attackEffect = Some(Damage(2)),
+    defense = Some(5),
+    productionCost = 1,
+    scienceCost = 5,
+  )
+
+  val legion = createPieceStats(
+    name = "legion",
+    moveRange = 1,
+    retaliate = true,
+    attackRange = 1,
+    attackEffect = Some(Damage(3)),
+    defense = Some(9),
+    productionCost = 5,
+    scienceCost = 6,
   )
 
   val wight = createPieceStats(
@@ -625,7 +628,7 @@ object Units {
     battle_necromancer,
     zombie_necromancer,
     zombie, acolyte,
-    salvager, skeleton, serpent, bat, ghost, wight, haunt, shrieker,
+    salvager, warrior, archer, skirmisher, legion, wight, haunt, shrieker,
     fog, ooze, witch, vampire, mummy, lich, sorcerer, void, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
@@ -653,10 +656,10 @@ object Units {
   //Pieces that need to be unlocked, in order
   val techPieces: Array[PieceStats] = Array(
     salvager,
-    skeleton,
-    serpent,
-    bat,
-    ghost,
+    warrior,
+    archer,
+    skirmisher,
+    legion,
     wight,
     haunt,
     shrieker,

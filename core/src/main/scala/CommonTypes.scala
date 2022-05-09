@@ -125,6 +125,10 @@ case class PieceStats(
   val abilities: List[PieceAbility],
   val notes: String,
   val notes2: String,
+
+  val nimble: Boolean,
+  val charge: Boolean,
+  val retaliate: Boolean,
 ) {
   def toFragments() : (PieceStatsFragment0,PieceStatsFragment1) = {
     (
@@ -162,7 +166,10 @@ case class PieceStats(
         isPersistent = isPersistent,
         isEldritch = isEldritch,
         isSoulbound = isSoulbound,
-        isWailing = isWailing
+        isWailing = isWailing,
+        nimble = nimble,
+        charge = charge,
+        retaliate = retaliate,
       )
     )
   }
@@ -203,7 +210,10 @@ case class PieceStatsFragment1 (
   val isPersistent: Boolean,
   val isEldritch: Boolean,
   val isSoulbound: Boolean,
-  val isWailing: Boolean
+  val isWailing: Boolean,
+  val nimble: Boolean,
+  val charge: Boolean,
+  val retaliate: Boolean,  
 )
 
 object PieceStatsOfFragments {
@@ -240,7 +250,10 @@ object PieceStatsOfFragments {
       isPersistent = f1.isPersistent,
       isEldritch = f1.isEldritch,
       isSoulbound = f1.isSoulbound,
-      isWailing = f1.isWailing
+      isWailing = f1.isWailing,
+      nimble = f1.nimble,
+      charge = f1.charge,
+      retaliate = f1.retaliate,
     )
   }
 }

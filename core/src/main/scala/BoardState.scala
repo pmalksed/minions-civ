@@ -2384,11 +2384,33 @@ case class BoardState private (
     return totalScore
   }
 
+  private def isRanged(piece: Piece): Boolean = {
+    return piece.baseStats.attackRange > 1
+  }
+
+  private def getRetaliateAttackEffect(piece: Piece, target: Piece): TargetEffect = {
+    if (target.baseStats.retaliate && !isRanged(piece)) {
+      return Damage(getDamageDealtToTarget(target, piece))
+    }
+    return Damage(0)
+  }
+
+  private def getAttackEffect(piece: Piece, target: Piece): TargetEffect = {
+    return Damage(getDamageDealtToTarget(piece, target))
+  }
+
+  private def getDamageDealtToTarget(piece: Piece, target: Piece): Int = {
+    if (isRanged(piece) && target.baseStats.nimble) {
+      return getAttackOfPiece(piece) / 2
+    }
+    return getAttackOfPiece(piece)
+  }
+
   private def getScoreForAttack(piece: Piece, target: Piece): Double = {
     var totalScore: Double = 0.0
 
     // Increase the score by the amount of the damage you would deal
-    totalScore = totalScore + getScoreForDamageToTarget(getAttackOfPiece(piece), target)
+    totalScore = totalScore + getScoreForDamageToTarget(getDamageDealtToTarget(piece, target), target)
 
     return totalScore
   }
@@ -2629,6 +2651,9 @@ case class BoardState private (
         attackMoveInner(piece, externalInfo, remainingMovement - 1)
       }
     }
+    else if (piece.baseStats.charge) {
+      val _ = tryAttacking(piece, externalInfo)
+    }
     else if (piece.baseStats.name == "salvager") {
       if (remainingResourceSpace(piece) <= 0.01) {
         // Try to drop off
@@ -2667,9 +2692,10 @@ case class BoardState private (
     val targetForAttack = getBestTargetForAttack(piece)
     targetForAttack match {
       case Some(target) =>
-        val attackerStats = piece.curStats(this)
-        val attackEffect = attackerStats.attackEffect.get
+        val attackEffect = getAttackEffect(piece, target)
+        val retaliateAttackEffect = getRetaliateAttackEffect(piece, target)
         applyEffect(attackEffect,target,externalInfo)
+        applyEffect(retaliateAttackEffect,piece,externalInfo)
         return true
       case None => 
         return false
