@@ -2678,7 +2678,7 @@ case class BoardState private (
       }
       else {
         // Try to pick up
-        val offsets = tiles.topology.adjOffsets;
+        val offsets = tiles.topology.adjOffsets ::: List(Vec(0,0));
         var adjLocs = offsets.map({vec => piece.loc + vec})
         adjLocs = adjLocs.filter(loc => locIsValid(loc))
         adjLocs = adjLocs.sortWith(smartDistance(_, piece.loc) < smartDistance(_, piece.loc))
