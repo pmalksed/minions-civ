@@ -1056,12 +1056,12 @@ case class BoardState private (
 
   //Directly spawn a piece if it possible to do so. Exposed for use to set up initial boards.
   def spawnPieceInitial(side: Side, pieceStats: PieceStats, loc: Loc, target: Loc, food: Double, 
-    production: Double, science: Double): Try[Piece] = {
+    production: Double, science: Double, extraHealth: Int = 0): Try[Piece] = {
 
     trySpawnIsLegal(side, pieceStats, loc) match {
       case Failure(err) => Failure(err)
       case Success(()) =>
-        val piece = spawnPieceInternal(side,pieceStats,loc,target,food,production,science).get
+        val piece = spawnPieceInternal(side,pieceStats,loc,target,food,production,science,extraHealth=extraHealth).get
         refreshPieceForStartOfTurn(piece)
         Success(piece)
     }
@@ -2171,7 +2171,7 @@ case class BoardState private (
 
   //Does check for legality of spawn, returning the piece on success
   def spawnPieceInternal(spawnSide: Side, spawnStats: PieceStats, spawnLoc: Loc, target: Loc, food: Double, 
-    production: Double, science: Double, cityFoundingSlack: Int = 0): Option[Piece] = {
+    production: Double, science: Double, cityFoundingSlack: Int = 0, extraHealth: Int = 0): Option[Piece] = {
 
     if(!spawnIsLegal(spawnSide, spawnStats, spawnLoc))
       None
@@ -2184,6 +2184,7 @@ case class BoardState private (
       nextPieceId += 1
       piecesSpawnedThisTurn += (piece.spawnedThisTurn.get -> piece)
       numPiecesSpawnedThisTurnAt += (spawnLoc -> (nthAtLoc+1))
+      piece.damage -= extraHealth
       if (spawnStats.name == "city") {
         cities = cities :+ piece
         val citiesFoundedBySide = citiesFounded.get(spawnSide).getOrElse(0)
@@ -2239,6 +2240,10 @@ case class BoardState private (
     var bestLoc: Option[Loc] = None
     var bestDistance: Double = 100.0
     var currentDistance: Double = 0.0
+    var extraHealth = 0
+    if (unit.name == "salvager") {
+      extraHealth = salvagerBuildingsBuilt.get(city.side).getOrElse(0)
+    }
     tiles.topology.forEachAdjRange2(city.loc) { loc =>
       currentDistance = tiles.topology.distance(city.loc, loc) + 0.01 * smartDistance(city.target, loc)
       if (!locIsOccupied(loc) && currentDistance < bestDistance) {
@@ -2249,7 +2254,8 @@ case class BoardState private (
     bestLoc match {
       case None => return false
       case Some(locToSpawnOn) => 
-        spawnPieceInitial(city.side,unit,locToSpawnOn,city.target, foodCost, productionCost, 0.0)
+        spawnPieceInitial(city.side,unit,locToSpawnOn,city.target, foodCost, productionCost, 0.0, 
+          extraHealth=extraHealth)
         return true
     }
   }
@@ -2289,6 +2295,12 @@ case class BoardState private (
           val citySide = city.side
           val salvagerBuildingsBuiltBySide = salvagerBuildingsBuilt.get(citySide).getOrElse(0)
           salvagerBuildingsBuilt += (citySide -> (salvagerBuildingsBuiltBySide + 1))
+          pieceById.keySet.foreach(pieceId => {
+            val piece = pieceById(pieceId)
+            if (piece.baseStats.name == "salvager" && piece.side == city.side) {
+              piece.damage -= 1
+            }
+          })
         }
         buildBuildings(city);
       }
