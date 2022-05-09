@@ -499,6 +499,8 @@ object Drawing {
               show("Attack range: " + stats.attackRange + " hexes" + vsFlyingStr)
             }
           }
+          show(stats.notes)
+          show(stats.notes2)
           if(stats.isFlying) {
             show("Flying (move over water or enemies)")
           }

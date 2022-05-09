@@ -124,6 +124,7 @@ case class PieceStats(
   //Abilities that a piece can use by discarding a spell
   val abilities: List[PieceAbility],
   val notes: String,
+  val notes2: String,
 ) {
   def toFragments() : (PieceStatsFragment0,PieceStatsFragment1) = {
     (
@@ -145,6 +146,7 @@ case class PieceStats(
         productionCost = productionCost,
         scienceCost = scienceCost,
         notes = notes,
+        notes2 = notes2,
       ),
       PieceStatsFragment1(
         swarmMax = swarmMax,
@@ -185,6 +187,7 @@ case class PieceStatsFragment0 (
   val productionCost: Int,
   val scienceCost: Int,
   val notes: String,
+  val notes2: String,
 )
 case class PieceStatsFragment1 (
   val swarmMax: Int,
@@ -223,6 +226,7 @@ object PieceStatsOfFragments {
       productionCost = f0.productionCost,
       scienceCost = f0.scienceCost,
       notes = f0.notes,
+      notes2 = f0.notes2,
       swarmMax = f1.swarmMax,
       spawnRange = f1.spawnRange,
       extraSouls = f1.extraSouls,

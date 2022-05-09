@@ -80,6 +80,7 @@ object Units {
     productionCost: Int = 3,
     scienceCost: Int = 6,
     notes: String = "",
+    notes2: String = "",
   ) : PieceStats = {
     PieceStats(
       name = name,
@@ -113,6 +114,7 @@ object Units {
       productionCost = productionCost,
       scienceCost = scienceCost,
       notes = notes,
+      notes2 = notes2,
     )
   }
 
@@ -331,6 +333,8 @@ object Units {
     defense = Some(5),
     productionCost = 5,
     scienceCost = 4,
+    notes = "Picks up resources from dead units and carries them to your cities to be recycled.",
+    notes2 = "Has 5 defense and 5 capacity by default and gets +1 of each per Salvager building you build.",
   )
 
   val skeleton = createPieceStats(
