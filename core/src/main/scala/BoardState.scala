@@ -279,6 +279,7 @@ object Piece {
       actState = DoneActing,
       hasMoved = false,
       hasAttacked = nthAtLoc > 0,
+      spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
       food = 0,
       production = 0,
       science = 0,
@@ -290,6 +291,7 @@ object Piece {
       buildings = List(),
       population = 0,
       focus = "food",
+      modifiers = (0, 0),
     )
   }
   def createInternal(side: Side, pieceStats: PieceStats, id: Int, loc: Loc, nthAtLoc: Int, target: Loc,
@@ -305,6 +307,7 @@ object Piece {
       actState = DoneActing,
       hasMoved = false,
       hasAttacked = nthAtLoc > 0,
+      spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
       food = food,
       production = production,
       science = science,
@@ -315,7 +318,8 @@ object Piece {
       scienceQueue = List(),
       buildings = List(),
       population = 0,
-      focus = "food",      
+      focus = "food",  
+      modifiers = (0, 0),
     )
   }  
 }
@@ -334,6 +338,8 @@ case class Piece (
   //Indicates what this piece actually DID do this turn so far.
   var hasMoved: Boolean,
   var hasAttacked: Boolean,
+  //If the piece was newly spawned this turn
+  var spawnedThisTurn: Option[SpawnedThisTurn],
   var food: Double,
   var production: Double,
   var science: Double,
@@ -347,6 +353,9 @@ case class Piece (
   var buildings: List[PieceStats],
   var population: Int,
   var focus: String,
+
+  // Modifiers are poison, 
+  var modifiers: (Int, Int),
 ) {
   def copy() = {
     new Piece(
@@ -360,6 +369,7 @@ case class Piece (
       hasMoved = hasMoved,
       actState = actState,
       hasAttacked = hasAttacked,
+      spawnedThisTurn = spawnedThisTurn,
       food = food,
       production = production,
       science = science,
@@ -371,6 +381,7 @@ case class Piece (
       buildings = buildings,
       population = population,
       focus = focus,
+      modifiers = modifiers,
     )
   }
 
@@ -1041,7 +1052,6 @@ case class BoardState private (
       case Failure(err) => Failure(err)
       case Success(()) =>
         val piece = spawnPieceInternal(side,pieceStats,loc).get
-        refreshPieceForStartOfTurn(piece)
         Success(piece)
     }
   }
@@ -1054,7 +1064,6 @@ case class BoardState private (
       case Failure(err) => Failure(err)
       case Success(()) =>
         val piece = spawnPieceInternal(side,pieceStats,loc,target,food,production,science,extraHealth=extraHealth).get
-        refreshPieceForStartOfTurn(piece)
         Success(piece)
     }
   }
@@ -1534,7 +1543,7 @@ case class BoardState private (
       else {
         val spawnerStats = piece.curStats(this)
         if((!spawnStats.isEldritch || distance > 1) && (spawnerStats.spawnRange.forall { d => d < distance })) false
-        else if(spawnerStats.isWailing && piece.hasAttacked) false
+        else if(spawnerStats.isWailing) false
         else if(piece.actState >= DoneActing) false
         else true
       }
@@ -1568,7 +1577,7 @@ case class BoardState private (
 
   private def killAttackingWailingUnits(externalInfo: ExternalInfo, otherThan: Option[PieceSpec] = None): Unit = {
     val attackedWailings = pieceById.iterator.filter { case (_,piece) =>
-      piece.curStats(this).isWailing && piece.hasAttacked && otherThan.forall { spec => piece.spec != spec }
+      piece.curStats(this).isWailing && otherThan.forall { spec => piece.spec != spec }
     }
     attackedWailings.toList.foreach { case (_,piece) => killPiece(piece, externalInfo) }
   }
@@ -1845,7 +1854,6 @@ case class BoardState private (
         val attackerStats = attacker.curStats(this)
         val attackEffect = attackerStats.attackEffect.get
         applyEffect(attackEffect,target,externalInfo)
-        attacker.hasAttacked = true
         attacker.actState = attacker.actState match {
           case Moving(_) => Attacking(1)
           case Attacking(n) => Attacking(n+1)
@@ -2295,6 +2303,11 @@ case class BoardState private (
     }
   }
 
+  private def increasePoisonOfPiece(piece: Piece, extraPoison: Int): Unit = {
+    val (poison, other) = piece.modifiers
+    piece.modifiers = (poison + extraPoison, other)
+  }
+
   private def totalResourcesOnLoc(tile: Tile): Double = {
     return tile.food + tile.production + tile.science
   }
@@ -2376,11 +2389,11 @@ case class BoardState private (
     return piece.baseStats.attackRange > 1
   }
 
-  private def getRetaliateAttackEffect(piece: Piece, target: Piece): TargetEffect = {
+  private def getRetaliateAttackEffect(piece: Piece, target: Piece): (TargetEffect, Boolean) = {
     if (target.baseStats.retaliate && !isRanged(piece)) {
-      return Damage(getDamageDealtToTarget(target, piece))
+      return (Damage(getDamageDealtToTarget(target, piece)), true)
     }
-    return Damage(0)
+    return (Damage(0), false)
   }
 
   private def getAttackEffect(piece: Piece, target: Piece): TargetEffect = {
@@ -2681,9 +2694,15 @@ case class BoardState private (
     targetForAttack match {
       case Some(target) =>
         val attackEffect = getAttackEffect(piece, target)
-        val retaliateAttackEffect = getRetaliateAttackEffect(piece, target)
+        val (retaliateAttackEffect, didRetaliate) = getRetaliateAttackEffect(piece, target)
         applyEffect(attackEffect,target,externalInfo)
         applyEffect(retaliateAttackEffect,piece,externalInfo)
+        if (piece.baseStats.poisonous > 0) {
+          increasePoisonOfPiece(target, piece.baseStats.poisonous)
+        }
+        if (target.baseStats.poisonous > 0 && didRetaliate) {
+          increasePoisonOfPiece(piece, target.baseStats.poisonous)
+        }
         return true
       case None => 
         return false
@@ -2716,10 +2735,9 @@ case class BoardState private (
     }
   }
 
-  private def refreshPieceForStartOfTurn(piece: Piece): Unit = {
+  private def refreshPieceForStartOfTurn(piece: Piece, externalInfo: ExternalInfo): Unit = {
     piece.actState = Moving(0)
     piece.hasMoved = false
-    piece.hasAttacked = false
 
     if (piece.baseStats.name == "city") {
       piece.damage = (piece.damage - 1).max(0);
@@ -2751,10 +2769,16 @@ case class BoardState private (
         piece.carriedProduction = piece.carriedProduction * Constants.PRODUCTION_DECAY_RATE
       }
     }
+    else {
+      // Not a city
+      val poison = piece.modifiers._1
+      val damageFromPoison = Damage(poison)
+      applyEffect(damageFromPoison, piece, externalInfo)
+    }
   }
 
   private def refreshPieceForStartOfTurnWithAttackMove(piece: Piece, externalInfo: ExternalInfo): Unit = {
-    refreshPieceForStartOfTurn(piece)
+    refreshPieceForStartOfTurn(piece, externalInfo)
     attackMove(piece, externalInfo)
   }
 }

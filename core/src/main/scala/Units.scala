@@ -83,7 +83,8 @@ object Units {
     notes2: String = "",
     nimble: Boolean = false,
     charge: Boolean = false,
-    retaliate: Boolean = false
+    retaliate: Boolean = false,
+    poisonous: Int = 0,
   ) : PieceStats = {
     PieceStats(
       name = name,
@@ -121,6 +122,7 @@ object Units {
       nimble = nimble,
       charge = charge,
       retaliate = retaliate,
+      poisonous = poisonous,
     )
   }
 
@@ -384,16 +386,16 @@ object Units {
     scienceCost = 6,
   )
 
-  val wight = createPieceStats(
-    name = "wight",
-    cost = 4,
-    rebate = 1,
-    moveRange = 0,
+  val snake = createPieceStats(
+    name = "snake",
+    moveRange = 1,
     attackRange = 2,
     attackEffect = Some(Damage(1)),
+    poisonous = 1,
     numAttacks = 5,
-    defense = Some(3),
-    canBlink = true,
+    defense = Some(4),
+    productionCost = 6,
+    scienceCost = 8,
   )
 
   val haunt = createPieceStats(
@@ -628,7 +630,7 @@ object Units {
     battle_necromancer,
     zombie_necromancer,
     zombie, acolyte,
-    salvager, warrior, archer, skirmisher, legion, wight, haunt, shrieker,
+    salvager, warrior, archer, skirmisher, legion, snake, haunt, shrieker,
     fog, ooze, witch, vampire, mummy, lich, sorcerer, void, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
@@ -660,7 +662,7 @@ object Units {
     archer,
     skirmisher,
     legion,
-    wight,
+    snake,
     haunt,
     shrieker,
     fog,
