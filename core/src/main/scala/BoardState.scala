@@ -278,8 +278,7 @@ object Piece {
       damage = 0,
       actState = DoneActing,
       hasMoved = false,
-      hasAttacked = false,
-      spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
+      hasAttacked = nthAtLoc > 0,
       food = 0,
       production = 0,
       science = 0,
@@ -305,8 +304,7 @@ object Piece {
       damage = 0,
       actState = DoneActing,
       hasMoved = false,
-      hasAttacked = false,
-      spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
+      hasAttacked = nthAtLoc > 0,
       food = food,
       production = production,
       science = science,
@@ -336,8 +334,6 @@ case class Piece (
   //Indicates what this piece actually DID do this turn so far.
   var hasMoved: Boolean,
   var hasAttacked: Boolean,
-  //If the piece was newly spawned this turn
-  var spawnedThisTurn: Option[SpawnedThisTurn],
   var food: Double,
   var production: Double,
   var science: Double,
@@ -364,7 +360,6 @@ case class Piece (
       hasMoved = hasMoved,
       actState = actState,
       hasAttacked = hasAttacked,
-      spawnedThisTurn = spawnedThisTurn,
       food = food,
       production = production,
       science = science,
@@ -388,10 +383,7 @@ case class Piece (
 
   //Get a spec that refers to this piece and can do so stably across undos or actions.
   def spec: PieceSpec = {
-    spawnedThisTurn match {
-      case None => StartedTurnWithID(id)
-      case Some(spawnedThisTurn) => spawnedThisTurn
-    }
+    StartedTurnWithID(id)
   }
 }
 
@@ -1082,8 +1074,7 @@ case class BoardState private (
     spec match {
       case StartedTurnWithID(pieceId) =>
         pieceById.get(pieceId).flatMap { piece =>
-          if(piece.spawnedThisTurn.nonEmpty) None
-          else Some(piece)
+          Some(piece)
         }
       case (spawnedThisTurn: SpawnedThisTurn) =>
         piecesSpawnedThisTurn.get(spawnedThisTurn)
@@ -2141,7 +2132,6 @@ case class BoardState private (
   private def removeFromBoard(piece: Piece): Unit = {
     pieces(piece.loc) = pieces(piece.loc).filterNot { p => p.id == piece.id }
     pieceById = pieceById - piece.id
-    piece.spawnedThisTurn.foreach { spawnedThisTurn => piecesSpawnedThisTurn = piecesSpawnedThisTurn - spawnedThisTurn }
   }
 
   private def addReinforcementInternal(side: Side, pieceName: PieceName): Unit = {
@@ -2158,7 +2148,6 @@ case class BoardState private (
       pieces(spawnLoc) = pieces(spawnLoc) :+ piece
       pieceById += (piece.id -> piece)
       nextPieceId += 1
-      piecesSpawnedThisTurn += (piece.spawnedThisTurn.get -> piece)
       numPiecesSpawnedThisTurnAt += (spawnLoc -> (nthAtLoc+1))     
       if (spawnStats.name == "city") {
         cities = cities :+ piece
@@ -2182,7 +2171,6 @@ case class BoardState private (
       pieces(spawnLoc) = pieces(spawnLoc) :+ piece
       pieceById += (piece.id -> piece)
       nextPieceId += 1
-      piecesSpawnedThisTurn += (piece.spawnedThisTurn.get -> piece)
       numPiecesSpawnedThisTurnAt += (spawnLoc -> (nthAtLoc+1))
       piece.damage -= extraHealth
       if (spawnStats.name == "city") {
@@ -2732,9 +2720,6 @@ case class BoardState private (
     piece.actState = Moving(0)
     piece.hasMoved = false
     piece.hasAttacked = false
-
-    piece.spawnedThisTurn.foreach { spawnedThisTurn => piecesSpawnedThisTurn = piecesSpawnedThisTurn - spawnedThisTurn }
-    piece.spawnedThisTurn = None
 
     if (piece.baseStats.name == "city") {
       piece.damage = (piece.damage - 1).max(0);
