@@ -2723,10 +2723,10 @@ case class BoardState private (
         val (retaliateAttackEffect, didRetaliate) = getRetaliateAttackEffect(piece, target)
         applyEffect(attackEffect,target,externalInfo)
         applyEffect(retaliateAttackEffect,piece,externalInfo)
-        if (piece.baseStats.poisonous > 0) {
+        if (piece.baseStats.poisonous > 0 && target.baseStats.name != "city") {
           increasePoisonOfPiece(target, piece.baseStats.poisonous)
         }
-        if (target.baseStats.poisonous > 0 && didRetaliate) {
+        if (target.baseStats.poisonous > 0 && didRetaliate && piece.baseStats.name != "city") {
           increasePoisonOfPiece(piece, target.baseStats.poisonous)
         }
         return true
