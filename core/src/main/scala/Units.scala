@@ -86,6 +86,7 @@ object Units {
     retaliate: Boolean = false,
     poisonous: Int = 0,
     robust: Int = 0,
+    leadership: Boolean = false,
   ) : PieceStats = {
     PieceStats(
       name = name,
@@ -125,6 +126,7 @@ object Units {
       retaliate = retaliate,
       poisonous = poisonous,
       robust = robust,
+      leadership = leadership,
     )
   }
 
@@ -435,20 +437,16 @@ object Units {
     notes = "Deals triple damage to cities"
   )
 
-  val ooze = createPieceStats(
-    name = "ooze",
-    shortDisplayName = "Ooze",
-    displayName = "Ooze",
-    cost = 3,
-    rebate = 3,
+  val sergeant = createPieceStats(
+    name = "sergeant",
     moveRange = 1,
     attackRange = 1,
-    attackEffect = Some(Kill),
-    defense = Some(2),
-    spawnRange = Some(1),
-    swarmMax = 3,
-    isLumbering = true,
-    canHurtNecromancer = false,
+    attackEffect = Some(Damage(2)),
+    defense = Some(7),
+    leadership = true,
+    productionCost = 7,
+    scienceCost = 6,
+    notes = "Nearby friendly units get +1 attack"
   )
 
   val sorcerer = createPieceStats(
@@ -634,7 +632,7 @@ object Units {
     zombie_necromancer,
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
-    trebuchet, ooze, witch, vampire, mummy, lich, sorcerer, void, hell_hound,
+    trebuchet, sergeant, witch, vampire, mummy, lich, sorcerer, void, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
 
@@ -669,7 +667,7 @@ object Units {
     horseman,
     berserker,
     trebuchet,
-    ooze,
+    sergeant,
     sorcerer,
     witch,
     vampire,

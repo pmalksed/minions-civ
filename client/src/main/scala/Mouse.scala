@@ -499,11 +499,11 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
 
       case MouseTerrain(_,loc) => 
         if ((curTarget == dragTarget) && undo) {
-          mouseState.selectedCity match {
+          mouseState.selectedPiece match {
             case None => ()
-            case Some(selectedCity) => 
+            case Some(selectedPiece) => 
               def makeAction() = {
-                SetTarget(selectedCity.id,loc)
+                SetTarget(selectedPiece.id,loc)
               }
               mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
             }
@@ -604,11 +604,11 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
       case MouseTile(loc) =>
         if(undo) (
           if ((curTarget == dragTarget)) {
-            mouseState.selectedCity match {
+            mouseState.selectedPiece match {
               case None => ()
-              case Some(selectedCity) => 
+              case Some(selectedPiece) => 
                 def makeAction() = {
-                  SetTarget(selectedCity.id,loc)
+                  SetTarget(selectedPiece.id,loc)
                 }
                 mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
               }

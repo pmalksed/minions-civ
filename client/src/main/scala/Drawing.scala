@@ -517,8 +517,14 @@ object Drawing {
           if (poisonous > 1) {
             maybeS = "s"
           }
-          if (stats.poisonous > 0) {
-            show("Poisonous (each attack inflicts " + poisonous + " stack" + maybeS + " of poison on the target)")
+          if (poisonous > 0) {
+            show("Poisonous " + poisonous + " (each attack inflicts " + poisonous + 
+              " stack" + maybeS + " of poison on the target)")
+          }
+          val robust = stats.robust
+          if (robust > 0) {
+            show("Robust " + robust + " (all damage sources, incl. poison, inflict " + robust + 
+              " less damage)")
           }
           if(stats.isFlying) {
             show("Flying (move over water or enemies)")
@@ -1083,11 +1089,15 @@ object Drawing {
       }
     }
 
-    def getAttackStringAndColor(baseStats: PieceStats, curStats: PieceStats, actState: ActState): (String,String) = {
+    def getAttackStringAndColor(baseStats: PieceStats, curStats: PieceStats, actState: ActState, 
+                                board: BoardState, piece: Piece): (String,String) = {
       val effectStr = (curStats.attackEffect, baseStats.attackEffect) match {
         case (None,None) => ""
         case (None,Some(_)) => "A-"
-        case (Some(Damage(n)),_) => "A" + n
+        case (Some(Damage(_)),_) => {
+          val attackOfPiece = board.getAttackOfPiece(piece)
+          "A" + attackOfPiece
+        }
         case (Some(Unsummon),_) => "A*"
         case (Some(Kill),_) => "AK"
         case (Some(_),_) => "A!"
@@ -1239,7 +1249,7 @@ object Drawing {
         strokeHex(loc, "magenta", scale, lineWidth=0.4, alpha = alpha)
       }
 
-      val (aStr,aColor) = getAttackStringAndColor(baseStats,curStats,piece.actState)
+      val (aStr,aColor) = getAttackStringAndColor(baseStats,curStats,piece.actState,board,piece)
       val (dStr,dColor) = getDefenseStringAndColor(baseStats,curStats,piece.damage)
       val (rStr,rColor) = getRangeStringAndColor(baseStats,curStats)
       val (mStr,mColor) = getMoveStringAndColor(baseStats,curStats,piece.actState)

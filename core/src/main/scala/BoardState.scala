@@ -860,6 +860,14 @@ case class BoardState private (
       refreshPieceForStartOfTurnWithAttackMove(piece, externalInfo)
       piece.modsWithDuration = piece.modsWithDuration.flatMap(_.decay)
     }
+
+    // Set targets from leadership units; must happen after all the moving is finished
+    pieceById.values.foreach { piece =>
+      if (piece.baseStats.leadership) {
+        setTargetsOfFollowers(piece)
+      }
+    }
+
     //Decay tile modifiers
     tiles.transform { tile =>
       if(tile.modsWithDuration.isEmpty)
@@ -991,23 +999,25 @@ case class BoardState private (
       // Guarantee that starting city yields from surrounding hexes are 2/2/2
       var counter = 0
       topology.forEachAdj(startLoc) { loc =>
-        val tile = tiles(loc)
-        if (counter % 3 == 0) {
-          tile.foodYield = 1
-          tile.productionYield = 0
-          tile.scienceYield = 0
+        if (locIsValid(loc)) {
+          val tile = tiles(loc)
+          if (counter % 3 == 0) {
+            tile.foodYield = 1
+            tile.productionYield = 0
+            tile.scienceYield = 0
+          }
+          if (counter % 3 == 1) {
+            tile.foodYield = 0
+            tile.productionYield = 1
+            tile.scienceYield = 0
+          }
+          if (counter % 3 == 2) {
+            tile.foodYield = 0
+            tile.productionYield = 0
+            tile.scienceYield = 1
+          }
+          counter += 1
         }
-        if (counter % 3 == 1) {
-          tile.foodYield = 0
-          tile.productionYield = 1
-          tile.scienceYield = 0
-        }
-        if (counter % 3 == 2) {
-          tile.foodYield = 0
-          tile.productionYield = 0
-          tile.scienceYield = 1
-        }
-        counter += 1
       }      
     }
 
@@ -2041,9 +2051,14 @@ case class BoardState private (
             }
           }
         }
-      case SetTarget(selectedCityId, target) =>
-        val selectedCity = pieceById(selectedCityId)
-        selectedCity.target = target
+      case SetTarget(selectedPieceId, target) =>
+        val selectedPiece = pieceById(selectedPieceId)
+        if (selectedPiece.baseStats.name == "city" || selectedPiece.baseStats.leadership) {
+          selectedPiece.target = target
+          if (selectedPiece.baseStats.leadership) {
+            setTargetsOfFollowers(selectedPiece)
+          }
+        } 
       case SetFocus(selectedCityId, focus) =>
         val selectedCity = pieceById(selectedCityId)
         selectedCity.focus = focus
@@ -2066,6 +2081,20 @@ case class BoardState private (
       val _ = spawnPieceInternal(side, externalInfo.pieceMap("city"), loc, loc, 0, 0, Constants.SCIENCE_FOR_NEW_CITY, 
         cityFoundingSlack=cityFoundingSlack)
     }
+  }
+
+  private def setTargetsOfFollowers(leader: Piece): Unit = {
+    topology.forEachAdjRange2(leader.loc) { loc =>
+      if (locIsValid(loc)) {
+        val piecesOnLoc = pieces(loc)
+        if (piecesOnLoc.length > 0) {
+          val pieceOnLoc = piecesOnLoc.head
+          if (pieceOnLoc.side == leader.side) {
+            pieceOnLoc.target = leader.target
+          }
+        }
+      }
+    }  
   }
 
   private def applyEffect(effect: TargetEffect, piece: Piece, externalInfo: ExternalInfo): Unit = {
@@ -2364,8 +2393,30 @@ case class BoardState private (
     return false
   }
 
-  private def getAttackOfPiece(piece: Piece): Int = {
-    return getBaseAttackOfPiece(piece)
+  // (isSergeant, blank)
+  private def getModifiersInRange(piece: Piece): (Boolean, Boolean) = {
+    var isSergeant = false
+    topology.forEachAdjRange2(piece.loc) { loc =>
+      if (locIsValid(loc)) {
+        val piecesOnLoc = pieces(loc)
+        if (piecesOnLoc.length > 0) {
+          val pieceOnLoc = piecesOnLoc.head
+          if (pieceOnLoc.baseStats.name == "sergeant" && pieceOnLoc.side == piece.side) {
+            isSergeant = true
+          }
+        }
+      }
+    }
+    return (isSergeant, false)
+  }
+
+  def getAttackOfPiece(piece: Piece): Int = {
+    val (isSergeant, _) = getModifiersInRange(piece)
+    var attack = getBaseAttackOfPiece(piece)
+    if (isSergeant) {
+      attack += 1
+    }
+    return attack
   }
 
   private def getRemainingHealthOfPiece(piece: Piece): Int = {
@@ -2788,7 +2839,9 @@ case class BoardState private (
       // Collect yields
       tiles.topology.forEachAdj(piece.loc) {
         loc => {
-          harvestYields(piece, tiles(loc))
+          if (locIsValid(loc)) {
+            harvestYields(piece, tiles(loc))
+          }
         }
       }
       harvestYields(piece, tiles(piece.loc))
