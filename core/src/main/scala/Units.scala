@@ -394,8 +394,8 @@ object Units {
     poisonous = 1,
     numAttacks = 5,
     defense = Some(4),
-    productionCost = 6,
-    scienceCost = 8,
+    productionCost = 4,
+    scienceCost = 6,
   )
 
   val haunt = createPieceStats(

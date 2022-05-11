@@ -1244,7 +1244,7 @@ object Drawing {
           text(mStr, PixelLoc.ofHexLoc(loc,gridSize) + PixelVec(10.0,12.0), mColor, alpha = alpha)
           val poison = piece.modifiers._1
           if (poison > 0) {
-            text("" + poison, PixelLoc.ofHexLoc(loc, gridSize), "green", alpha = alpha)
+            text("" + poison, PixelLoc.ofHexLoc(loc,gridSize) + PixelVec(0.0,18.0), "green", alpha = alpha)
           }
         }
       }
