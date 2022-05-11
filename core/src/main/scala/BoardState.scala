@@ -2433,7 +2433,29 @@ case class BoardState private (
     return (piece.food + piece.production) / (getRemainingHealthOfPiece(piece))
   }
 
-  private def getScoreForDamageToTarget(damage: Int, target: Piece): Double ={
+  private def stealResources(piece: Piece, target: Piece, amount: Double) = {
+    var remainingAmountToSteal = amount
+    val tile = tiles(piece.loc)
+    if (remainingAmountToSteal > 0.01) {
+      val amountToSteal = Math.min(remainingAmountToSteal, target.carriedScience)
+      tile.science += amountToSteal
+      target.carriedScience -= amountToSteal
+      remainingAmountToSteal -= amountToSteal
+    }
+    if (remainingAmountToSteal > 0.01) {
+      val amountToSteal = Math.min(remainingAmountToSteal, target.carriedProduction)
+      tile.production += amountToSteal
+      target.carriedProduction -= amountToSteal
+      remainingAmountToSteal -= amountToSteal
+    }
+    if (remainingAmountToSteal > 0.01) {
+      val amountToSteal = Math.min(remainingAmountToSteal, target.carriedFood)
+      tile.food += amountToSteal
+      target.carriedFood -= amountToSteal
+    }        
+  }
+
+  private def getScoreForDamageToTarget(damage: Int, target: Piece): Double = {
     var totalScore: Double = 0.0
     val targetRemainingHealth = getRemainingHealthOfPiece(target)
     val damageWouldBeDealt = java.lang.Math.min(damage, targetRemainingHealth)
@@ -2456,6 +2478,13 @@ case class BoardState private (
     return piece.baseStats.attackRange > 1
   }
 
+  // Differs from getDamageDealtToTarget by taking into account max health
+  private def getDamageWouldBeDealt(piece: Piece, target: Piece): Int = {
+    val damage = getDamageDealtToTarget(piece, target)
+    val targetRemainingHealth = getRemainingHealthOfPiece(target)
+    return java.lang.Math.min(damage, targetRemainingHealth)
+  }
+
   private def getRetaliateAttackEffect(piece: Piece, target: Piece): (TargetEffect, Boolean) = {
     if (target.baseStats.retaliate && !isRanged(piece)) {
       return (Damage(getDamageDealtToTarget(target, piece)), true)
@@ -2475,6 +2504,9 @@ case class BoardState private (
     if (piece.baseStats.name == "trebuchet" && target.baseStats.name == "city") {
       damage = damage * 3
     }
+    if (piece.baseStats.name == "telekinetic" && target.baseStats.name == "salvager") {
+      damage = damage * 3
+    }
     damage = Math.max(damage - target.baseStats.robust, 0)
     return damage
   }
@@ -2488,9 +2520,13 @@ case class BoardState private (
       totalScore -= 10000.0
     }
 
-
     // Increase the score by the amount of the damage you would deal
-    totalScore = totalScore + getScoreForDamageToTarget(getDamageDealtToTarget(piece, target), target)
+    totalScore = totalScore + getScoreForDamageToTarget(damageDealtToTarget, target)
+
+    // Reward stealing resources
+    if (piece.baseStats.name == "telekinetic") {
+      totalScore = totalScore + Math.min(totalResourcesCarried(target), getDamageWouldBeDealt(piece, target).asInstanceOf[Double])
+    }
 
     // Decrease score by each stack of poison on the target
     val poisonOnTarget = target.modifiers._1
@@ -2783,7 +2819,8 @@ case class BoardState private (
     targetForAttack match {
       case Some(target) =>
         val attackEffect = getAttackEffect(piece, target)
-        val (retaliateAttackEffect, didRetaliate) = getRetaliateAttackEffect(piece, target)
+        val (retaliateAttackEffect, didRetaliate) = getRetaliateAttackEffect(piece, target)    
+        val damageWouldBeDealt = getDamageWouldBeDealt(piece, target)
         applyEffect(attackEffect,target,externalInfo)
         applyEffect(retaliateAttackEffect,piece,externalInfo)
         if (piece.baseStats.poisonous > 0 && target.baseStats.name != "city") {
@@ -2792,6 +2829,9 @@ case class BoardState private (
         if (target.baseStats.poisonous > 0 && didRetaliate && piece.baseStats.name != "city") {
           increasePoisonOfPiece(piece, target.baseStats.poisonous)
         }
+        if (piece.baseStats.name == "telekinetic" && totalResourcesCarried(target) > 0.0) {
+          stealResources(piece, target, damageWouldBeDealt.asInstanceOf[Double])
+        }        
         return true
       case None => 
         return false

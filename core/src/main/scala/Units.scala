@@ -460,15 +460,16 @@ object Units {
     scienceCost = 12,
   )
 
-  val witch = createPieceStats(
-    name = "witch",
-    cost = 4,
-    rebate = 1,
+  val telekinetic = createPieceStats(
+    name = "telekinetic",
     moveRange = 1,
     attackRange = 3,
-    attackEffect = Some(Damage(1)),
-    defense = Some(1),
-    swarmMax = 3,
+    attackEffect = Some(Damage(2)),
+    defense = Some(5),
+    productionCost = 8,    
+    scienceCost = 8,
+    notes = "Does triple damage to salvagers",
+    notes2 = "Steals stored resources equal to damage dealt and drops them",
   )
 
   val vampire = createPieceStats(
@@ -631,7 +632,7 @@ object Units {
     zombie_necromancer,
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
-    trebuchet, sergeant, champion, witch, vampire, mummy, lich, void, hell_hound,
+    trebuchet, sergeant, champion, telekinetic, vampire, mummy, lich, void, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
 
@@ -668,7 +669,7 @@ object Units {
     trebuchet,
     sergeant,
     champion,
-    witch,
+    telekinetic,
     vampire,
     mummy,
     lich,
