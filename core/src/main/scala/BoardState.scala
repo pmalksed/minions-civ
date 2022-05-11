@@ -988,6 +988,27 @@ case class BoardState private (
             piece.modsWithDuration = piece.modsWithDuration :+ necroPick
           }
       }
+      // Guarantee that starting city yields from surrounding hexes are 2/2/2
+      var counter = 0
+      topology.forEachAdj(startLoc) { loc =>
+        val tile = tiles(loc)
+        if (counter % 3 == 0) {
+          tile.foodYield = 1
+          tile.productionYield = 0
+          tile.scienceYield = 0
+        }
+        if (counter % 3 == 1) {
+          tile.foodYield = 0
+          tile.productionYield = 1
+          tile.scienceYield = 0
+        }
+        if (counter % 3 == 2) {
+          tile.foodYield = 0
+          tile.productionYield = 0
+          tile.scienceYield = 1
+        }
+        counter += 1
+      }      
     }
 
     handleStartOfTurn()
