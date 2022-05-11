@@ -2773,6 +2773,12 @@ case class BoardState private (
     }
   }
 
+  private def harvestYields(piece: Piece, tile: Tile): Unit = {
+    piece.carriedFood = piece.carriedFood + tile.foodYield;          
+    piece.carriedProduction = piece.carriedProduction + tile.productionYield;
+    piece.carriedScience = piece.carriedScience + tile.scienceYield;
+  }
+
   private def refreshPieceForStartOfTurn(piece: Piece, externalInfo: ExternalInfo): Unit = {
     piece.actState = Moving(0)
     piece.hasMoved = false
@@ -2782,11 +2788,10 @@ case class BoardState private (
       // Collect yields
       tiles.topology.forEachAdj(piece.loc) {
         loc => {
-          piece.carriedFood = piece.carriedFood + tiles(loc).foodYield;          
-          piece.carriedProduction = piece.carriedProduction + tiles(loc).productionYield;
-          piece.carriedScience = piece.carriedScience + tiles(loc).scienceYield;
+          harvestYields(piece, tiles(loc))
         }
       }
+      harvestYields(piece, tiles(piece.loc))
       if (piece.focus == "food") {
         piece.carriedFood = piece.carriedFood + piece.population;
       } else if (piece.focus == "production") {
