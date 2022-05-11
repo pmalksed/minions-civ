@@ -501,6 +501,25 @@ object Drawing {
           }
           show(stats.notes)
           show(stats.notes2)
+          show("Production cost: " + stats.productionCost)
+          show("Science cost: " + stats.scienceCost)
+          if(stats.nimble) {
+            show("Nimble (takes half damage rounded down from ranged attacks)")
+          }
+          if (stats.charge) {
+            show("Charge (can attack even with 0 movement points remaining)")
+          }
+          if (stats.retaliate) {
+            show("Retaliate (makes a free counterattack against melee attacks)")
+          }
+          val poisonous = stats.poisonous
+          var maybeS = ""
+          if (poisonous > 1) {
+            maybeS = "s"
+          }
+          if (stats.poisonous > 0) {
+            show("Poisonous (each attack inflicts " + poisonous + " stack" + maybeS + " of poison on the target)")
+          }
           if(stats.isFlying) {
             show("Flying (move over water or enemies)")
           }
