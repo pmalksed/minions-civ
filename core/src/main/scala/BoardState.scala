@@ -2417,12 +2417,15 @@ case class BoardState private (
   }
 
   private def getDamageDealtToTarget(piece: Piece, target: Piece): Int = {
-    var attack = getAttackOfPiece(piece)
+    var damage = getAttackOfPiece(piece)
     if (isRanged(piece) && target.baseStats.nimble) {
-      attack = attack / 2
+      damage = damage / 2
     }
-    attack = Math.max(attack - target.baseStats.robust, 0)
-    return attack
+    if (piece.baseStats.name == "trebuchet" && target.baseStats.name == "city") {
+      damage = damage * 3
+    }
+    damage = Math.max(damage - target.baseStats.robust, 0)
+    return damage
   }
 
   private def getScoreForAttack(piece: Piece, target: Piece): Double = {

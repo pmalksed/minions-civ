@@ -424,16 +424,15 @@ object Units {
     scienceCost = 10,
   )
 
-  val fog = createPieceStats(
-    name = "fog",
-    cost = 5,
-    rebate = 3,
-    moveRange = 2,
-    attackRange = 1,
-    attackEffect = Some(Damage(1)),
-    defense = Some(5),
-    spawnRange = Some(1),
-    isFlying = true,
+  val trebuchet = createPieceStats(
+    name = "trebuchet",
+    moveRange = 1,
+    attackRange = 3,
+    attackEffect = Some(Damage(2)),
+    defense = Some(4),
+    productionCost = 6,
+    scienceCost = 3,
+    notes = "Deals triple damage to cities"
   )
 
   val ooze = createPieceStats(
@@ -635,7 +634,7 @@ object Units {
     zombie_necromancer,
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
-    fog, ooze, witch, vampire, mummy, lich, sorcerer, void, hell_hound,
+    trebuchet, ooze, witch, vampire, mummy, lich, sorcerer, void, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
 
@@ -669,7 +668,7 @@ object Units {
     snake,
     horseman,
     berserker,
-    fog,
+    trebuchet,
     ooze,
     sorcerer,
     witch,
