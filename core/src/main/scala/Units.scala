@@ -376,8 +376,8 @@ object Units {
     scienceCost = 5,
   )
 
-  val legion = createPieceStats(
-    name = "legion",
+  val legionary = createPieceStats(
+    name = "legionary",
     moveRange = 1,
     retaliate = true,
     attackRange = 1,
@@ -631,7 +631,7 @@ object Units {
     battle_necromancer,
     zombie_necromancer,
     zombie, acolyte,
-    salvager, warrior, archer, skirmisher, legion, snake, haunt, shrieker,
+    salvager, warrior, archer, skirmisher, legionary, snake, haunt, shrieker,
     fog, ooze, witch, vampire, mummy, lich, sorcerer, void, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
@@ -662,7 +662,7 @@ object Units {
     warrior,
     archer,
     skirmisher,
-    legion,
+    legionary,
     snake,
     haunt,
     shrieker,
