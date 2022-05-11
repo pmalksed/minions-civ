@@ -278,7 +278,11 @@ object Piece {
       damage = 0,
       actState = DoneActing,
       hasMoved = false,
+<<<<<<< HEAD
       hasAttacked = nthAtLoc > 0,
+=======
+      hasAttacked = false,
+>>>>>>> Add back hasAttacked
       spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
       food = 0,
       production = 0,
@@ -306,7 +310,11 @@ object Piece {
       damage = 0,
       actState = DoneActing,
       hasMoved = false,
+<<<<<<< HEAD
       hasAttacked = nthAtLoc > 0,
+=======
+      hasAttacked = false,
+>>>>>>> Add back hasAttacked
       spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
       food = food,
       production = production,
@@ -337,6 +345,7 @@ case class Piece (
   var actState: ActState,
   //Indicates what this piece actually DID do this turn so far.
   var hasMoved: Boolean,
+  var hasAttacked: Boolean,
   //If the piece was newly spawned this turn
   var spawnedThisTurn: Option[SpawnedThisTurn],
   var food: Double,
@@ -366,6 +375,7 @@ case class Piece (
       modsWithDuration = modsWithDuration,
       damage = damage,
       hasMoved = hasMoved,
+      hasAttacked = hasAttacked,
       actState = actState,
       hasAttacked = hasAttacked,
       spawnedThisTurn = spawnedThisTurn,
