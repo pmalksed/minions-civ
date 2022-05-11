@@ -85,6 +85,7 @@ object Units {
     charge: Boolean = false,
     retaliate: Boolean = false,
     poisonous: Int = 0,
+    robust: Int = 0,
   ) : PieceStats = {
     PieceStats(
       name = name,
@@ -123,6 +124,7 @@ object Units {
       charge = charge,
       retaliate = retaliate,
       poisonous = poisonous,
+      robust = robust,
     )
   }
 
@@ -384,7 +386,7 @@ object Units {
     attackEffect = Some(Damage(3)),
     defense = Some(9),
     productionCost = 5,
-    scienceCost = 6,
+    scienceCost = 5,
   )
 
   val snake = createPieceStats(
@@ -410,14 +412,16 @@ object Units {
     scienceCost = 8,
   )
 
-  val shrieker = createPieceStats(
-    name = "shrieker",
-    cost = 6,
-    rebate = 4,
-    moveRange = 3,
+  val berserker = createPieceStats(
+    name = "berserker",
+    charge = true,
+    moveRange = 1,
     attackRange = 1,
-    attackEffect = Some(Damage(3)),
-    defense = Some(1),
+    attackEffect = Some(Damage(5)),
+    defense = Some(6),
+    robust = 1,
+    productionCost = 5,
+    scienceCost = 10,
   )
 
   val fog = createPieceStats(
@@ -630,7 +634,7 @@ object Units {
     battle_necromancer,
     zombie_necromancer,
     zombie, acolyte,
-    salvager, warrior, archer, skirmisher, legionary, snake, horseman, shrieker,
+    salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
     fog, ooze, witch, vampire, mummy, lich, sorcerer, void, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
@@ -664,7 +668,7 @@ object Units {
     legionary,
     snake,
     horseman,
-    shrieker,
+    berserker,
     fog,
     ooze,
     sorcerer,

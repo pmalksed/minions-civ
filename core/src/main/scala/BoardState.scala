@@ -2417,14 +2417,23 @@ case class BoardState private (
   }
 
   private def getDamageDealtToTarget(piece: Piece, target: Piece): Int = {
+    var attack = getAttackOfPiece(piece)
     if (isRanged(piece) && target.baseStats.nimble) {
-      return getAttackOfPiece(piece) / 2
+      attack = attack / 2
     }
-    return getAttackOfPiece(piece)
+    attack = Math.max(attack - target.baseStats.robust, 0)
+    return attack
   }
 
   private def getScoreForAttack(piece: Piece, target: Piece): Double = {
     var totalScore: Double = 0.0
+
+    val damageDealtToTarget = getDamageDealtToTarget(piece, target)
+    if (damageDealtToTarget <= 0 && piece.baseStats.poisonous == 0) {
+      // Harshly penalize attacks that do nothing so that they don't happen
+      totalScore -= 10000.0
+    }
+
 
     // Increase the score by the amount of the damage you would deal
     totalScore = totalScore + getScoreForDamageToTarget(getDamageDealtToTarget(piece, target), target)
@@ -2798,7 +2807,8 @@ case class BoardState private (
     else {
       // Not a city
       val poison = piece.modifiers._1
-      val damageFromPoison = Damage(poison)
+      val robustness = piece.baseStats.robust
+      val damageFromPoison = Damage(Math.max(poison - robustness, 0))
       applyEffect(damageFromPoison, piece, externalInfo)
     }
   }
