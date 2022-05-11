@@ -486,16 +486,14 @@ object Units {
     scienceCost = 8,
   )
 
-  val mummy = createPieceStats(
-    name = "mummy",
-    cost = 5,
-    rebate = 2,
+  val crossbowman = createPieceStats(
+    name = "crossbowman",
     moveRange = 1,
-    attackRange = 1,
-    numAttacks = 6,
-    attackEffect = Some(Damage(1)),
+    attackRange = 2,
+    attackEffect = Some(Damage(5)),
     defense = Some(6),
-    spawnRange = Some(1),
+    productionCost = 6,
+    scienceCost = 10,
   )
 
   val lich = createPieceStats(
@@ -634,7 +632,7 @@ object Units {
     zombie_necromancer,
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
-    trebuchet, sergeant, champion, telekinetic, stalwart, mummy, lich, void, hell_hound,
+    trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, lich, void, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
 
@@ -673,7 +671,7 @@ object Units {
     champion,
     telekinetic,
     stalwart,
-    mummy,
+    crossbowman,
     lich,
     void,
     hell_hound,
