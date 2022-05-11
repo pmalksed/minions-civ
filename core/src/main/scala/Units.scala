@@ -449,16 +449,15 @@ object Units {
     notes = "Nearby friendly units get +1 attack"
   )
 
-  val sorcerer = createPieceStats(
-    name = "sorcerer",
-    cost = 4,
-    rebate = 1,
+  val champion = createPieceStats(
+    name = "champion",
     moveRange = 1,
-    attackRange = 2,
-    attackEffect = Some(Unsummon),
-    defense = Some(3),
-    isPersistent = true,
-    swarmMax = 3,
+    attackRange = 1,
+    attackEffect = Some(Damage(7)),
+    defense = Some(9),
+    retaliate = true,
+    productionCost = 7,
+    scienceCost = 12,
   )
 
   val witch = createPieceStats(
@@ -632,7 +631,7 @@ object Units {
     zombie_necromancer,
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
-    trebuchet, sergeant, witch, vampire, mummy, lich, sorcerer, void, hell_hound,
+    trebuchet, sergeant, champion, witch, vampire, mummy, lich, void, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
 
@@ -668,7 +667,7 @@ object Units {
     berserker,
     trebuchet,
     sergeant,
-    sorcerer,
+    champion,
     witch,
     vampire,
     mummy,
