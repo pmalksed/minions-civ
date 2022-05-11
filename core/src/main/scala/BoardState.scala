@@ -278,16 +278,14 @@ object Piece {
       damage = 0,
       actState = DoneActing,
       hasMoved = false,
-<<<<<<< HEAD
       hasAttacked = nthAtLoc > 0,
-=======
-      hasAttacked = false,
->>>>>>> tupleify carried resources
       spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
       food = 0,
       production = 0,
       science = 0,
-      carriedResources = (0, 0, 0),
+      carriedFood = 0,
+      carriedProduction = 0,
+      carriedScience = 0,
       productionQueue = List(),
       scienceQueue = List(),
       buildings = List(),
@@ -313,7 +311,9 @@ object Piece {
       food = food,
       production = production,
       science = science,
-      carriedResources = (0, 0, 0),
+      carriedFood = 0,
+      carriedProduction = 0,
+      carriedScience = 0,
       productionQueue = List(),
       scienceQueue = List(),
       buildings = List(),
@@ -337,13 +337,14 @@ case class Piece (
   var actState: ActState,
   //Indicates what this piece actually DID do this turn so far.
   var hasMoved: Boolean,
-  var hasAttacked: Boolean,
   //If the piece was newly spawned this turn
   var spawnedThisTurn: Option[SpawnedThisTurn],
   var food: Double,
   var production: Double,
   var science: Double,
-  var carriedResources: (Double, Double, Double),
+  var carriedFood: Double,
+  var carriedProduction: Double,
+  var carriedScience: Double,
 
   //Properties of cities but not other units
   var productionQueue: List[PieceStats],
@@ -365,14 +366,15 @@ case class Piece (
       modsWithDuration = modsWithDuration,
       damage = damage,
       hasMoved = hasMoved,
-      hasAttacked = hasAttacked,
       actState = actState,
       hasAttacked = hasAttacked,
       spawnedThisTurn = spawnedThisTurn,
       food = food,
       production = production,
       science = science,
-      carriedResources = carriedResources,
+      carriedFood = carriedFood,
+      carriedProduction = carriedProduction,
+      carriedScience = carriedScience,
       productionQueue = productionQueue,
       scienceQueue = scienceQueue,
       buildings = buildings,
@@ -2004,7 +2006,7 @@ case class BoardState private (
           if (selectedCity.scienceQueue.length > 0) {
             selectedCity.scienceQueue = List(selectedCity.scienceQueue.head)
             if (clearEntireQueue) {
-              setCarriedScience(selectedCity, selectedCity.carriedResources._3 * Constants.SCIENCE_DECAY_RATE)
+              selectedCity.carriedScience = selectedCity.carriedScience * Constants.SCIENCE_DECAY_RATE
               selectedCity.scienceQueue = List()
             }
           }
@@ -2016,8 +2018,8 @@ case class BoardState private (
               // The below is equivalent to just applying Constants.PRODUCTION_DECAY_RATE to the carriedProduction,
               // unless you have an unbuild unit sitting around, in which case it's applied only to the cost of the
               // unbuilt unit
-              val amountToDecreaseProductionBy = java.lang.Math.min(selectedCity.carriedResources._2, selectedCity.productionQueue.head.productionCost.asInstanceOf[Double]) * (1 - Constants.PRODUCTION_DECAY_RATE)
-              increaseCarriedResources(selectedCity, 0.0, -1 * amountToDecreaseProductionBy, 0.0)
+              selectedCity.carriedProduction = selectedCity.carriedProduction 
+                - java.lang.Math.min(selectedCity.carriedProduction, selectedCity.productionQueue.head.productionCost.asInstanceOf[Double]) * (1 - Constants.PRODUCTION_DECAY_RATE)
               selectedCity.productionQueue = List()
             }
           }
@@ -2123,9 +2125,9 @@ case class BoardState private (
       }
 
       val tile = tiles(piece.loc)
-      tile.food = tile.food + (piece.food + piece.carriedResources._1) * multiplier
-      tile.production = tile.production + (piece.production + piece.carriedResources._2) * multiplier
-      tile.science = tile.science + (piece.science + piece.carriedResources._3) * multiplier
+      tile.food = tile.food + (piece.food + piece.carriedFood) * multiplier
+      tile.production = tile.production + (piece.production + piece.carriedProduction) * multiplier
+      tile.science = tile.science + (piece.science + piece.carriedScience) * multiplier
     }
   }
 
@@ -2258,17 +2260,17 @@ case class BoardState private (
       val productionQueue = city.productionQueue;
       val nextProductionUnit = productionQueue.head
       val productionCost = nextProductionUnit.productionCost.asInstanceOf[Double];
-      if ((productionCost <= city.carriedResources._2) && (city.population > 0)) {
+      if ((productionCost <= city.carriedProduction) && (city.population > 0)) {
         val foodCost = getCostOfLastPopulation(city)
         if (buildUnit(city, nextProductionUnit, foodCost, productionCost)) {
           city.productionQueue = productionQueue.slice(1, productionQueue.size);
-          increaseCarriedResources(city, 0.0, -1 * productionCost, 0.0)
+          city.carriedProduction = city.carriedProduction - productionCost;
           city.population = city.population - 1;
           city.food = city.food - foodCost;
           buildUnits(city);
         } else {
           // Decay the city's excess production if the build failed
-          increaseCarriedResources(city, 0.0, -1 * (city.carriedResources._2 - productionCost) * (1 - Constants.PRODUCTION_DECAY_RATE), 0.0)
+          city.carriedProduction = city.carriedProduction - (city.carriedProduction - productionCost) * (1 - Constants.PRODUCTION_DECAY_RATE)
         }
       }
     }
@@ -2279,10 +2281,10 @@ case class BoardState private (
       val scienceQueue = city.scienceQueue;
       val nextScienceUnit = scienceQueue.head;
       val scienceCost = nextScienceUnit.scienceCost;
-      if (scienceCost <= city.carriedResources._3) {
+      if (scienceCost <= city.carriedScience) {
         city.buildings = city.buildings ::: List(nextScienceUnit);
         city.scienceQueue = scienceQueue.slice(1, scienceQueue.size);
-        increaseCarriedResources(city, 0.0, 0.0, (-1 * scienceCost).asInstanceOf[Double])
+        city.carriedScience = city.carriedScience - scienceCost;
         city.science = city.science + scienceCost;
         if (nextScienceUnit.name == "salvager") {
           val citySide = city.side
@@ -2314,7 +2316,7 @@ case class BoardState private (
   }
 
   private def totalResourcesCarried(salvager: Piece): Double = {
-    return salvager.carriedResources._1 + salvager.carriedResources._2 + salvager.carriedResources._3
+    return salvager.carriedFood + salvager.carriedProduction + salvager.carriedScience
   }
 
   private def remainingResourceSpace(salvager: Piece): Double = {
@@ -2605,48 +2607,24 @@ case class BoardState private (
     return false
   }
 
-  private def increaseCarriedResources(piece: Piece, extraCarriedFood: Double,
-    extraCarriedProduction: Double, extraCarriedScience: Double): Unit = {
-
-    val (carriedFood, carriedProduction, carriedScience) = piece.carriedResources
-    piece.carriedResources = (carriedFood + extraCarriedFood,
-                              carriedProduction + extraCarriedProduction,
-                              carriedScience + extraCarriedScience)
-  }
-
-  // private def setCarriedFood(piece: Piece, newCarriedFood: Double): Unit = {
-  //   val (_, carriedProduction, carriedScience) = piece.carriedResources
-  //   piece.carriedResources = (newCarriedFood, carriedProduction, carriedScience)
-  // }
-
-  private def setCarriedProduction(piece: Piece, newCarriedProduction: Double): Unit = {
-    val (carriedFood, _, carriedScience) = piece.carriedResources
-    piece.carriedResources = (carriedFood, newCarriedProduction, carriedScience)
-  }  
-
-  private def setCarriedScience(piece: Piece, newCarriedScience: Double): Unit = {
-    val (carriedFood, carriedProduction, _) = piece.carriedResources
-    piece.carriedResources = (carriedFood, carriedProduction, newCarriedScience)
-  }  
-
   private def salvagerPickUpResourcesFromTile(salvager: Piece, tile: Tile): Unit = {
     var remainingSpace = remainingResourceSpace(salvager)
     if (remainingSpace > 0.01) {
       val amountToPickUp = Math.min(remainingSpace, tile.science)
       tile.science -= amountToPickUp
-      increaseCarriedResources(salvager, 0.0, 0.0, amountToPickUp)
+      salvager.carriedScience += amountToPickUp
       remainingSpace -= amountToPickUp
     }
     if (remainingSpace > 0.01) {
       val amountToPickUp = Math.min(remainingSpace, tile.production)
       tile.production -= amountToPickUp
-      increaseCarriedResources(salvager, 0.0, amountToPickUp, 0.0)
+      salvager.carriedProduction += amountToPickUp
       remainingSpace -= amountToPickUp
     }
     if (remainingSpace > 0.01) {
       val amountToPickUp = Math.min(remainingSpace, tile.food)
       tile.food -= amountToPickUp
-      increaseCarriedResources(salvager, 0.0, amountToPickUp, 0.0)
+      salvager.carriedFood += amountToPickUp
     }    
   }
 
@@ -2686,9 +2664,15 @@ case class BoardState private (
               val fakeCityId = fakeCity.id
               val city = pieceById(fakeCityId)
               if (tiles.topology.distance(city.loc, piece.loc) <= 1) {
-                increaseCarriedResources(city, piece.carriedResources._1, piece.carriedResources._2,
-                                          piece.carriedResources._3)
-                piece.carriedResources = (0.0, 0.0, 0.0)
+                val carriedFood = piece.carriedFood
+                city.carriedFood = city.carriedFood + carriedFood
+                piece.carriedFood = 0.0
+                val carriedProduction = piece.carriedProduction
+                city.carriedProduction = city.carriedProduction + carriedProduction
+                piece.carriedProduction = 0.0
+                val carriedScience = piece.carriedScience
+                city.carriedScience = city.carriedScience + carriedScience
+                piece.carriedScience = 0.0
           }
         }
       }
@@ -2743,8 +2727,8 @@ case class BoardState private (
 
   private def growPopulation(piece: Piece): Unit = {
     val costOfNextPopulation = getCostOfNextPopulation(piece);
-    if (piece.carriedResources._1 >= costOfNextPopulation) {
-      increaseCarriedResources(piece, -1 * costOfNextPopulation, 0.0, 0.0);
+    if (piece.carriedFood >= costOfNextPopulation) {
+      piece.carriedFood = piece.carriedFood - costOfNextPopulation;
       piece.food = piece.food + costOfNextPopulation;
       piece.population = piece.population + 1;
     }
@@ -2759,16 +2743,17 @@ case class BoardState private (
       // Collect yields
       tiles.topology.forEachAdj(piece.loc) {
         loc => {
-          increaseCarriedResources(piece, tiles(loc).foodYield.asInstanceOf[Double], tiles(loc).productionYield.asInstanceOf[Double], 
-                                   tiles(loc).scienceYield.asInstanceOf[Double])
+          piece.carriedFood = piece.carriedFood + tiles(loc).foodYield;          
+          piece.carriedProduction = piece.carriedProduction + tiles(loc).productionYield;
+          piece.carriedScience = piece.carriedScience + tiles(loc).scienceYield;
         }
       }
       if (piece.focus == "food") {
-        increaseCarriedResources(piece, piece.population.asInstanceOf[Double], 0.0, 0.0);
+        piece.carriedFood = piece.carriedFood + piece.population;
       } else if (piece.focus == "production") {
-        increaseCarriedResources(piece, 0.0, piece.population.asInstanceOf[Double], 0.0);
+        piece.carriedProduction = piece.carriedProduction + piece.population;
       } else {
-        increaseCarriedResources(piece, 0.0, 0.0, piece.population.asInstanceOf[Double]);
+        piece.carriedScience = piece.carriedScience + piece.population;
       }
       // Allocate production and science to their respective queues
       growPopulation(piece);
@@ -2777,10 +2762,10 @@ case class BoardState private (
 
       // Penalize unallocated production and science
       if (piece.scienceQueue.size == 0) {
-        setCarriedScience(piece, piece.carriedResources._3 * Constants.SCIENCE_DECAY_RATE)
+        piece.carriedScience = piece.carriedScience * Constants.SCIENCE_DECAY_RATE
       }
       if (piece.productionQueue.size == 0) {
-        setCarriedProduction(piece, piece.carriedResources._2 * Constants.PRODUCTION_DECAY_RATE)
+        piece.carriedProduction = piece.carriedProduction * Constants.PRODUCTION_DECAY_RATE
       }
     }
     else {

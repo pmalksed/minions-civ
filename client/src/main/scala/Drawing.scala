@@ -550,9 +550,9 @@ object Drawing {
               show("Production: " + p.production)
               if (p.baseStats.name == "city" || p.baseStats.name == "salvager") {
                 show("Science: " + p.science)
-                show("Stored food: " + p.carriedResources._1)
-                show("Stored production: " + p.carriedResources._2)
-                show("Stored science: " + p.carriedResources._3)
+                show("Stored food: " + p.carriedFood)
+                show("Stored production: " + p.carriedProduction)
+                show("Stored science: " + p.carriedScience)
               }
               if (p.baseStats.name == "city") {
                 show("Production queue: " + p.productionQueue.map(u => u.displayName))
