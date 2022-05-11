@@ -399,16 +399,15 @@ object Units {
     scienceCost = 6,
   )
 
-  val haunt = createPieceStats(
-    name = "haunt",
-    cost = 5,
-    rebate = 1,
-    moveRange = 0,
-    attackRange = 3,
-    attackEffect = Some(Damage(2)),
-    defense = Some(2),
-    canBlink = true,
-    abilities = List(MoveEarthquake)
+  val horseman = createPieceStats(
+    name = "horseman",
+    charge = true,
+    moveRange = 2,
+    attackRange = 1,
+    attackEffect = Some(Damage(4)),
+    defense = Some(7),
+    productionCost = 6,
+    scienceCost = 8,
   )
 
   val shrieker = createPieceStats(
@@ -631,7 +630,7 @@ object Units {
     battle_necromancer,
     zombie_necromancer,
     zombie, acolyte,
-    salvager, warrior, archer, skirmisher, legionary, snake, haunt, shrieker,
+    salvager, warrior, archer, skirmisher, legionary, snake, horseman, shrieker,
     fog, ooze, witch, vampire, mummy, lich, sorcerer, void, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
@@ -664,7 +663,7 @@ object Units {
     skirmisher,
     legionary,
     snake,
-    haunt,
+    horseman,
     shrieker,
     fog,
     ooze,
