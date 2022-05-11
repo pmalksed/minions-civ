@@ -278,11 +278,7 @@ object Piece {
       damage = 0,
       actState = DoneActing,
       hasMoved = false,
-<<<<<<< HEAD
       hasAttacked = nthAtLoc > 0,
-=======
-      hasAttacked = false,
->>>>>>> Add back hasAttacked
       spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
       food = 0,
       production = 0,
@@ -310,11 +306,7 @@ object Piece {
       damage = 0,
       actState = DoneActing,
       hasMoved = false,
-<<<<<<< HEAD
       hasAttacked = nthAtLoc > 0,
-=======
-      hasAttacked = false,
->>>>>>> Add back hasAttacked
       spawnedThisTurn = Some(SpawnedThisTurn(pieceStats.name,loc,nthAtLoc)),
       food = food,
       production = production,
@@ -377,7 +369,6 @@ case class Piece (
       hasMoved = hasMoved,
       hasAttacked = hasAttacked,
       actState = actState,
-      hasAttacked = hasAttacked,
       spawnedThisTurn = spawnedThisTurn,
       food = food,
       production = production,
