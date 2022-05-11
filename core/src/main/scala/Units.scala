@@ -339,8 +339,8 @@ object Units {
     defense = Some(5),
     productionCost = 5,
     scienceCost = 4,
-    notes = "Picks up resources from dead units and carries them to your cities to be recycled.",
-    notes2 = "Has 5 defense and 5 capacity by default and gets +1 of each per Salvager building you build.",
+    notes = "Picks up resources from dead units and carries them to your cities to be recycled",
+    notes2 = "Has 5 defense and 5 capacity by default and gets +1 of each per Salvager building you build",
   )
 
   val warrior = createPieceStats(
@@ -350,7 +350,8 @@ object Units {
     attackEffect = Some(Damage(3)),
     defense = Some(6),
     productionCost = 2,
-    scienceCost = 2,
+    scienceCost = 0,
+    notes = "Can be built without a corresponding building"
   )
 
   val archer = createPieceStats(
