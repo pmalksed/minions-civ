@@ -2408,6 +2408,16 @@ case class BoardState private (
     // Increase the score by the amount of the damage you would deal
     totalScore = totalScore + getScoreForDamageToTarget(getDamageDealtToTarget(piece, target), target)
 
+    // Decrease score by each stack of poison on the target
+    val poisonOnTarget = target.modifiers._1
+    totalScore = totalScore - 2.0 * poisonOnTarget.asInstanceOf[Double]
+
+    // If the attacker is poisonous, prioritize larger targets, further adjusting downwards if the target
+    // is already poisoned
+    if (piece.baseStats.poisonous > 0) {
+      totalScore = totalScore + getRemainingHealthOfPiece(target) - 2.0 * poisonOnTarget.asInstanceOf[Double]
+    }
+
     return totalScore
   }
 
