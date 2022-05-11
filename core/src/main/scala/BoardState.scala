@@ -2413,6 +2413,10 @@ case class BoardState private (
   def getAttackOfPiece(piece: Piece): Int = {
     val (isSergeant, _) = getModifiersInRange(piece)
     var attack = getBaseAttackOfPiece(piece)
+    // No way to pump civilian units
+    if (attack == 0) {
+      return 0
+    }
     if (isSergeant) {
       attack += 1
     }
@@ -2761,7 +2765,7 @@ case class BoardState private (
 
   private def attackMoveInner(piece: Piece, externalInfo: ExternalInfo, remainingMovement: Int): Unit = {
     if (remainingMovement > 0) {
-      if (getAttackOfPiece(piece) > 0) {
+      if (getBaseAttackOfPiece(piece) > 0) {
         if (!tryAttacking(piece, externalInfo)) {
           val targetForMoveTowards = getBestTargetForMoveTowards(piece)
           var targetLoc = piece.loc
@@ -2781,9 +2785,18 @@ case class BoardState private (
         civilianMoveTowards(piece, targetForMoveTowards) 
         attackMoveInner(piece, externalInfo, remainingMovement - 1)
       }
+      else if (piece.baseStats.name == "healer") {
+        val targetForMoveTowards = getBestTargetForSalvagerMoveTowards(piece)
+        civilianMoveTowards(piece, targetForMoveTowards) 
+        attackMoveInner(piece, externalInfo, remainingMovement - 1)
+      }      
     }
     else if (piece.baseStats.charge) {
-      val _ = tryAttacking(piece, externalInfo)
+      if (getBaseAttackOfPiece(piece) > 0) {
+        val _ = tryAttacking(piece, externalInfo)
+      } else if (piece.baseStats.name == "healer") {
+        val _ = tryHealing(piece, externalInfo)
+      }
     }
     else if (piece.baseStats.name == "salvager") {
       if (remainingResourceSpace(piece) <= 0.01) {
