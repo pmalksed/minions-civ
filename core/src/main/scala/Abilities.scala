@@ -8,7 +8,7 @@ case object NecroPickAbility extends PieceAbility {
   val isSorcery = false
   val spawnPhaseOnly = false
   val tryIsUsableNow = { (piece:Piece) =>
-    if(piece.hasMoved || piece.hasAttacked) Failure(new Exception("Undo move before picking necromancer"))
+    if(piece.hasMoved) Failure(new Exception("Undo move before picking necromancer"))
     else Success(())
   }
 }
