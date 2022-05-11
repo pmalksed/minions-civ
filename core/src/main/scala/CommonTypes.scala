@@ -132,6 +132,7 @@ case class PieceStats(
   val poisonous: Int,
   val robust: Int,
   val leadership: Boolean,
+  val taunt: Boolean,
 ) {
   def toFragments() : (PieceStatsFragment0,PieceStatsFragment1) = {
     (
@@ -176,6 +177,7 @@ case class PieceStats(
         poisonous = poisonous,
         robust = robust,
         leadership = leadership,
+        taunt = taunt,
       )
     )
   }
@@ -223,6 +225,7 @@ case class PieceStatsFragment1 (
   val poisonous: Int,
   val robust: Int,
   val leadership: Boolean,
+  var taunt: Boolean,
 )
 
 object PieceStatsOfFragments {
@@ -266,6 +269,7 @@ object PieceStatsOfFragments {
       poisonous = f1.poisonous,
       robust = f1.robust,
       leadership = f1.leadership,
+      taunt = f1.taunt,
     )
   }
 }

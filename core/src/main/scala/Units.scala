@@ -87,6 +87,7 @@ object Units {
     poisonous: Int = 0,
     robust: Int = 0,
     leadership: Boolean = false,
+    taunt: Boolean = false,
   ) : PieceStats = {
     PieceStats(
       name = name,
@@ -127,6 +128,7 @@ object Units {
       poisonous = poisonous,
       robust = robust,
       leadership = leadership,
+      taunt = taunt,
     )
   }
 
@@ -472,16 +474,16 @@ object Units {
     notes2 = "Steals stored resources equal to damage dealt and drops them",
   )
 
-  val vampire = createPieceStats(
-    name = "vampire",
-    cost = 4,
-    rebate = 2,
+  val stalwart = createPieceStats(
+    name = "stalwart",
     moveRange = 1,
     attackRange = 1,
     attackEffect = Some(Damage(2)),
-    defense = Some(6),
-    isPersistent = true,
-    isFlying = true,
+    defense = Some(12),
+    robust = 1,
+    taunt = true,
+    productionCost = 6,
+    scienceCost = 8,
   )
 
   val mummy = createPieceStats(
@@ -632,7 +634,7 @@ object Units {
     zombie_necromancer,
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
-    trebuchet, sergeant, champion, telekinetic, vampire, mummy, lich, void, hell_hound,
+    trebuchet, sergeant, champion, telekinetic, stalwart, mummy, lich, void, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
 
@@ -670,7 +672,7 @@ object Units {
     sergeant,
     champion,
     telekinetic,
-    vampire,
+    stalwart,
     mummy,
     lich,
     void,

@@ -2515,7 +2515,7 @@ case class BoardState private (
     var totalScore: Double = 0.0
 
     val damageDealtToTarget = getDamageDealtToTarget(piece, target)
-    if (damageDealtToTarget <= 0 && piece.baseStats.poisonous == 0) {
+    if (damageDealtToTarget <= 0 && piece.baseStats.poisonous == 0 && !target.baseStats.taunt) {
       // Harshly penalize attacks that do nothing so that they don't happen
       totalScore -= 10000.0
     }
@@ -2536,6 +2536,11 @@ case class BoardState private (
     // is already poisoned
     if (piece.baseStats.poisonous > 0) {
       totalScore = totalScore + getRemainingHealthOfPiece(target) - 2.0 * poisonOnTarget.asInstanceOf[Double]
+    }
+
+    // Prioritize attacking taunt units
+    if (target.baseStats.taunt) {
+      totalScore += 100.0
     }
 
     return totalScore
