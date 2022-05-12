@@ -2,6 +2,8 @@ package minionsgame.core
 
 import scala.util.{Try,Success,Failure,Random}
 import scala.collection.immutable.Vector
+import java.text.SimpleDateFormat
+import java.util.Calendar
 
 import RichImplicits._
 
@@ -53,6 +55,14 @@ package object Constants {
   val SCIENCE_DECAY_RATE = 0.75
   val SUICIDE_TAX = 0.75
   val SCIENCE_FOR_NEW_CITY = 5.0
+  val HEALER_EFFECT_SIZE = 2.0
+}
+
+object Log {
+  val timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
+  def log(s: String): Unit = {
+    println(timeFormat.format(Calendar.getInstance().getTime()) + " " + s)
+  }
 }
 
 /**
@@ -2348,6 +2358,11 @@ case class BoardState private (
     }
   }
 
+  private def decreasePoisonOfPiece(piece: Piece, extraPoison: Int): Unit = {
+    val (poison, other) = piece.modifiers
+    piece.modifiers = (Math.max(poison - extraPoison, 0), other)
+  }
+
   private def increasePoisonOfPiece(piece: Piece, extraPoison: Int): Unit = {
     val (poison, other) = piece.modifiers
     piece.modifiers = (poison + extraPoison, other)
@@ -2413,6 +2428,10 @@ case class BoardState private (
   def getAttackOfPiece(piece: Piece): Int = {
     val (isSergeant, _) = getModifiersInRange(piece)
     var attack = getBaseAttackOfPiece(piece)
+    // No way to pump civilian units
+    if (attack == 0) {
+      return 0
+    }
     if (isSergeant) {
       attack += 1
     }
@@ -2476,6 +2495,30 @@ case class BoardState private (
 
   private def isRanged(piece: Piece): Boolean = {
     return piece.baseStats.attackRange > 1
+  }
+
+  private def amountOfDamageSuchThatIsFullyHealed(piece: Piece): Int = {
+    piece.baseStats.defense match {
+      case None => 
+        return 0
+      case Some(defense) => 
+        return defense - maxHealthOfPiece(piece)
+    }
+  }
+
+  private def maxHealthOfPiece(piece: Piece): Int = {
+    var maxHealth = 0
+
+    piece.baseStats.defense match {
+      case None =>
+      case Some(defense) => 
+        maxHealth += defense
+    }
+
+    if (piece.baseStats.name == "salvager") {
+      maxHealth += salvagerBuildingsBuilt.get(piece.side).getOrElse(0)
+    }
+    return maxHealth
   }
 
   // Differs from getDamageDealtToTarget by taking into account max health
@@ -2665,6 +2708,32 @@ case class BoardState private (
     return bestTarget
   }
 
+  private def getBestTargetForHealerMoveTowards(piece: Piece): Loc = {
+    val offsets = tiles.topology.adjOffsetsRange3;
+
+    var bestTarget: Loc = piece.target
+    var bestScore: Double = -1000.0
+
+    offsets.foreach {vec =>
+      val loc = piece.loc + vec
+      if (locIsValid(loc)) {
+        val piecesOnLoc = pieces(loc)
+        if (piecesOnLoc.length > 0) {
+          val target = piecesOnLoc.head
+          if (target.side != piece.side) {
+            val score = getScoreForHeal(target)
+            if (score > bestScore) {
+              bestScore = score
+              bestTarget = target.loc
+            }
+          }
+        }
+      }
+    }    
+
+    return bestTarget
+  }  
+
   private def getBestTargetForSalvagerMoveTowards(piece: Piece): Loc = {
     val resourceSpace = remainingResourceSpace(piece)
     val offsets = tiles.topology.adjOffsetsRange3;    
@@ -2761,7 +2830,7 @@ case class BoardState private (
 
   private def attackMoveInner(piece: Piece, externalInfo: ExternalInfo, remainingMovement: Int): Unit = {
     if (remainingMovement > 0) {
-      if (getAttackOfPiece(piece) > 0) {
+      if (getBaseAttackOfPiece(piece) > 0) {
         if (!tryAttacking(piece, externalInfo)) {
           val targetForMoveTowards = getBestTargetForMoveTowards(piece)
           var targetLoc = piece.loc
@@ -2781,9 +2850,20 @@ case class BoardState private (
         civilianMoveTowards(piece, targetForMoveTowards) 
         attackMoveInner(piece, externalInfo, remainingMovement - 1)
       }
+      else if (piece.baseStats.name == "healer") {
+        if (!tryHealing(piece)) {
+          val targetForMoveTowards = getBestTargetForHealerMoveTowards(piece)
+          civilianMoveTowards(piece, targetForMoveTowards) 
+          attackMoveInner(piece, externalInfo, remainingMovement - 1)
+        }
+      }      
     }
     else if (piece.baseStats.charge) {
-      val _ = tryAttacking(piece, externalInfo)
+      if (getBaseAttackOfPiece(piece) > 0) {
+        val _ = tryAttacking(piece, externalInfo)
+      } else if (piece.baseStats.name == "healer") {
+        val _ = tryHealing(piece)
+      }
     }
     else if (piece.baseStats.name == "salvager") {
       if (remainingResourceSpace(piece) <= 0.01) {
@@ -2840,6 +2920,85 @@ case class BoardState private (
         return true
       case None => 
         return false
+    }
+  }
+
+  private def reloadPiece(piece: Piece): Piece = {
+    return pieceById(piece.id)
+  }
+
+  private def getAmountWouldBeHealed(target: Piece): Double = {
+    return Math.min(Constants.HEALER_EFFECT_SIZE, target.damage - amountOfDamageSuchThatIsFullyHealed(target).asInstanceOf[Double])
+  }
+
+  private def getScoreForHeal(target: Piece): Double = {
+    Log.log("" + target)
+    var totalScore: Double = 0.0
+    val amountWouldBeHealed = getAmountWouldBeHealed(target)
+    val targetPoison = target.modifiers._1
+    Log.log("" + targetPoison)
+    if (amountWouldBeHealed <= 0 && targetPoison == 0) {
+      // Harshly penalize heals that do nothing so that they don't happen
+      totalScore -= 10000.0
+    }
+
+    // Increase the score by the amount of the damage you would heal
+    totalScore += amountWouldBeHealed
+
+    // Increase the score by 4 if the target has a poison stack
+    if (targetPoison > 0) {
+      totalScore += 2.0
+    }
+
+    // Tiebreak using juiciness score
+    totalScore = totalScore + 0.001 * juiciness(target)
+    Log.log("" + totalScore)
+    return totalScore
+  }
+
+  private def getBestTargetForHeal(piece: Piece): Option[Piece] = {
+    val offsets = tiles.topology.adjOffsets;
+
+    var bestTarget: Option[Piece] = None
+    var bestScore: Double = -1000.0
+
+    offsets.foreach {vec => 
+      val loc = piece.loc + vec
+      if (locIsValid(loc)) {
+        val piecesOnLoc = pieces(loc)
+        if (piecesOnLoc.length > 0) {
+          val target = piecesOnLoc.head
+          if (target.side == piece.side) {
+            val score = getScoreForHeal(target)
+            if (score > bestScore) {
+              Log.log("new best score: " + score)
+              bestScore = score
+              bestTarget = Some(target)
+            }
+          }
+        }
+      }
+    }
+    Log.log("" + bestTarget)
+
+    return bestTarget        
+  }
+
+  private def tryHealing(piece: Piece): Boolean = {
+    val targetForHeal = getBestTargetForHeal(piece)
+    targetForHeal match {
+      case None => return false
+      case Some(target) => {
+        Log.log("" + target.id)
+        val realTarget = reloadPiece(target)
+        Log.log("" + realTarget.id)
+        Log.log("hi")
+        Log.log("" + (realTarget.damage - 2))
+        Log.log("" + amountOfDamageSuchThatIsFullyHealed(realTarget))
+        realTarget.damage = Math.max(realTarget.damage - 2, amountOfDamageSuchThatIsFullyHealed(realTarget))
+        decreasePoisonOfPiece(realTarget, 1)
+        return true
+      }
     }
   }
 
