@@ -2851,9 +2851,9 @@ case class BoardState private (
         attackMoveInner(piece, externalInfo, remainingMovement - 1)
       }
       else if (piece.baseStats.name == "healer") {
-        if (!tryHealing(piece)) {
+        if (!tryHealing(piece, externalInfo)) {
           val targetForMoveTowards = getBestTargetForHealerMoveTowards(piece)
-          civilianMoveTowards(piece, targetForMoveTowards) 
+          moveTowards(piece, targetForMoveTowards) 
           attackMoveInner(piece, externalInfo, remainingMovement - 1)
         }
       }      
@@ -2862,7 +2862,7 @@ case class BoardState private (
       if (getBaseAttackOfPiece(piece) > 0) {
         val _ = tryAttacking(piece, externalInfo)
       } else if (piece.baseStats.name == "healer") {
-        val _ = tryHealing(piece)
+        val _ = tryHealing(piece, externalInfo)
       }
     }
     else if (piece.baseStats.name == "salvager") {
@@ -2984,7 +2984,7 @@ case class BoardState private (
     return bestTarget        
   }
 
-  private def tryHealing(piece: Piece): Boolean = {
+  private def tryHealing(piece: Piece, externalInfo: ExternalInfo): Boolean = {
     val targetForHeal = getBestTargetForHeal(piece)
     targetForHeal match {
       case None => return false
@@ -2995,6 +2995,8 @@ case class BoardState private (
         Log.log("hi")
         Log.log("" + (realTarget.damage - 2))
         Log.log("" + amountOfDamageSuchThatIsFullyHealed(realTarget))
+        applyEffect(Damage(Math.max(realTarget.damage - 2, amountOfDamageSuchThatIsFullyHealed(realTarget))),
+          target,externalInfo)
         realTarget.damage = Math.max(realTarget.damage - 2, amountOfDamageSuchThatIsFullyHealed(realTarget))
         decreasePoisonOfPiece(realTarget, 1)
         return true
