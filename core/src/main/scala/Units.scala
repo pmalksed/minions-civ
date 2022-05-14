@@ -496,16 +496,15 @@ object Units {
     scienceCost = 10,
   )
 
-  val lich = createPieceStats(
-    name = "lich",
-    cost = 7,
-    rebate = 3,
-    moveRange = 1,
-    isLumbering = true,
-    attackRange = 3,
-    attackEffect = Some(Kill),
-    defense = Some(3),
-    canHurtNecromancer = false,
+  val mule = createPieceStats(
+    name = "mule",
+    moveRange = 2,
+    attackRange = 1,
+    attackEffect = Some(Damage(0)),
+    defense = Some(8),
+    productionCost = 5,
+    scienceCost = 3,
+    notes = "Unaffected by the Suicide Tax"
   )
 
   val void = createPieceStats(
@@ -632,7 +631,7 @@ object Units {
     zombie_necromancer,
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
-    trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, lich, void, hell_hound,
+    trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, mule, void, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
 
@@ -672,7 +671,7 @@ object Units {
     telekinetic,
     stalwart,
     crossbowman,
-    lich,
+    mule,
     void,
     hell_hound,
     wraith,

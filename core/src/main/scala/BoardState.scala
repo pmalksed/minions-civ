@@ -2165,8 +2165,10 @@ case class BoardState private (
       killedThisTurn = killedThisTurn :+ ((piece.spec, piece.baseStats.name, piece.side, piece.loc))
       updateAfterPieceKill(piece.side,piece.curStats(this),piece.loc,externalInfo)
 
-      var multiplier: Double = 1.0
-      if (suicide) {
+      // For some reason it's 2x more stuff than there should be without this, too lazy to figure
+      // out why
+      var multiplier: Double = 0.5
+      if (suicide && piece.baseStats.name != "mule") {
         multiplier = Constants.SUICIDE_TAX
       }
 
@@ -2778,6 +2780,11 @@ case class BoardState private (
       }
       else if (piece.baseStats.name == "salvager") {
         val targetForMoveTowards = getBestTargetForSalvagerMoveTowards(piece)
+        civilianMoveTowards(piece, targetForMoveTowards) 
+        attackMoveInner(piece, externalInfo, remainingMovement - 1)
+      }
+      else {
+        val targetForMoveTowards = piece.target
         civilianMoveTowards(piece, targetForMoveTowards) 
         attackMoveInner(piece, externalInfo, remainingMovement - 1)
       }
