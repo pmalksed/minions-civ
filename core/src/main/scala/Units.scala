@@ -507,16 +507,15 @@ object Units {
     notes = "Unaffected by the Suicide Tax"
   )
 
-  val void = createPieceStats(
-    name = "void",
-    cost = 5,
-    rebate = 3,
-    moveRange = 2,
-    attackRange = 2,
-    attackEffect = Some(Unsummon),
-    defense = Some(2),
-    canBlink = true,
-    abilities = List(MoveWhirlwind)
+  val longbowman = createPieceStats(
+    name = "longbowman",
+    moveRange = 1,
+    attackRange = 3,
+    attackEffect = Some(Damage(3)),
+    defense = Some(5),
+    nimble = true,
+    productionCost = 6,
+    scienceCost = 12,
   )
 
   val hell_hound = createPieceStats(
@@ -631,7 +630,7 @@ object Units {
     zombie_necromancer,
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
-    trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, mule, void, hell_hound,
+    trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hell_hound,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
 
@@ -672,7 +671,7 @@ object Units {
     stalwart,
     crossbowman,
     mule,
-    void,
+    longbowman,
     hell_hound,
     wraith,
     fiend,
