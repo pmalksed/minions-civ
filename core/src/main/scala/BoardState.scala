@@ -2569,7 +2569,7 @@ case class BoardState private (
           val piecesOnLoc = pieces(loc)
           if (piecesOnLoc.length > 0) {
             val target = piecesOnLoc.head
-            if (target.side != piece.side) {
+            if (target.side != piece.side && (piece.baseStats.name != "hussar" || target.baseStats.attackRange > 1)) {
               val score = getScoreForAttack(piece, target)
               if (score > bestScore) {
                 bestScore = score
@@ -2653,7 +2653,7 @@ case class BoardState private (
         val piecesOnLoc = pieces(loc)
         if (piecesOnLoc.length > 0) {
           val target = piecesOnLoc.head
-          if (target.side != piece.side) {
+          if (target.side != piece.side && (piece.baseStats.name != "hussar" || target.baseStats.attackRange > 1)) {
             val score = getScoreForMoveTowards(piece, target)
             if (score > bestScore) {
               bestScore = score

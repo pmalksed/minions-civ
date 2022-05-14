@@ -514,22 +514,20 @@ object Units {
     attackEffect = Some(Damage(3)),
     defense = Some(5),
     nimble = true,
-    productionCost = 6,
-    scienceCost = 12,
+    productionCost = 7,
+    scienceCost = 14,
   )
 
-  val hell_hound = createPieceStats(
-    name = "hell_hound",
-    shortDisplayName = "Hound",
-    displayName = "Hell Hound",
-    cost = 3,
-    rebate = 1,
-    moveRange = 3,
+  val hussar = createPieceStats(
+    name = "hussar",
+    moveRange = 2,
     attackRange = 1,
-    attackEffect = Some(Damage(1)),
-    defense = Some(2),
-    swarmMax = 3,
-    abilities = List(MoveFirestorm)
+    attackEffect = Some(Damage(3)),
+    defense = Some(7),
+    nimble = true,
+    productionCost = 7,
+    scienceCost = 12,
+    notes = "Ignores enemey melee units"
   )
 
   val wraith = createPieceStats(
@@ -630,7 +628,7 @@ object Units {
     zombie_necromancer,
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
-    trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hell_hound,
+    trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hussar,
     wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
 
@@ -672,7 +670,7 @@ object Units {
     crossbowman,
     mule,
     longbowman,
-    hell_hound,
+    hussar,
     wraith,
     fiend,
     banshee,
