@@ -501,7 +501,7 @@ object Units {
     moveRange = 2,
     attackRange = 1,
     attackEffect = Some(Damage(0)),
-    defense = Some(8),
+    defense = Some(7),
     productionCost = 5,
     scienceCost = 3,
     notes = "Unaffected by the Suicide Tax"
@@ -527,20 +527,18 @@ object Units {
     nimble = true,
     productionCost = 7,
     scienceCost = 12,
-    notes = "Ignores enemey melee units"
+    notes = "Doesn't attack enemy melee units"
   )
 
-  val wraith = createPieceStats(
-    name = "wraith",
-    cost = 6,
-    rebate = 2,
-    moveRange = 3,
-    isFlying = true,
-    isLumbering = true,
+  val horse_archer = createPieceStats(
+    name = "horse archer",
+    moveRange = 2,
     attackRange = 2,
     attackEffect = Some(Damage(4)),
-    defense = Some(8),
-    isPersistent = true,
+    defense = Some(6),
+    productionCost = 8,
+    scienceCost = 18,
+    notes = "Kites enemy melee units",
   )
 
   val fiend = createPieceStats(
@@ -629,7 +627,7 @@ object Units {
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
     trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hussar,
-    wraith, fiend, banshee, elemental, fallen_angel, shadowlord, city
+    horse_archer, fiend, banshee, elemental, fallen_angel, shadowlord, city
   )
 
   //Necromancers awarded after a board resets
@@ -671,7 +669,7 @@ object Units {
     mule,
     longbowman,
     hussar,
-    wraith,
+    horse_archer,
     fiend,
     banshee,
     elemental,

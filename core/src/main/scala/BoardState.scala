@@ -2167,15 +2167,21 @@ case class BoardState private (
 
       // For some reason it's 2x more stuff than there should be without this, too lazy to figure
       // out why
-      var multiplier: Double = 0.5
+      var multiplier: Double = 1.0
       if (suicide && piece.baseStats.name != "mule") {
-        multiplier = Constants.SUICIDE_TAX
+        multiplier *= Constants.SUICIDE_TAX
       }
 
       val tile = tiles(piece.loc)
       tile.food = tile.food + (piece.food + piece.carriedFood) * multiplier
       tile.production = tile.production + (piece.production + piece.carriedProduction) * multiplier
       tile.science = tile.science + (piece.science + piece.carriedScience) * multiplier
+      piece.food = 0.0
+      piece.production = 0.0
+      piece.science = 0.0
+      piece.carriedFood = 0.0
+      piece.carriedProduction = 0.0
+      piece.carriedScience = 0.0
     }
   }
 
@@ -2434,6 +2440,37 @@ case class BoardState private (
   private def juiciness(piece: Piece): Double = {
     return (piece.food + piece.production) / (getRemainingHealthOfPiece(piece))
   }
+
+  private def locIsAdjacentToEnemyMeleeUnit(loc: Loc, side: Side): Boolean = {
+    topology.forEachAdj(loc) { loc =>
+      if (locIsValid(loc)) {
+        val piecesOnLoc = pieces(loc)
+        if (piecesOnLoc.length > 0) {
+          val pieceOnLoc = piecesOnLoc.head
+          if (pieceOnLoc.baseStats.attackRange == 1 && pieceOnLoc.side != side) {
+            return true
+          }
+        }
+      }
+    }
+    return false
+  }
+
+  private def adjacentUnoccupiedHexNotAdjacentToEnemyMeleeUnit(piece: Piece): Option[Loc] = {
+    var bestLoc: Option[Loc] = None
+    var bestScore: Double = -1000.0
+
+    topology.forEachAdj(piece.loc) { loc =>
+      if (!locIsOccupied(loc) && !locIsAdjacentToEnemyMeleeUnit(loc, piece.side)) {
+        val score = -1 * smartDistance(loc, piece.target)
+        if (score > bestScore) {
+          bestScore = score
+          bestLoc = Some(loc)
+        }
+      }
+    }
+    return bestLoc
+  }  
 
   private def stealResources(piece: Piece, target: Piece, amount: Double) = {
     var remainingAmountToSteal = amount
@@ -2762,7 +2799,16 @@ case class BoardState private (
   }
 
   private def attackMoveInner(piece: Piece, externalInfo: ExternalInfo, remainingMovement: Int): Unit = {
-    if (remainingMovement > 0) {
+    if (remainingMovement > 1 && piece.baseStats.name == "horse archer") {
+      val locToFleeTo = adjacentUnoccupiedHexNotAdjacentToEnemyMeleeUnit(piece)
+      locToFleeTo match { 
+        case None =>
+        case Some(loc) =>
+          doMovePieceToLoc(piece, loc)
+      }
+      attackMoveInner(piece, externalInfo, remainingMovement - 1)
+    }
+    else if (remainingMovement > 0) {
       if (getAttackOfPiece(piece) > 0) {
         if (!tryAttacking(piece, externalInfo)) {
           val targetForMoveTowards = getBestTargetForMoveTowards(piece)
