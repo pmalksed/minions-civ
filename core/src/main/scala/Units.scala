@@ -395,6 +395,17 @@ object Units {
     scienceCost = 5,
   )
 
+  val sergeant = createPieceStats(
+    name = "sergeant",
+    moveRange = 1,
+    attackRange = 1,
+    attackEffect = Some(Damage(1)),
+    defense = Some(7),
+    leadership = true,
+    productionCost = 3,
+    scienceCost = 2,
+  )  
+
   val snake = createPieceStats(
     name = "snake",
     moveRange = 1,
@@ -441,14 +452,14 @@ object Units {
     notes = "Deals triple damage to cities"
   )
 
-  val sergeant = createPieceStats(
-    name = "sergeant",
+  val general = createPieceStats(
+    name = "general",
     moveRange = 1,
     attackRange = 1,
     attackEffect = Some(Damage(2)),
-    defense = Some(7),
+    defense = Some(8),
     leadership = true,
-    productionCost = 7,
+    productionCost = 8,
     scienceCost = 6,
     notes = "Nearby friendly units get +1 attack"
   )
@@ -653,6 +664,19 @@ object Units {
     scienceCost = 42,
   )
 
+  val colossus = createPieceStats(
+    name = "colossus",
+    moveRange = 1,
+    attackRange = 1,
+    attackEffect = Some(Damage(5)),
+    defense = Some(48),
+    taunt = true,
+    robust = 2,
+    retaliate = true,
+    productionCost = 32,
+    scienceCost = 30,
+  )
+
   val city = createPieceStats(
     name = "city",
     shortDisplayName = "City",
@@ -675,10 +699,10 @@ object Units {
     battle_necromancer,
     zombie_necromancer,
     zombie, acolyte,
-    salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
-    trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hussar,
+    salvager, warrior, archer, skirmisher, legionary, snake, sergeant, horseman, berserker,
+    trebuchet, general, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hussar,
     horse_archer, kudzu, onager, banshee, knight, giant_frog, khan, godzilla, warlock, dragon, 
-    city
+    colossus, city
   )
 
   //Necromancers awarded after a board resets
@@ -730,6 +754,7 @@ object Units {
     godzilla,
     warlock,
     dragon,
+    colossus,
   )
 
   //Given a piece, get its index within the pieces array

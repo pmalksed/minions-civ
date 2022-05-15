@@ -2401,9 +2401,9 @@ case class BoardState private (
     return false
   }
 
-  // (isSergeant, blank)
+  // (isGeneral, blank)
   private def getModifiersInRange(piece: Piece): (Boolean, Boolean, Boolean) = {
-    var isSergeant = false
+    var isGeneral = false
     var isBanshee = false
     var isKhan = false
     topology.forEachAdjRange2(piece.loc) { loc =>
@@ -2411,8 +2411,8 @@ case class BoardState private (
         val piecesOnLoc = pieces(loc)
         if (piecesOnLoc.length > 0) {
           val pieceOnLoc = piecesOnLoc.head
-          if (pieceOnLoc.baseStats.name == "sergeant" && pieceOnLoc.side == piece.side) {
-            isSergeant = true
+          if (pieceOnLoc.baseStats.name == "general" && pieceOnLoc.side == piece.side) {
+            isGeneral = true
           }
           if (pieceOnLoc.baseStats.name == "khan" && pieceOnLoc.side == piece.side) {
             isKhan = true
@@ -2423,16 +2423,16 @@ case class BoardState private (
         }
       }
     }
-    return (isSergeant, isBanshee, isKhan)
+    return (isGeneral, isBanshee, isKhan)
   }
 
   def getAttackOfPiece(piece: Piece, mainAttack: Boolean = true): Int = {
     if (!mainAttack) {
       return piece.baseStats.splash
     }
-    val (isSergeant, isBanshee, _) = getModifiersInRange(piece)
+    val (isGeneral, isBanshee, _) = getModifiersInRange(piece)
     var attack = getBaseAttackOfPiece(piece)
-    if (isSergeant) {
+    if (isGeneral) {
       attack += 1
     }
     if (isBanshee) {
