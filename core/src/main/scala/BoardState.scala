@@ -2089,7 +2089,7 @@ case class BoardState private (
         val piecesOnLoc = pieces(loc)
         if (piecesOnLoc.length > 0) {
           val pieceOnLoc = piecesOnLoc.head
-          if (pieceOnLoc.side == leader.side) {
+          if (pieceOnLoc.side == leader.side && !pieceOnLoc.baseStats.leadership) {
             pieceOnLoc.target = leader.target
           }
         }
