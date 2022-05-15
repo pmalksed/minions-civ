@@ -541,15 +541,17 @@ object Units {
     notes = "Kites enemy melee units",
   )
 
-  val fiend = createPieceStats(
-    name = "fiend",
-    cost = 3,
-    rebate = 0,
+  val kudzu = createPieceStats(
+    name = "kudzu",
     moveRange = 1,
     attackRange = 1,
-    attackEffect = Some(Damage(1)),
-    numAttacks = 8,
-    defense = Some(6)
+    attackEffect = Some(Damage(3)),
+    poisonous = 3,
+    defense = Some(11),
+    taunt = true,
+    retaliate = true,
+    productionCost = 10,
+    scienceCost = 16,
   )
 
   val banshee = createPieceStats(
@@ -627,7 +629,7 @@ object Units {
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
     trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hussar,
-    horse_archer, fiend, banshee, elemental, fallen_angel, shadowlord, city
+    horse_archer, kudzu, banshee, elemental, fallen_angel, shadowlord, city
   )
 
   //Necromancers awarded after a board resets
@@ -670,7 +672,7 @@ object Units {
     longbowman,
     hussar,
     horse_archer,
-    fiend,
+    kudzu,
     banshee,
     elemental,
     fallen_angel,
