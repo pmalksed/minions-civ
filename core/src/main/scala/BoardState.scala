@@ -2466,12 +2466,12 @@ case class BoardState private (
     return false
   }
 
-  private def adjacentUnoccupiedHexNotAdjacentToEnemyMeleeUnit(piece: Piece): Option[Loc] = {
+  private def adjacentUnoccupiedHex(piece: Piece, notAdjacentToEnemyMeleeUnit: Boolean = false): Option[Loc] = {
     var bestLoc: Option[Loc] = None
     var bestScore: Double = -1000.0
 
     topology.forEachAdj(piece.loc) { loc =>
-      if (!locIsOccupied(loc) && !locIsAdjacentToEnemyMeleeUnit(loc, piece.side)) {
+      if (!locIsOccupied(loc) && (!locIsAdjacentToEnemyMeleeUnit(loc, piece.side) || !notAdjacentToEnemyMeleeUnit)) {
         val score = -1 * smartDistance(loc, piece.target)
         if (score > bestScore) {
           bestScore = score
@@ -2617,6 +2617,10 @@ case class BoardState private (
     return totalScore
   }
 
+  private def ignoresMelee(piece: Piece): Boolean = {
+    return piece.baseStats.name == "hussar" || piece.baseStats.name == "giant frog"
+  }
+
   private def getBestTargetForAttack(piece: Piece): Option[Piece] = {
     val range = piece.baseStats.attackRange;
     var offsets = List(Vec(0,0))
@@ -2638,7 +2642,7 @@ case class BoardState private (
           val piecesOnLoc = pieces(loc)
           if (piecesOnLoc.length > 0) {
             val target = piecesOnLoc.head
-            if (target.side != piece.side && (piece.baseStats.name != "hussar" || target.baseStats.attackRange > 1)) {
+            if (target.side != piece.side && (!ignoresMelee(piece) || target.baseStats.attackRange > 1)) {
               val score = getScoreForAttackAccountingForSplash(piece, target)
               if (score > bestScore) {
                 bestScore = score
@@ -2707,6 +2711,16 @@ case class BoardState private (
     // If all else is equal, chase the juicier target
     totalScore = totalScore + 0.001 * juiciness(target)    
 
+    // Giant frogs need an adjacent hex to jump into
+    if (piece.baseStats.name == "giant frog") {
+      val adjHex = adjacentUnoccupiedHex(target)
+      adjHex match {
+        case None => 
+          totalScore = totalScore - 10000.0
+        case Some(_) => 
+      }
+    }
+
     return totalScore
   }
 
@@ -2722,7 +2736,7 @@ case class BoardState private (
         val piecesOnLoc = pieces(loc)
         if (piecesOnLoc.length > 0) {
           val target = piecesOnLoc.head
-          if (target.side != piece.side && (piece.baseStats.name != "hussar" || target.baseStats.attackRange > 1)) {
+          if (target.side != piece.side && (!ignoresMelee(piece) || target.baseStats.attackRange > 1)) {
             val score = getScoreForMoveTowards(piece, target)
             if (score > bestScore) {
               bestScore = score
@@ -2832,7 +2846,7 @@ case class BoardState private (
 
   private def attackMoveInner(piece: Piece, externalInfo: ExternalInfo, remainingMovement: Int): Unit = {
     if (remainingMovement > 1 && piece.baseStats.name == "horse archer") {
-      val locToFleeTo = adjacentUnoccupiedHexNotAdjacentToEnemyMeleeUnit(piece)
+      val locToFleeTo = adjacentUnoccupiedHex(piece, notAdjacentToEnemyMeleeUnit=true)
       locToFleeTo match { 
         case None =>
         case Some(loc) =>
@@ -2845,13 +2859,25 @@ case class BoardState private (
         if (!tryAttacking(piece, externalInfo)) {
           val targetForMoveTowards = getBestTargetForMoveTowards(piece)
           var targetLoc = piece.loc
+          var didJump = false
           targetForMoveTowards match {
             case Some(target) =>
               targetLoc = target.loc
+              if (piece.baseStats.name == "giant frog") {
+                val adjHex = adjacentUnoccupiedHex(target)
+                // Should never be null, if there's a valid target
+                adjHex match {
+                  case None =>
+                  case Some(loc) =>
+                    doMovePieceToLoc(piece, loc)
+                    attackMoveInner(piece, externalInfo, remainingMovement - 1)
+                    didJump = true
+                }
+              }              
             case None =>
               targetLoc = piece.target
           }
-          if (moveTowards(piece, targetLoc)) {
+          if (!didJump && moveTowards(piece, targetLoc)) {
             attackMoveInner(piece, externalInfo, remainingMovement - 1)
           }
         }

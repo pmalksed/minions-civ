@@ -529,7 +529,7 @@ object Units {
     nimble = true,
     productionCost = 7,
     scienceCost = 12,
-    notes = "Doesn't attack enemy melee units"
+    notes = "Doesn't attack enemy melee units",
   )
 
   val horse_archer = createPieceStats(
@@ -591,17 +591,18 @@ object Units {
     scienceCost = 20,
   )
 
-  val shadowlord = createPieceStats(
-    name = "shadowlord",
-    shortDisplayName = "SLord",
-    cost = 10,
-    rebate = 5,
-    moveRange = 2,
-    isFlying = true,
+  val giant_frog = createPieceStats(
+    name = "giant frog",
+    moveRange = 1,
     attackRange = 1,
-    attackEffect = Some(Damage(8)),
+    charge = true,
+    attackEffect = Some(Damage(6)),
     defense = Some(10),
-    isPersistent = true,
+    nimble = true,
+    productionCost = 14,
+    scienceCost = 22,
+    notes = "Jumps next to ranged enemies that are up to 3 hexes away",
+    notes2 = "Doesn't attack enemy melee units",
   )
 
   val city = createPieceStats(
@@ -628,7 +629,7 @@ object Units {
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
     trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hussar,
-    horse_archer, kudzu, onager, banshee, knight, shadowlord, city
+    horse_archer, kudzu, onager, banshee, knight, giant_frog, city
   )
 
   //Necromancers awarded after a board resets
@@ -675,7 +676,7 @@ object Units {
     onager,
     banshee,
     knight,
-    shadowlord
+    giant_frog,
   )
 
   //Given a piece, get its index within the pieces array
