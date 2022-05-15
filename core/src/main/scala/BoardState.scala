@@ -4,6 +4,8 @@ import scala.util.{Try,Success,Failure,Random}
 import scala.collection.immutable.Vector
 
 import RichImplicits._
+import java.util.Calendar
+import java.text.SimpleDateFormat
 
 /**
   * The board state and various (often mutable) data structures and types relating directly to it,
@@ -26,6 +28,13 @@ import RichImplicits._
   *
   * See Board.scala for the next layer up in the board implementation stack.
   */
+
+object Log {
+  val timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
+  def log(s: String): Unit = {
+    println(timeFormat.format(Calendar.getInstance().getTime()) + " " + s)
+  }
+}
 
 /**
   * PieceSpec:
@@ -2158,20 +2167,22 @@ case class BoardState private (
 
   //Kill a piece, for any reason
   private def killPiece(piece: Piece, externalInfo: ExternalInfo, suicide: Boolean = false): Unit = {
+    if(piece.id )
     if(piece.curStats(this).isSoulbound) {
       unsummonPiece(piece)
     } else {
       removeFromBoard(piece)
-      killedThisTurn = killedThisTurn :+ ((piece.spec, piece.baseStats.name, piece.side, piece.loc))
+      killedThisTurn = killedThisTurn :+ (piece.id)
       updateAfterPieceKill(piece.side,piece.curStats(this),piece.loc,externalInfo)
 
       // For some reason it's 2x more stuff than there should be without this, too lazy to figure
       // out why
       var multiplier: Double = 0.5
       if (suicide && piece.baseStats.name != "mule") {
-        multiplier = Constants.SUICIDE_TAX
+        multiplier *= Constants.SUICIDE_TAX
       }
-
+      Log.log("hello")
+      Log.log("" +piece)
       val tile = tiles(piece.loc)
       tile.food = tile.food + (piece.food + piece.carriedFood) * multiplier
       tile.production = tile.production + (piece.production + piece.carriedProduction) * multiplier
@@ -2434,6 +2445,37 @@ case class BoardState private (
   private def juiciness(piece: Piece): Double = {
     return (piece.food + piece.production) / (getRemainingHealthOfPiece(piece))
   }
+
+  private def locIsAdjacentToEnemyMeleeUnit(loc: Loc, side: Side): Boolean = {
+    topology.forEachAdj(loc) { loc =>
+      if (locIsValid(loc)) {
+        val piecesOnLoc = pieces(loc)
+        if (piecesOnLoc.length > 0) {
+          val pieceOnLoc = piecesOnLoc.head
+          if (pieceOnLoc.baseStats.attackRange == 0 && pieceOnLoc.side != side) {
+            return true
+          }
+        }
+      }
+    }
+    return false
+  }
+
+  private def adjacentUnoccupiedHexNotAdjacentToEnemyMeleeUnit(piece: Piece): Option[Loc] = {
+    var bestLoc: Option[Loc] = None
+    var bestScore: Double = -1000.0
+
+    topology.forEachAdj(piece.loc) { loc =>
+      if (!locIsOccupied(loc) && !locIsAdjacentToEnemyMeleeUnit(loc, piece.side)) {
+        val score = -1 * smartDistance(loc, piece.target)
+        if (score > bestScore) {
+          bestScore = score
+          bestLoc = Some(loc)
+        }
+      }
+    }
+    return bestLoc
+  }  
 
   private def stealResources(piece: Piece, target: Piece, amount: Double) = {
     var remainingAmountToSteal = amount
@@ -2762,6 +2804,15 @@ case class BoardState private (
   }
 
   private def attackMoveInner(piece: Piece, externalInfo: ExternalInfo, remainingMovement: Int): Unit = {
+    if (remainingMovement > 1 && piece.baseStats.name == "horse archer") {
+      val locToFleeTo = adjacentUnoccupiedHexNotAdjacentToEnemyMeleeUnit(piece)
+      locToFleeTo match { 
+        case None =>
+        case Some(loc) =>
+          moveTowards(piece, loc)
+      }
+      attackMoveInner(piece, externalInfo, remainingMovement - 1)
+    }
     if (remainingMovement > 0) {
       if (getAttackOfPiece(piece) > 0) {
         if (!tryAttacking(piece, externalInfo)) {
