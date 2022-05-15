@@ -630,6 +630,17 @@ object Units {
     scienceCost = 28,
   )
 
+  val warlock = createPieceStats(
+    name = "warlock",
+    moveRange = 1,
+    attackRange = 3,
+    attackEffect = Some(Damage(5)),
+    poisonous = 5,
+    defense = Some(8),
+    productionCost = 18,
+    scienceCost = 33,
+  )
+
   val city = createPieceStats(
     name = "city",
     shortDisplayName = "City",
@@ -654,7 +665,7 @@ object Units {
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
     trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hussar,
-    horse_archer, kudzu, onager, banshee, knight, giant_frog, khan, godzilla, city
+    horse_archer, kudzu, onager, banshee, knight, giant_frog, khan, godzilla, warlock, city
   )
 
   //Necromancers awarded after a board resets
@@ -704,6 +715,7 @@ object Units {
     giant_frog,
     khan,
     godzilla,
+    warlock,
   )
 
   //Given a piece, get its index within the pieces array
