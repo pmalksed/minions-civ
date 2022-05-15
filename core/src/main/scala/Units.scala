@@ -461,7 +461,7 @@ object Units {
     leadership = true,
     productionCost = 8,
     scienceCost = 6,
-    notes = "Nearby friendly units get +1 attack"
+    notes = "Nearby friendly units get +1 attack (does not stack)"
   )
 
   val champion = createPieceStats(
@@ -627,7 +627,7 @@ object Units {
     productionCost = 18,
     scienceCost = 15,
     leadership = true,
-    notes = "Nearby friendly units get +1 movement"
+    notes = "Nearby friendly units get +1 movement (does not stack)"
   )
 
   val godzilla = createPieceStats(
