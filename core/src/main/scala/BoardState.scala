@@ -4,8 +4,6 @@ import scala.util.{Try,Success,Failure,Random}
 import scala.collection.immutable.Vector
 
 import RichImplicits._
-import java.util.Calendar
-import java.text.SimpleDateFormat
 
 /**
   * The board state and various (often mutable) data structures and types relating directly to it,
@@ -28,13 +26,6 @@ import java.text.SimpleDateFormat
   *
   * See Board.scala for the next layer up in the board implementation stack.
   */
-
-object Log {
-  val timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
-  def log(s: String): Unit = {
-    println(timeFormat.format(Calendar.getInstance().getTime()) + " " + s)
-  }
-}
 
 /**
   * PieceSpec:
@@ -2167,26 +2158,30 @@ case class BoardState private (
 
   //Kill a piece, for any reason
   private def killPiece(piece: Piece, externalInfo: ExternalInfo, suicide: Boolean = false): Unit = {
-    if(piece.id )
     if(piece.curStats(this).isSoulbound) {
       unsummonPiece(piece)
     } else {
       removeFromBoard(piece)
-      killedThisTurn = killedThisTurn :+ (piece.id)
+      killedThisTurn = killedThisTurn :+ ((piece.spec, piece.baseStats.name, piece.side, piece.loc))
       updateAfterPieceKill(piece.side,piece.curStats(this),piece.loc,externalInfo)
 
       // For some reason it's 2x more stuff than there should be without this, too lazy to figure
       // out why
-      var multiplier: Double = 0.5
+      var multiplier: Double = 1.0
       if (suicide && piece.baseStats.name != "mule") {
         multiplier *= Constants.SUICIDE_TAX
       }
-      Log.log("hello")
-      Log.log("" +piece)
+
       val tile = tiles(piece.loc)
       tile.food = tile.food + (piece.food + piece.carriedFood) * multiplier
       tile.production = tile.production + (piece.production + piece.carriedProduction) * multiplier
       tile.science = tile.science + (piece.science + piece.carriedScience) * multiplier
+      piece.food = 0.0
+      piece.production = 0.0
+      piece.science = 0.0
+      piece.carriedFood = 0.0
+      piece.carriedProduction = 0.0
+      piece.carriedScience = 0.0
     }
   }
 
