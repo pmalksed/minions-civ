@@ -88,6 +88,7 @@ object Units {
     robust: Int = 0,
     leadership: Boolean = false,
     taunt: Boolean = false,
+    splash: Int = 0,
   ) : PieceStats = {
     PieceStats(
       name = name,
@@ -129,6 +130,7 @@ object Units {
       robust = robust,
       leadership = leadership,
       taunt = taunt,
+      splash = splash,
     )
   }
 
@@ -554,16 +556,15 @@ object Units {
     scienceCost = 16,
   )
 
-  val banshee = createPieceStats(
-    name = "banshee",
-    cost = 4,
-    rebate = 1,
-    moveRange = 2,
-    attackRange = 1,
-    attackEffect = Some(Kill),
-    defense = Some(2),
-    isPersistent = true,
-    canHurtNecromancer = false
+  val onager = createPieceStats(
+    name = "onager",
+    moveRange = 1,
+    attackRange = 3,
+    attackEffect = Some(Damage(3)),
+    splash = 2,
+    defense = Some(5),
+    productionCost = 11,
+    scienceCost = 15,
   )
 
   val elemental = createPieceStats(
@@ -629,7 +630,7 @@ object Units {
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
     trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hussar,
-    horse_archer, kudzu, banshee, elemental, fallen_angel, shadowlord, city
+    horse_archer, kudzu, onager, elemental, fallen_angel, shadowlord, city
   )
 
   //Necromancers awarded after a board resets
@@ -673,7 +674,7 @@ object Units {
     hussar,
     horse_archer,
     kudzu,
-    banshee,
+    onager,
     elemental,
     fallen_angel,
     shadowlord

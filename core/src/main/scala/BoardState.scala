@@ -2418,7 +2418,10 @@ case class BoardState private (
     return (isSergeant, false)
   }
 
-  def getAttackOfPiece(piece: Piece): Int = {
+  def getAttackOfPiece(piece: Piece, mainAttack: Boolean = true): Int = {
+    if (!mainAttack) {
+      return piece.baseStats.splash
+    }
     val (isSergeant, _) = getModifiersInRange(piece)
     var attack = getBaseAttackOfPiece(piece)
     if (isSergeant) {
@@ -2535,8 +2538,8 @@ case class BoardState private (
     return Damage(getDamageDealtToTarget(piece, target))
   }
 
-  private def getDamageDealtToTarget(piece: Piece, target: Piece): Int = {
-    var damage = getAttackOfPiece(piece)
+  private def getDamageDealtToTarget(piece: Piece, target: Piece, mainAttack: Boolean = true): Int = {
+    var damage = getAttackOfPiece(piece, mainAttack=mainAttack)
     if (isRanged(piece) && target.baseStats.nimble) {
       damage = damage / 2
     }
@@ -2550,11 +2553,11 @@ case class BoardState private (
     return damage
   }
 
-  private def getScoreForAttack(piece: Piece, target: Piece): Double = {
+  private def getScoreForAttack(piece: Piece, target: Piece, mainAttack: Boolean = true, ignoreTaunt: Boolean = false): Double = {
     var totalScore: Double = 0.0
 
-    val damageDealtToTarget = getDamageDealtToTarget(piece, target)
-    if (damageDealtToTarget <= 0 && piece.baseStats.poisonous == 0 && !target.baseStats.taunt) {
+    val damageDealtToTarget = getDamageDealtToTarget(piece, target, mainAttack=mainAttack)
+    if (damageDealtToTarget <= 0 && piece.baseStats.poisonous == 0 && !target.baseStats.taunt && piece.baseStats.splash == 0) {
       // Harshly penalize attacks that do nothing so that they don't happen
       totalScore -= 10000.0
     }
@@ -2578,10 +2581,32 @@ case class BoardState private (
     }
 
     // Prioritize attacking taunt units
-    if (target.baseStats.taunt) {
+    if (target.baseStats.taunt && !ignoreTaunt) {
       totalScore += 100.0
     }
 
+    return totalScore
+  }
+
+  private def getScoreForAttackAccountingForSplash(piece: Piece, target: Piece): Double = {
+    var totalScore = getScoreForAttack(piece, target);
+    if (piece.baseStats.splash == 0) {
+      return totalScore
+    }
+    tiles.topology.forEachAdj(target.loc) { loc =>
+      if (locIsValid(loc)) {
+        val piecesOnLoc = pieces(loc)
+        if (piecesOnLoc.length > 0) {
+          val splashTarget = piecesOnLoc.head
+          if (splashTarget.side != piece.side) {
+            totalScore = totalScore + getScoreForAttack(piece, target, mainAttack=false)
+          }
+          if (splashTarget.side == piece.side) {
+            totalScore = totalScore - getScoreForAttack(piece, target, mainAttack=false, ignoreTaunt=true)
+          }          
+        }
+      }
+    }
     return totalScore
   }
 
@@ -2607,7 +2632,7 @@ case class BoardState private (
           if (piecesOnLoc.length > 0) {
             val target = piecesOnLoc.head
             if (target.side != piece.side && (piece.baseStats.name != "hussar" || target.baseStats.attackRange > 1)) {
-              val score = getScoreForAttack(piece, target)
+              val score = getScoreForAttackAccountingForSplash(piece, target)
               if (score > bestScore) {
                 bestScore = score
                 bestTarget = Some(target)
@@ -2889,7 +2914,19 @@ case class BoardState private (
         }
         if (piece.baseStats.name == "telekinetic" && totalResourcesCarried(target) > 0.0) {
           stealResources(piece, target, damageWouldBeDealt.asInstanceOf[Double])
-        }        
+        }
+        if (piece.baseStats.splash > 0) {
+          tiles.topology.forEachAdj(target.loc) { loc =>
+            if (locIsValid(loc)) {
+              val piecesOnLoc = pieces(loc)
+              if (piecesOnLoc.length > 0) {
+                val splashTarget = piecesOnLoc.head
+                val splashEffect = Damage(piece.baseStats.splash)
+                applyEffect(splashEffect, splashTarget, externalInfo)
+              }
+            }            
+          }
+        }
         return true
       case None => 
         return false
