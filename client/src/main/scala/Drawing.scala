@@ -499,8 +499,6 @@ object Drawing {
               show("Attack range: " + stats.attackRange + " hexes" + vsFlyingStr)
             }
           }
-          show(stats.notes)
-          show(stats.notes2)
           show("Production cost: " + stats.productionCost)
           show("Science cost: " + stats.scienceCost)
           if(stats.nimble) {
@@ -525,6 +523,22 @@ object Drawing {
           if (robust > 0) {
             show("Robust " + robust + " (all damage sources, incl. poison, inflict " + robust + 
               " less damage)")
+          }
+          if (stats.taunt) {
+            show("Taunt (enemy units will prioritize attacking this unit)")
+          }
+          if (stats.leadership) {
+            show("Leadership (can change target; leads friendly units at range 2)")
+          }
+          val splash = stats.splash
+          if (splash > 0) {
+            show("Splash " + splash + " (attacks deal " + splash + " damage to units adjacent to the target, including friendlies)")
+          }
+          if (stats.notes.length > 0) { 
+            show(stats.notes)
+          }
+          if (stats.notes2.length > 0) {
+            show(stats.notes2)
           }
           if(stats.isFlying) {
             show("Flying (move over water or enemies)")
