@@ -605,6 +605,20 @@ object Units {
     notes2 = "Doesn't attack enemy melee units",
   )
 
+  val khan = createPieceStats(
+    name = "khan",
+    moveRange = 2,
+    attackRange = 1,
+    charge = true,
+    attackEffect = Some(Damage(3)),
+    defense = Some(12),
+    nimble = true,
+    productionCost = 18,
+    scienceCost = 15,
+    leadership = true,
+    notes = "Nearby friendly units get +1 movement"
+  )
+
   val city = createPieceStats(
     name = "city",
     shortDisplayName = "City",
@@ -629,7 +643,7 @@ object Units {
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
     trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hussar,
-    horse_archer, kudzu, onager, banshee, knight, giant_frog, city
+    horse_archer, kudzu, onager, banshee, knight, giant_frog, khan, city
   )
 
   //Necromancers awarded after a board resets
@@ -677,6 +691,7 @@ object Units {
     banshee,
     knight,
     giant_frog,
+    khan,
   )
 
   //Given a piece, get its index within the pieces array
