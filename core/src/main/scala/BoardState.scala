@@ -2447,7 +2447,7 @@ case class BoardState private (
         val piecesOnLoc = pieces(loc)
         if (piecesOnLoc.length > 0) {
           val pieceOnLoc = piecesOnLoc.head
-          if (pieceOnLoc.baseStats.attackRange == 0 && pieceOnLoc.side != side) {
+          if (pieceOnLoc.baseStats.attackRange == 1 && pieceOnLoc.side != side) {
             return true
           }
         }
@@ -2804,11 +2804,11 @@ case class BoardState private (
       locToFleeTo match { 
         case None =>
         case Some(loc) =>
-          moveTowards(piece, loc)
+          doMovePieceToLoc(piece, loc)
       }
       attackMoveInner(piece, externalInfo, remainingMovement - 1)
     }
-    if (remainingMovement > 0) {
+    else if (remainingMovement > 0) {
       if (getAttackOfPiece(piece) > 0) {
         if (!tryAttacking(piece, externalInfo)) {
           val targetForMoveTowards = getBestTargetForMoveTowards(piece)
