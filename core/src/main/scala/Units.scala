@@ -619,6 +619,17 @@ object Units {
     notes = "Nearby friendly units get +1 movement"
   )
 
+  val godzilla = createPieceStats(
+    name = "godzilla",
+    moveRange = 1,
+    attackRange = 1,
+    charge = true,
+    attackEffect = Some(Damage(18)),
+    defense = Some(30),
+    productionCost = 17,
+    scienceCost = 28,
+  )
+
   val city = createPieceStats(
     name = "city",
     shortDisplayName = "City",
@@ -643,7 +654,7 @@ object Units {
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, horseman, berserker,
     trebuchet, sergeant, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hussar,
-    horse_archer, kudzu, onager, banshee, knight, giant_frog, khan, city
+    horse_archer, kudzu, onager, banshee, knight, giant_frog, khan, godzilla, city
   )
 
   //Necromancers awarded after a board resets
@@ -692,6 +703,7 @@ object Units {
     knight,
     giant_frog,
     khan,
+    godzilla,
   )
 
   //Given a piece, get its index within the pieces array
