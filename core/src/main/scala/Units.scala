@@ -639,6 +639,7 @@ object Units {
     defense = Some(30),
     productionCost = 17,
     scienceCost = 28,
+    notes = "Enters the hex of enemy units that it kills"
   )
 
   val warlock = createPieceStats(

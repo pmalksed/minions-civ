@@ -2940,7 +2940,10 @@ case class BoardState private (
       case Some(target) =>
         val attackEffect = getAttackEffect(piece, target)
         val (retaliateAttackEffect, didRetaliate) = getRetaliateAttackEffect(piece, target)    
+        val targetRemainingHealth = getRemainingHealthOfPiece(target)
         val damageWouldBeDealt = getDamageWouldBeDealt(piece, target)
+        val killingBlow = targetRemainingHealth <= damageWouldBeDealt
+        val targetLoc = target.loc
         applyEffect(attackEffect,target,externalInfo)
         applyEffect(retaliateAttackEffect,piece,externalInfo)
         if (piece.baseStats.poisonous > 0 && target.baseStats.name != "city") {
@@ -2963,6 +2966,9 @@ case class BoardState private (
               }
             }            
           }
+        }
+        if (piece.baseStats.name == "godzilla" && killingBlow) {
+          doMovePieceToLoc(piece, targetLoc)
         }
         return true
       case None => 
