@@ -256,29 +256,34 @@ object Drawing {
         side match {
           case None => "#cccccc"
           case Some(S0) =>
-            if(externalInfo.pieceMap(pieceName).isNecromancer) "#bbddff"
+            if (pieceName == "city") "#bbbbff"
             else "#ccccff"
           case Some(S1) =>
-            if(externalInfo.pieceMap(pieceName).isNecromancer) "#ffccaa"
-            else "#ffbbbb"
+            if (pieceName == "city") "#ffffaa"
+            else "#ffffcc"
+          case Some(S2) =>
+            if (pieceName == "city") "#ffbb88"
+            else "#ffccaa"
+          case Some(S3) =>
+            if (pieceName == "city") "#bbffbb"
+            else "#ccffcc"
+          case Some(S4) =>
+            if (pieceName == "city") "#ff88ff"
+            else "#ffaaff"
+          case Some(S5) =>
+            if (pieceName == "city") "#88ffff"
+            else "#aaffff"
+          case Some(SB) =>
+            if (pieceName == "city") "#ffbbbb"
+            else "ffcccc"
         }
       fillHex(hexLoc, pieceColor, scale, alpha = alpha)
       strokeHex(hexLoc, "black", scale, alpha = 0.2 * alpha)
     }
 
     def drawSpell(hexLoc: HexLoc, scale : Double, side: Option[Side], spellId: Option[SpellId], subLabel: Option[String] = None, alpha: Double = 1.0) : Unit = {
-      val color =
-        side match {
-          case None => "#aaaaaa"
-          case Some(S0) => "#aaccff"
-          case Some(S1) => "#ffccaa"
-        }
-      val strokeColor =
-        side match {
-          case None => "#aaaaaa"
-          case Some(S0) => "#0000bb"
-          case Some(S1) => "#bb0000"
-        }
+      val color = "#aaaaaa"
+      val strokeColor = "#aaaaaa"
       fillHex(hexLoc, color, scale, rectangle=true, alpha=alpha)
       strokeHex(hexLoc, strokeColor, scale, alpha=0.4*alpha, rectangle=true)
       spellId.foreach { spellId =>
@@ -289,7 +294,7 @@ object Drawing {
           case Some(spellName) =>
             val spell = Spells.spellMap(spellName)
             subLabel match {
-              case None => text(spell.shortDisplayName, hexLoc, "black", alpha=alpha)
+              case None => text(spell.shortDisplayName + side.toString(), hexLoc, "black", alpha=alpha)
               case Some(subLabel) =>
                 text(spell.shortDisplayName, PixelLoc.ofHexLoc(hexLoc,gridSize) + PixelVec(0,-4.0), "black", alpha=alpha)
                 text(subLabel, PixelLoc.ofHexLoc(hexLoc,gridSize) + PixelVec(0,7.0), "black", alpha=alpha)
@@ -740,10 +745,8 @@ object Drawing {
     ctx.clearRect(0.0, 0.0, canvas.width.toDouble, canvas.height.toDouble)
 
     //Background fill based on whose turn it is
-    val backgroundColor = board.side match {
-      case S0 => "#eeeeff"
-      case S1 => "#ffeeee"
-    }
+    val backgroundColor = "#0088ff"
+
     ctx.fillStyle = backgroundColor
     ctx.globalAlpha = 1.0
     ctx.fillRect(0.0, 0.0, canvas.width.toDouble, canvas.height.toDouble)
@@ -765,44 +768,54 @@ object Drawing {
 
     def textColorOfSide(side: Side): String = {
       side match {
-        case S0 => "#000099"
-        case S1 => "#770000"
+        case S0 => "#000000"
+        case S1 => "#000000"
+        case S2 => "#000000"
+        case S3 => "#000000"
+        case S4 => "#000000"
+        case S5 => "#000000"
+        case SB => "#000000"
       }
     }
-    def rectColorOfSide(side: Side): String = {
-      side match {
-        case S0 => "#e0e0ff"
-        case S1 => "#ffe0e0"
-      }
-    }
+    // def rectColorOfSide(side: Side): String = {
+    //   side match {
+    //     case S0 => "#000000"
+    //     case S1 => "#000000"
+    //     case S2 => "#000000"
+    //     case S3 => "#000000"
+    //     case S4 => "#000000"
+    //     case S5 => "#000000"
+    //     case SB => "#000000"
+    //   }
+    // }
 
-    //Game info text
-    Side.foreach { side =>
-      val infoLoc = ui.TopInfo.getHexLoc(side)
-      val pixelLoc = PixelLoc.ofHexLoc(infoLoc, gridSize)
-      val color = textColorOfSide(side)
-      val souls = boards.foldLeft(game.souls(side) + game.soulsThisRound(side)) { case (sum,board) =>
-        sum + board.curState.soulsThisRound(side)
-      }
-      val newSouls = boards.foldLeft(game.extraSoulsPerTurn(side)) { case (sum, board) =>
-        sum + board.curState.endOfTurnSouls(side)
-      }
+    // //Game info text
+    // Side.foreach { side =>
+    //   val infoLoc = ui.TopInfo.getHexLoc(side)
+    //   val pixelLoc = PixelLoc.ofHexLoc(infoLoc, gridSize)
+    //   val color = textColorOfSide(side)
+    //   val souls = boards.foldLeft(game.souls(side) + game.soulsThisRound(side)) { case (sum,board) =>
+    //     sum + board.curState.soulsThisRound(side)
+    //   }
+    //   val newSouls = boards.foldLeft(game.extraSoulsPerTurn(side)) { case (sum, board) =>
+    //     sum + board.curState.endOfTurnSouls(side)
+    //   }
 
-      def textAtLoc(s: String, dpx: Double, dpy: Double, style:String = "normal") =
-        text(s, pixelLoc+PixelVec(dpx,dpy), color, textAlign="left", fontSize = 14, style = style)
+    //   def textAtLoc(s: String, dpx: Double, dpy: Double, style:String = "normal") =
+    //     text(s, pixelLoc+PixelVec(dpx,dpy), color, textAlign="left", fontSize = 14, style = style)
 
-      if(side == board.side) {
-        ctx.fillStyle = rectColorOfSide(side)
-        ctx.fillRect(pixelLoc.x - 10.0, pixelLoc.y - 26.0, 470.0, 24.0)
-      }
+    //   if(side == board.side) {
+    //     ctx.fillStyle = rectColorOfSide(side)
+    //     ctx.fillRect(pixelLoc.x - 10.0, pixelLoc.y - 26.0, 470.0, 24.0)
+    //   }
 
-      textAtLoc(side.toColorName + " Team:", 0.0, -10.0, style = "bold")
-      textAtLoc("Wins: " + game.wins(side) + "/" + game.targetNumWins, 110.0, -10.0)
-      textAtLoc("Souls: " + souls + " (+" + newSouls + "/turn)", 200.0, -10.0)
-      if(side == game.curSide) {
-        textAtLoc("Techs Used: " + game.usedTechsThisTurn + "/" + game.techsThisTurn(), 345.0, -10.0)
-      }
-    }
+    //   textAtLoc(side.toColorName + " Team:", 0.0, -10.0, style = "bold")
+    //   textAtLoc("Wins: " + game.wins(side) + "/" + game.targetNumWins, 110.0, -10.0)
+    //   textAtLoc("Souls: " + souls + " (+" + newSouls + "/turn)", 200.0, -10.0)
+    //   if(side == game.curSide) {
+    //     textAtLoc("Techs Used: " + game.usedTechsThisTurn + "/" + game.techsThisTurn(), 345.0, -10.0)
+    //   }
+    // }
 
     // Terrain
     for((terrain, i) <- ui.Terrain.terrains.zipWithIndex) {
@@ -811,31 +824,31 @@ object Drawing {
       drawTile(ui.Terrain.hexLoc(loc), loc, Tile(terrain), ui.Terrain.gridSizeScale*0.8, alpha=alpha) 
     }
 
-    //Board-specific info text
-    Side.foreach { side =>
-      val infoLoc = ui.BoardInfo.getHexLoc(side)
-      val pixelLoc = PixelLoc.ofHexLoc(infoLoc, gridSize)
-      val color = textColorOfSide(side)
+    // //Board-specific info text
+    // Side.foreach { side =>
+    //   val infoLoc = ui.BoardInfo.getHexLoc(side)
+    //   val pixelLoc = PixelLoc.ofHexLoc(infoLoc, gridSize)
+    //   val color = textColorOfSide(side)
 
-      if(side == board.side) {
-        ctx.fillStyle = rectColorOfSide(side)
-        ctx.fillRect(pixelLoc.x - 5.0, pixelLoc.y - 16.0, 345.0, 24.0)
-      }
+    //   if(side == board.side) {
+    //     ctx.fillStyle = rectColorOfSide(side)
+    //     ctx.fillRect(pixelLoc.x - 5.0, pixelLoc.y - 16.0, 345.0, 24.0)
+    //   }
 
-      def textAtLoc(s: String, dpx: Double, dpy: Double, style:String = "normal", size:Int = 14) =
-        text(s, pixelLoc+PixelVec(dpx,dpy), color, textAlign="left", fontSize = size, style = style)
+    //   def textAtLoc(s: String, dpx: Double, dpy: Double, style:String = "normal", size:Int = 14) =
+    //     text(s, pixelLoc+PixelVec(dpx,dpy), color, textAlign="left", fontSize = size, style = style)
 
-      textAtLoc("Souls: +" + board.endOfTurnSouls(side) + "/turn", 0, 0)
-      textAtLoc("Souls in play: " + board.soulsOnBoard(side), 100, -7, size=11)
-      textAtLoc("Souls spent: " + board.totalCosts(side), 100, 3, size=11)
+    //   textAtLoc("Souls: +" + board.endOfTurnSouls(side) + "/turn", 0, 0)
+    //   textAtLoc("Souls in play: " + board.soulsOnBoard(side), 100, -7, size=11)
+    //   textAtLoc("Souls spent: " + board.totalCosts(side), 100, 3, size=11)
 
-      if(side == board.side) {
-        if(board.mana < 0)
-          textAtLoc("Mana: " + board.mana, 220, 0, style = "bold")
-        else
-          textAtLoc("Mana: " + board.mana, 220, 0)
-      }
-    }
+    //   if(side == board.side) {
+    //     if(board.mana < 0)
+    //       textAtLoc("Mana: " + board.mana, 220, 0, style = "bold")
+    //     else
+    //       textAtLoc("Mana: " + board.mana, 220, 0)
+    //   }
+    // }
 
     //Clock
     if(client.gotFatalError) {
@@ -914,17 +927,17 @@ object Drawing {
       }
     }
 
-    //SpellHand
-    Side.foreach { side =>
-      val locs = ui.SpellHand.getLocs(side)
-      board.spellsInHand(side).zipWithIndex.foreach { case (spellId, idx) =>
-        //If the user has so many spells that it overflows, then we just won't draw them all...
-        if(idx < locs.length) {
-          val hexLoc = ui.SpellHand.hexLoc(locs(idx))
-          drawSpell(hexLoc, spellScale, Some(side), Some(spellId))
-        }
-      }
-    }
+    // //SpellHand
+    // Side.foreach { side =>
+    //   val locs = ui.SpellHand.getLocs(side)
+    //   board.spellsInHand(side).zipWithIndex.foreach { case (spellId, idx) =>
+    //     //If the user has so many spells that it overflows, then we just won't draw them all...
+    //     if(idx < locs.length) {
+    //       val hexLoc = ui.SpellHand.hexLoc(locs(idx))
+    //       drawSpell(hexLoc, spellScale, Some(side), Some(spellId))
+    //     }
+    //   }
+    // }
 
     //Dead pieces
     {
@@ -958,18 +971,10 @@ object Drawing {
     //Techs
     val techLocs = ui.Tech.getHexLocs(game)
     for(i <- 0 until game.techLine.length) {
-      val techState = game.techLine(i)
-      val changedThisTurn = Side.exists { side => techState.startingLevelThisTurn(side) != techState.level(side) }
-      val alpha = if(changedThisTurn) 0.5 else 1.0
+      val alpha = 1.0
 
       val hexLoc = techLocs(i)
-      val (fillColor, strokeColor) =
-        (techState.level(S0), techState.level(S1)) match {
-          case ((TechLocked | TechUnlocked), (TechLocked | TechUnlocked)) => ("#aaaaaa", "#888888")
-          case (TechAcquired, TechAcquired) => ("#A3C2A3", "#9ED49E")
-          case ((TechLocked | TechUnlocked), TechAcquired) => ("#ffbbbb", "#ff3333")
-          case (TechAcquired, (TechLocked | TechUnlocked)) => ("#bbbbff", "#3333ff")
-        }
+      val (fillColor, strokeColor) = ("#aaaaaa", "#888888")
 
       fillHex(hexLoc, fillColor, techScale, alpha=alpha)
       strokeHex(hexLoc, strokeColor, techScale, lineWidth=2.0, alpha=alpha)
@@ -989,8 +994,7 @@ object Drawing {
     for(i <- 0 until game.techLine.length) {
       val techState = game.techLine(i)
       val hexLoc = techLocs(i)
-      val changedThisTurn = Side.exists { side => techState.startingLevelThisTurn(side) != techState.level(side) }
-      val alpha = if(changedThisTurn) 0.5 else 1.0
+      val alpha = 1.0
 
       text(techState.shortDisplayName, PixelLoc.ofHexLoc(hexLoc, gridSize), "black", alpha=alpha)
       techState.techNumber.foreach { techNumber =>
@@ -1000,68 +1004,68 @@ object Drawing {
       text(techState.level(S1).toUnicodeSymbol, PixelLoc.ofHexLoc(hexLoc + HexVec.corners(0) * techInteriorScale, gridSize), "red", alpha=alpha)
     }
 
-    def techMidLoc(i: Int): HexLoc = {
-      techLocs(i) + HexVec.corners(if(i%2==0) 2 else 5)/2.0
-    }
-    for(i <- 0 until game.techLine.length-1) {
-      ctx.globalAlpha = 1.0
-      ctx.fillStyle = "black"
-      ctx.strokeStyle = "black"
-      ctx.lineWidth = 0.5
-      ctx.beginPath()
-      move(techMidLoc(i))
-      line(techMidLoc(i+1))
-      ctx.stroke()
-      ctx.closePath()
-      if(i+1 == game.techLine.length-1) {
-        // Draw an arrow at the end
-        ctx.beginPath();
-        val head = PixelLoc.ofHexLoc(techMidLoc(i+1), gridSize)
-        val angle = 7.0/6.0*Math.PI - (if(i%2==1) 2.0/6.0*Math.PI else 0.0)
-        val d1 = PixelVec(Math.cos(angle - Math.PI/7), Math.sin(angle - Math.PI/7))
-        val d2 = PixelVec(Math.cos(angle + Math.PI/7), Math.sin(angle + Math.PI/7))
+    // def techMidLoc(i: Int): HexLoc = {
+    //   techLocs(i) + HexVec.corners(if(i%2==0) 2 else 5)/2.0
+    // }
+    // for(i <- 0 until game.techLine.length-1) {
+    //   ctx.globalAlpha = 1.0
+    //   ctx.fillStyle = "black"
+    //   ctx.strokeStyle = "black"
+    //   ctx.lineWidth = 0.5
+    //   ctx.beginPath()
+    //   move(techMidLoc(i))
+    //   line(techMidLoc(i+1))
+    //   ctx.stroke()
+    //   ctx.closePath()
+    //   if(i+1 == game.techLine.length-1) {
+    //     // Draw an arrow at the end
+    //     ctx.beginPath();
+    //     val head = PixelLoc.ofHexLoc(techMidLoc(i+1), gridSize)
+    //     val angle = 7.0/6.0*Math.PI - (if(i%2==1) 2.0/6.0*Math.PI else 0.0)
+    //     val d1 = PixelVec(Math.cos(angle - Math.PI/7), Math.sin(angle - Math.PI/7))
+    //     val d2 = PixelVec(Math.cos(angle + Math.PI/7), Math.sin(angle + Math.PI/7))
 
-        movePixel(head)
-        linePixel(head + d1*8)
-        linePixel(head + d2*8)
-        linePixel(head)
-        ctx.fill()
-        ctx.closePath()
-      }
-    }
+    //     movePixel(head)
+    //     linePixel(head + d1*8)
+    //     linePixel(head + d2*8)
+    //     linePixel(head)
+    //     ctx.fill()
+    //     ctx.closePath()
+    //   }
+    // }
 
     //Spells
-    client.ourSide.foreach { ourSide =>
-      var availableLabeled = false
-      var upcomingLabeled = false
-      for(i <- (-1) until ui.SpellChoice.size) {
-        val (spellId, spellSide) = game.resolveSpellChoice(i, client.ourSide)
-        spellId match {
-          case None => ()
-          case Some(spellId) =>
-            val labelLoc = PixelLoc.ofHexLoc(ui.SpellChoice.hexLoc(ui.SpellChoice.getLoc(i-1)), gridSize)
-            if(game.spellsToChoose.contains(spellId)) {
-              if(!availableLabeled) {
-                text("Available", labelLoc + PixelVec(0,-4.0), "black")
-                text("Spells", labelLoc + PixelVec(0,7.0), "black")
-                availableLabeled = true
-              }
-            } else {
-              if(!upcomingLabeled) {
-                text("Upcoming", labelLoc + PixelVec(0,-4.0), "black")
-                text("Spells", labelLoc + PixelVec(0,7.0), "black")
-                upcomingLabeled = true
-              }
-            }
-            val hexLoc = ui.SpellChoice.hexLoc(ui.SpellChoice.getLoc(i))
+    // client.ourSide.foreach { ourSide =>
+    //   var availableLabeled = false
+    //   var upcomingLabeled = false
+    //   for(i <- (-1) until ui.SpellChoice.size) {
+    //     val (spellId, spellSide) = game.resolveSpellChoice(i, client.ourSide)
+    //     spellId match {
+    //       case None => ()
+    //       case Some(spellId) =>
+    //         val labelLoc = PixelLoc.ofHexLoc(ui.SpellChoice.hexLoc(ui.SpellChoice.getLoc(i-1)), gridSize)
+    //         if(game.spellsToChoose.contains(spellId)) {
+    //           if(!availableLabeled) {
+    //             text("Available", labelLoc + PixelVec(0,-4.0), "black")
+    //             text("Spells", labelLoc + PixelVec(0,7.0), "black")
+    //             availableLabeled = true
+    //           }
+    //         } else {
+    //           if(!upcomingLabeled) {
+    //             text("Upcoming", labelLoc + PixelVec(0,-4.0), "black")
+    //             text("Spells", labelLoc + PixelVec(0,7.0), "black")
+    //             upcomingLabeled = true
+    //           }
+    //         }
+    //         val hexLoc = ui.SpellChoice.hexLoc(ui.SpellChoice.getLoc(i))
 
-            if(game.boardsWithSpells.getOrElse(boardIdx, 0) > 0 && game.spellsToChoose.contains(spellId))
-              drawSpell(hexLoc, spellScale, spellSide, Some(spellId), alpha=0.4)
-            else
-              drawSpell(hexLoc, spellScale, spellSide, Some(spellId), alpha=1.0)
-        }
-      }
-    }
+    //         if(game.boardsWithSpells.getOrElse(boardIdx, 0) > 0 && game.spellsToChoose.contains(spellId))
+    //           drawSpell(hexLoc, spellScale, spellSide, Some(spellId), alpha=0.4)
+    //         else
+    //           drawSpell(hexLoc, spellScale, spellSide, Some(spellId), alpha=1.0)
+    //     }
+    //   }
+    // }
 
 
     //Terrain
@@ -1243,17 +1247,7 @@ object Drawing {
 
       drawPiece(loc, scale, Some(piece.side), curStats.name, alpha = alpha)
 
-      if(piece.modsWithDuration.exists { mod => mod.mod.isGood }) {
-        piece.side match {
-          case S0 =>
-            fillHex(loc, "#ccffff", scale, alpha=0.50 * alpha)
-            strokeHex(loc, "#22eeff", scale, lineWidth=1.0, alpha = alpha)
-          case S1 =>
-            fillHex(loc, "#ffeecc", scale, alpha=0.50 * alpha)
-            strokeHex(loc, "#ffaa44", scale, lineWidth=1.0, alpha = alpha)
-        }
-      }
-      else if(piece.modsWithDuration.exists { mod => !mod.mod.isGood }) {
+      if(piece.modsWithDuration.exists { mod => !mod.mod.isGood }) {
         fillHex(loc, "#bb00bb", scale, alpha=0.15 * alpha)
         strokeHex(loc, "magenta", scale, lineWidth=0.4, alpha = alpha)
       }

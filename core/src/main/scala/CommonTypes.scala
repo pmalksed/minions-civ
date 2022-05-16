@@ -16,20 +16,61 @@ import RichImplicits._
  */
 sealed trait Side {
   val int: Int
-  def opp: Side = this match { case S0 => S1  case S1 => S0 }
+  def opp: Side = this match { 
+    case S0 => S1  
+    case S1 => S0 
+    case S2 => S0 
+    case S3 => S0
+    case S4 => S0
+    case S5 => S0
+    case SB => S0
+  }
 
-  override def toString: String = this match { case S0 => "S0"  case S1 => "S1" }
-  def toColorName: String = this match { case S0 => "Blue"  case S1 => "Red" }
+  override def toString: String = this match { 
+    case S0 => "S0"
+    case S1 => "S1" 
+    case S2 => "S2"
+    case S3 => "S3"
+    case S4 => "S4"
+    case S5 => "S5"
+    case SB => "SB"
+  }
+  def toColorName: String = this match { 
+    case S0 => "Blue"  
+    case S1 => "Yellow" 
+    case S2 => "Brown"
+    case S3 => "Green"
+    case S4 => "Magenta"
+    case S5 => "Cyan"
+    case SB => "Red"
+  }
 }
 case object S0 extends Side { val int = 0 }
 case object S1 extends Side { val int = 1 }
+case object S2 extends Side { val int = 2 }
+case object S3 extends Side { val int = 3 }
+case object S4 extends Side { val int = 4 }
+case object S5 extends Side { val int = 5 }
+case object SB extends Side { val int = 6 }
 object Side {
   def ofString(s:String): Side = {
     s match {
       case "S0" => S0
       case "S1" => S1
+      case "S2" => S2
+      case "S3" => S3
+      case "S4" => S4
+      case "S5" => S5
+      case "S6" => SB
       case "0" => S0
       case "1" => S1
+      case "2" => S2
+      case "3" => S3
+      case "4" => S4
+      case "5" => S5
+      case "6" => SB
+      case "SB" => SB
+      case "B" => SB
       case _ => throw new Exception("Could not parse side: " + s)
     }
   }
@@ -37,9 +78,14 @@ object Side {
   def foreach(f: Side => Unit): Unit = {
     f(S0)
     f(S1)
+    // f(S2)
+    // f(S3)
+    // f(S4)
+    // f(S5)
+    // f(SB)
   }
-  def exists(f: Side => Boolean): Boolean = f(S0) || f(S1)
-  val sides = List(S0,S1)
+  def exists(f: Side => Boolean): Boolean = f(S0) || f(S1) || f(S2) || f(S3) || f(S4) || f(S5) || f(SB)
+  val sides = List(S0,S1)//,S2,S3,S4,S5,SB)
 }
 
 /**

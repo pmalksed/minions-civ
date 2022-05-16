@@ -35,9 +35,9 @@ case class UI(val flipDisplay: Boolean, val ourSide: Option[Side], val boardXSiz
 
     def getHexLoc(side: Side): HexLoc = {
       (side,flipDisplay) match {
-        case (S0,false) | (S1,true) =>
+        case (S0,false) | (S1,true) | (S2,true) | (S3,true) | (S4,true) | (S5,true) | (SB,true) =>
           HexLoc(1.3,-5.9)
-        case (S1,false) | (S0,true) =>
+        case (S1,false) | (S0,true) | (S2,false) | (S3,false) | (S4,false) | (S5,false) | (SB,false)=>
           HexLoc(boardXSize.toDouble/2 + 5.7, -5.9)
       }
     }
@@ -82,9 +82,9 @@ case class UI(val flipDisplay: Boolean, val ourSide: Option[Side], val boardXSiz
 
     def getHexLoc(side: Side): HexLoc = {
       (side,flipDisplay) match {
-        case (S0,false) | (S1,true) =>
+        case (S0,false) | (S1,true) | (S2,true) | (S3,true) | (S4,true) | (S5,true) | (SB,true) =>
           HexLoc(-1,-1)
-        case (S1,false) | (S0,true) =>
+        case (S1,false) | (S0,true) | (S2,false) | (S3,false) | (S4,false) | (S5,false) | (SB,false)=>
           HexLoc(boardXSize.toDouble - 3, -1)
       }
     }
@@ -301,9 +301,9 @@ case class UI(val flipDisplay: Boolean, val ourSide: Option[Side], val boardXSiz
 
     def getLocs(side: Side): Array[Loc] = {
       (side,flipDisplay) match {
-        case (S0,false) | (S1,true) =>
+        case (S0,false) | (S1,true) | (S2,true) | (S3,true) | (S4,true) | (S5,true) | (SB,true) =>
           unflippedLocs
-        case (S1,false) | (S0,true) =>
+        case (S1,false) | (S0,true) | (S2,false) | (S3,false) | (S4,false) | (S5,false) | (SB,false)=>
           unflippedLocs.map { loc => Loc(boardXSize - loc.x - 2, boardYSize - loc.y - 1) }
       }
     }
@@ -335,9 +335,9 @@ case class UI(val flipDisplay: Boolean, val ourSide: Option[Side], val boardXSiz
 
     def getLocs(side: Side): Array[Loc] = {
       (side,flipDisplay) match {
-        case (S0,false) | (S1,true) =>
+        case (S0,false) | (S1,true) | (S2,true) | (S3,true) | (S4,true) | (S5,true) | (SB,true) =>
           unflippedLocs
-        case (S1,false) | (S0,true) =>
+        case (S1,false) | (S0,true) | (S2,false) | (S3,false) | (S4,false) | (S5,false) | (SB,false)=>
           unflippedLocs.map { loc => Loc(boardXSize - loc.x - 2, boardYSize - loc.y - 1) }
       }
     }
