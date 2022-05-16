@@ -85,7 +85,7 @@ object Side {
     // f(SB)
   }
   def exists(f: Side => Boolean): Boolean = f(S0) || f(S1) || f(S2) || f(S3) || f(S4) || f(S5) || f(SB)
-  val sides = List(S0,S1,S2,S3,S4,S5,SB)
+  val sides = List(S0,S1)//,S2,S3,S4,S5,SB)
 }
 
 /**
