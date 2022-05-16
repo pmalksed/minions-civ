@@ -256,29 +256,34 @@ object Drawing {
         side match {
           case None => "#cccccc"
           case Some(S0) =>
-            if(externalInfo.pieceMap(pieceName).isNecromancer) "#bbddff"
+            if (pieceName == "city") "#bbbbff"
             else "#ccccff"
           case Some(S1) =>
-            if(externalInfo.pieceMap(pieceName).isNecromancer) "#ffccaa"
-            else "#ffbbbb"
+            if (pieceName == "city") "#ffffaa"
+            else "#ffffcc"
+          case Some(S2) =>
+            if (pieceName == "city") "#ffbb88"
+            else "#ffccaa"
+          case Some(S3) =>
+            if (pieceName == "city") "#bbffbb"
+            else "#ccffcc"
+          case Some(S4) =>
+            if (pieceName == "city") "#ff88ff"
+            else "#ffaaff"
+          case Some(S5) =>
+            if (pieceName == "city") "#88ffff"
+            else "#aaffff"
+          case Some(SB) =>
+            if (pieceName == "city") "#ffbbbb"
+            else "ffcccc"
         }
       fillHex(hexLoc, pieceColor, scale, alpha = alpha)
       strokeHex(hexLoc, "black", scale, alpha = 0.2 * alpha)
     }
 
     def drawSpell(hexLoc: HexLoc, scale : Double, side: Option[Side], spellId: Option[SpellId], subLabel: Option[String] = None, alpha: Double = 1.0) : Unit = {
-      val color =
-        side match {
-          case None => "#aaaaaa"
-          case Some(S0) => "#aaccff"
-          case Some(S1) => "#ffccaa"
-        }
-      val strokeColor =
-        side match {
-          case None => "#aaaaaa"
-          case Some(S0) => "#0000bb"
-          case Some(S1) => "#bb0000"
-        }
+      val color = "#aaaaaa"
+      val strokeColor = "#aaaaaa"
       fillHex(hexLoc, color, scale, rectangle=true, alpha=alpha)
       strokeHex(hexLoc, strokeColor, scale, alpha=0.4*alpha, rectangle=true)
       spellId.foreach { spellId =>
@@ -289,7 +294,7 @@ object Drawing {
           case Some(spellName) =>
             val spell = Spells.spellMap(spellName)
             subLabel match {
-              case None => text(spell.shortDisplayName, hexLoc, "black", alpha=alpha)
+              case None => text(spell.shortDisplayName + side, hexLoc, "black", alpha=alpha)
               case Some(subLabel) =>
                 text(spell.shortDisplayName, PixelLoc.ofHexLoc(hexLoc,gridSize) + PixelVec(0,-4.0), "black", alpha=alpha)
                 text(subLabel, PixelLoc.ofHexLoc(hexLoc,gridSize) + PixelVec(0,7.0), "black", alpha=alpha)
@@ -740,10 +745,8 @@ object Drawing {
     ctx.clearRect(0.0, 0.0, canvas.width.toDouble, canvas.height.toDouble)
 
     //Background fill based on whose turn it is
-    val backgroundColor = board.side match {
-      case S0 => "#eeeeff"
-      case S1 => "#ffeeee"
-    }
+    val backgroundColor = "#eeeeee"
+
     ctx.fillStyle = backgroundColor
     ctx.globalAlpha = 1.0
     ctx.fillRect(0.0, 0.0, canvas.width.toDouble, canvas.height.toDouble)
@@ -765,14 +768,24 @@ object Drawing {
 
     def textColorOfSide(side: Side): String = {
       side match {
-        case S0 => "#000099"
-        case S1 => "#770000"
+        case S0 => "#000000"
+        case S1 => "#000000"
+        case S2 => "#000000"
+        case S3 => "#000000"
+        case S4 => "#000000"
+        case S5 => "#000000"
+        case SB => "#000000"
       }
     }
     def rectColorOfSide(side: Side): String = {
       side match {
-        case S0 => "#e0e0ff"
-        case S1 => "#ffe0e0"
+        case S0 => "#000000"
+        case S1 => "#000000"
+        case S2 => "#000000"
+        case S3 => "#000000"
+        case S4 => "#000000"
+        case S5 => "#000000"
+        case SB => "#000000"
       }
     }
 
@@ -1243,17 +1256,7 @@ object Drawing {
 
       drawPiece(loc, scale, Some(piece.side), curStats.name, alpha = alpha)
 
-      if(piece.modsWithDuration.exists { mod => mod.mod.isGood }) {
-        piece.side match {
-          case S0 =>
-            fillHex(loc, "#ccffff", scale, alpha=0.50 * alpha)
-            strokeHex(loc, "#22eeff", scale, lineWidth=1.0, alpha = alpha)
-          case S1 =>
-            fillHex(loc, "#ffeecc", scale, alpha=0.50 * alpha)
-            strokeHex(loc, "#ffaa44", scale, lineWidth=1.0, alpha = alpha)
-        }
-      }
-      else if(piece.modsWithDuration.exists { mod => !mod.mod.isGood }) {
+      if(piece.modsWithDuration.exists { mod => !mod.mod.isGood }) {
         fillHex(loc, "#bb00bb", scale, alpha=0.15 * alpha)
         strokeHex(loc, "magenta", scale, lineWidth=0.4, alpha = alpha)
       }
