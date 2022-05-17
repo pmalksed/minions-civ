@@ -324,16 +324,20 @@ object Drawing {
       }
     }
 
-    def drawSidebar(
-      piece: Option[Piece] = None,
-      stats: Option[PieceStats] = None,
-      side: Option[Side] = None,
-      tile: Option[Tile] = None,
-      spell: Option[Int] = None,
-      freeform: Option[List[String]] = None,
-      spellTargets: Option[Option[SpellOrAbilityTargets]] = None,
+    def drawSidebarInner(
+      piece: Option[Piece],
+      stats: Option[PieceStats],
+      side: Option[Side],
+      tile: Option[Tile],
+      spell: Option[Int],
+      freeform: Option[List[String]],
+      spellTargets: Option[Option[SpellOrAbilityTargets]],
+      isAltSidebar: Boolean = false,
     ) = {
-      val hexLoc = ui.Sidebar.origin
+      var hexLoc = ui.Sidebar.origin
+      if (isAltSidebar) {
+        hexLoc = ui.Sidebar2.origin
+      }
       tile match {
         case None => ()
         case Some(tile) => drawTile(hexLoc, Loc.zero, tile, 8.0)
@@ -741,6 +745,19 @@ object Drawing {
       }
     }
 
+    def drawSidebar(
+      piece: Option[Piece] = None,
+      stats: Option[PieceStats] = None,
+      side: Option[Side] = None,
+      tile: Option[Tile] = None,
+      spell: Option[Int] = None,
+      freeform: Option[List[String]] = None,
+      spellTargets: Option[Option[SpellOrAbilityTargets]] = None,
+    ) = {
+      drawSidebarInner(piece, stats, side, tile, spell, freeform, spellTargets);
+      drawSidebarInner(piece, stats, side, tile, spell, freeform, spellTargets, isAltSidebar=true);
+    }
+
     ctx.setTransform(1,0,0,1,0,0)
     ctx.clearRect(0.0, 0.0, canvas.width.toDouble, canvas.height.toDouble)
 
@@ -870,6 +887,21 @@ object Drawing {
           val clockStr = board.side.toColorName + " Team Time left: " + timeStr
           text(clockStr, ui.Clock.origin + HexVec(1,0), textColorOfSide(board.side), textAlign="left", style = "bold", fontSize=16)
       }
+
+      fillHex(ui.Clock2.origin, "#dddddd", tileScale)
+      strokeHex(ui.Clock2.origin, "#666666", tileScale, lineWidth=1.0)
+      text(pauseText, ui.Clock2.origin, "black")
+
+      timeLeft match {
+        case None => ()
+        case Some(timeLeft) =>
+          val seconds: Int = Math.floor(timeLeft).toInt
+          val timeStr =
+            if(seconds < 0) "-" + ((-seconds) / 60).toString + ":" + "%02d".format((-seconds) % 60)
+            else (seconds / 60).toString + ":" + "%02d".format(seconds % 60)
+          val clockStr = board.side.toColorName + " Team Time left: " + timeStr
+          text(clockStr, ui.Clock2.origin + HexVec(1,0), textColorOfSide(board.side), textAlign="left", style = "bold", fontSize=16)
+      }      
     }
 
     // Options

@@ -136,6 +136,19 @@ case class UI(val flipDisplay: Boolean, val ourSide: Option[Side], val boardXSiz
       else MouseNone
     }
   }
+  object Clock2 extends UI.Component with UI.Clickable {
+    val origin = HexLoc(-5.0, 20.0)
+    val gridSizeScale = 1
+
+    def getMouseTarget(game: Game, board: BoardState, hexLoc: HexLoc): MouseTarget = {
+      val _ = (game,board)
+      val (loc,_) = getLocAndDelta(hexLoc)
+      if(loc == Loc.zero) MousePause(loc)
+      else MouseNone
+    }
+  }
+
+
 
   object Options extends UI.Component with UI.Clickable {
     val origin = HexLoc(19.25, -4.0)
@@ -150,6 +163,11 @@ case class UI(val flipDisplay: Boolean, val ourSide: Option[Side], val boardXSiz
 
   object Sidebar extends UI.Component {
     val origin = HexLoc(27.5,-0.5)
+    val gridSizeScale = 1
+  }
+
+  object Sidebar2 extends UI.Component {
+    val origin = HexLoc(-8.0,18.0)
     val gridSizeScale = 1
   }
 
