@@ -984,18 +984,19 @@ case class BoardState private (
     canMove = canMoveFirstTurn
     turnEndingImmediately = turnEndingImmediatelyAfterReset
 
+    val starts = List(
+      (S0, Loc(1,11)),
+      (S1, Loc(7,17)),
+      (S2, Loc(11,1)),
+      (S3, Loc(17,7)),
+    )
+
     //Set up initial pieces
-    Side.foreach { side =>
-      val startLoc = startLocs(side)
+    starts.foreach { tup =>
+      val (side, startLoc) = tup;
       val cityStats = externalInfo.pieceMap("city")
-      spawnPieceInitial(side,cityStats,startLoc,startLoc,0,0,Constants.SCIENCE_FOR_NEW_CITY) match {
-        case Failure(_) =>
-        case Success(piece) =>
-          if(allowedNecros(side).size > 1) {
-            val necroPick = PieceModWithDuration(PieceMods.NecroPick, turnsLeft=None)
-            piece.modsWithDuration = piece.modsWithDuration :+ necroPick
-          }
-      }
+      // 4P start
+      spawnPieceInitial(side,cityStats,startLoc,startLoc,0,0,Constants.SCIENCE_FOR_NEW_CITY)
       // Guarantee that starting city yields from surrounding hexes are 2/2/2
       var counter = 0
       topology.forEachAdj(startLoc) { loc =>
