@@ -52,6 +52,65 @@ object BoardMaps {
           w g . . . . . . . .
 """)
 
+
+val civMapSize2 = make(13,13,SideArray.createTwo(Loc(7, 7), Loc(13, 13)), """
+ w w w w w w . . . . . . . 
+  w w w w w . . . . . . . . 
+   w w w w . . . . . . . . . 
+    w w w . . . . . . . . . .
+     w w . . . . . . . . . . .
+      w . . . . . . . . . . . .
+       . . . . . . . . . . . . .
+        . . . . . . . . . . . . w
+         . . . . . . . . . . . w w
+          . . . . . . . . . . w w w
+           . . . . . . . . . w w w w
+            . . . . . . . . w w w w w
+             . . . . . . . w w w w w w
+""")
+
+
+
+  val civMapSize3 = make(15,15,SideArray.createTwo(Loc(7, 7), Loc(13, 13)), """
+ w w w w w w w . . . . . . . . 
+  w w w w w w . . . . . . . . . 
+   w w w w w . . . . . . . . . . 
+    w w w w . . . . . . . . . . .
+     w w w . . . . . . . . . . . .
+      w w . . . . . . . . . . . . .
+       w . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . .
+         . . . . . . . . . . . . . . w
+          . . . . . . . . . . . . . w w
+           . . . . . . . . . . . . w w w
+            . . . . . . . . . . . w w w w
+             . . . . . . . . . . w w w w w
+              . . . . . . . . . w w w w w w
+               . . . . . . . . w w w w w w w
+""")
+
+val civMapSize4 = make(19,19,SideArray.createTwo(Loc(7, 7), Loc(13, 13)), """
+ w w w w w w w w w . . . . . . . . . .  
+  w w w w w w w w . . . . . . . . . . . 
+   w w w w w w w . . . . . . . . . . . .  
+    w w w w w w . . . . . . . . . . . . . 
+     w w w w w . . . . . . . . . . . . . . 
+      w w w w . . . . . . . . . . . . . . . 
+       w w w . . . . . . . . . . . . . . . . 
+        w w . . . . . . . . . . . . . . . . .
+         w . . . . . . . . . . . . . . . . . .
+          . . . . . . . . . . . . . . . . . . .
+           . . . . . . . . . . . . . . . . . . w
+            . . . . . . . . . . . . . . . . . w w
+             . . . . . . . . . . . . . . . . w w w
+              . . . . . . . . . . . . . . . w w w w
+               . . . . . . . . . . . . . . w w w w w
+                . . . . . . . . . . . . . w w w w w w
+                 . . . . . . . . . . . . w w w w w w w
+                  . . . . . . . . . . . w w w w w w w w
+                   . . . . . . . . . . w w w w w w w w w
+""")  
+
   val apocalypse = make(10,10,SideArray.createTwo(Loc(2, 2), Loc(7, 7)), """
  . . g . . . . . g z
   w . . . . . . . . .
@@ -196,45 +255,17 @@ object BoardMaps {
           . g . . w g . . . .
 """)
 
-  val advancedMaps = Map(
-    "Sorcerer's Lair" -> sorcerersLair,
-    "Chaos Diamond" -> chaosDiamond,
-    "Apocalypse" -> apocalypse,
-    "Treacherous Pathways" -> treacherousPathways,
-  )
+  val advancedMaps = Map()
 
   val basicMaps = Map(
-    "Midnight Lake" -> midnightLake,
-    "Eternal Battlefield" -> eternalBattlefield,
-    "Forbidden Isle" -> forbiddenIsle,
-    "MegaPuddles" -> megaPuddles,
-    "Blackened Shores" -> blackenedShores,
-    "River Styx" -> riverStyx
+    "Civ Map Size 4" -> civMapSize4
   )
 
   val groundImage = Map(
-    "Sorcerer's Lair" -> "img_terrain_grass1",
-    "Chaos Diamond" -> "img_terrain_dirt1",
-    "Apocalypse" -> "img_terrain_sand0",
-    "Midnight Lake" -> "img_terrain_grass1",
-    "Eternal Battlefield" -> "img_terrain_grass3",
-    "Forbidden Isle" -> "img_terrain_grass0",
-    "MegaPuddles" -> "img_terrain_grass2",
-    "Blackened Shores" -> "img_terrain_dirt0",
-    "Treacherous Pathways" -> "img_terrain_grass0",
-    "River Styx" -> "img_terrain_dirt0",
+    "Civ Map Size 4" -> "img_terrain_grass0",
   )
 
   val waterImage = Map(
-    "Sorcerer's Lair" -> "img_terrain_water0",
-    "Chaos Diamond" -> "img_terrain_water1",
-    "Apocalypse" -> "img_terrain_water1",
-    "Midnight Lake" -> "img_terrain_water0",
-    "Eternal Battlefield" -> "img_terrain_water1",
-    "Forbidden Isle" -> "img_terrain_water1",
-    "MegaPuddles" -> "img_terrain_water1",
-    "Blackened Shores" -> "img_terrain_water0",
-    "Treacherous Pathways" -> "img_terrain_water1",
-    "River Styx" -> "img_terrain_water0",
+    "Civ Map Size 4" -> "img_terrain_water1",
   )
 }

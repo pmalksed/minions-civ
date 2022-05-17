@@ -938,7 +938,7 @@ if(!username || username.length == 0) {
   val extraSoulsPerTurn = SideArray.createTwo(0, 10)
   val targetWins = 2
   val techSouls = 4
-  val maps_opt = Some(List("MegaPuddles"))
+  val maps_opt = Some(List("Civ Map Size 4"))
   val seed_opt = None
 
   val gameid = chooseGameName("ai_test")

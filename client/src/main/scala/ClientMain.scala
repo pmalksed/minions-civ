@@ -504,10 +504,10 @@ class Client() {
         mouseState.refresh(game.get,board.curState)
         updateTimeLeft()
 
-        if(canvas.width != jQuery("#main").get(0).clientWidth)
-          canvas.width = jQuery("#main").get(0).clientWidth
-        if(canvas.height != jQuery("#main").get(0).clientHeight)
-          canvas.height = jQuery("#main").get(0).clientHeight
+        // if(canvas.width != jQuery("#main").get(0).clientWidth)
+        canvas.width = jQuery("#main").get(0).clientWidth * 2
+        // if(canvas.height != jQuery("#main").get(0).clientHeight)
+        canvas.height = jQuery("#main").get(0).clientHeight * 2
         Drawing.drawEverything(canvas, ctx, game.get, externalInfo.get, localBoards, serverBoardNames, curBoardIdx, ui, mouseState,
           mouseState.undoing, turnTimeLeft, this)
       }

@@ -989,7 +989,7 @@ case class BoardState private (
       val startLoc = startLocs(side)
       val cityStats = externalInfo.pieceMap("city")
       spawnPieceInitial(side,cityStats,startLoc,startLoc,0,0,Constants.SCIENCE_FOR_NEW_CITY) match {
-        case Failure(_) => assertUnreachable()
+        case Failure(_) =>
         case Success(piece) =>
           if(allowedNecros(side).size > 1) {
             val necroPick = PieceModWithDuration(PieceMods.NecroPick, turnsLeft=None)

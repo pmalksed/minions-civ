@@ -336,15 +336,15 @@ object Drawing {
       val hexLoc = ui.Sidebar.origin
       tile match {
         case None => ()
-        case Some(tile) => drawTile(hexLoc, Loc.zero, tile, 6.0)
+        case Some(tile) => drawTile(hexLoc, Loc.zero, tile, 8.0)
       }
       stats match {
         case None => ()
-        case Some(stats) => drawPiece(hexLoc, pieceScale*6.0, side, stats.name)
+        case Some(stats) => drawPiece(hexLoc, pieceScale*8.0, side, stats.name)
       }
       var row_idx = 0
       def row(n:Int) : PixelLoc = {
-        PixelLoc.ofHexLoc(hexLoc, gridSize) + PixelVec(0, 16.0*(n-6))
+        PixelLoc.ofHexLoc(hexLoc, gridSize) + PixelVec(0, 16.0*(n-8))
       }
       def show(s:String, color:String = "black") : Unit = {
         text(s, row(row_idx), color, fontSize = 11)
@@ -354,7 +354,7 @@ object Drawing {
         case None => ()
         case Some(lines) =>
           val color = "#cccccc"
-          val scale = pieceScale * 6.0
+          val scale = pieceScale * 8.0
           fillHex(hexLoc, color, scale, alpha = 1.0)
           strokeHex(hexLoc, "black", scale, alpha = 0.2)
           lines.foreach { line =>
@@ -363,7 +363,7 @@ object Drawing {
       }
       spell match {
         case None => ()
-        case Some(_) => drawSpell(hexLoc, spellScale*6.0, side, spellId=None)
+        case Some(_) => drawSpell(hexLoc, spellScale*8.0, side, spellId=None)
       }
       stats match {
         case None => ()
