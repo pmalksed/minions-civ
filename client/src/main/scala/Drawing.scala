@@ -262,14 +262,14 @@ object Drawing {
             if (pieceName == "city") "#ffffaa"
             else "#ffffcc"
           case Some(S2) =>
-            if (pieceName == "city") "#ffbb88"
-            else "#ffccaa"
+            if (pieceName == "city") "#88ffff"
+            else "#aaffff"
           case Some(S3) =>
-            if (pieceName == "city") "#bbffbb"
-            else "#ccffcc"
-          case Some(S4) =>
             if (pieceName == "city") "#ff88ff"
-            else "#ffaaff"
+            else "#ffbbff"
+          case Some(S4) =>
+            if (pieceName == "city") "#bbbb66"
+            else "#cccc88"
           case Some(S5) =>
             if (pieceName == "city") "#88ffff"
             else "#aaffff"
