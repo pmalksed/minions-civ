@@ -265,8 +265,8 @@ object Drawing {
             if (pieceName == "city") "#88ffff"
             else "#aaffff"
           case Some(S3) =>
-            if (pieceName == "city") "#ff88ff"
-            else "#ffbbff"
+            if (pieceName == "city") "#aa66ff"
+            else "#bb88ff"
           case Some(S4) =>
             if (pieceName == "city") "#bbbb66"
             else "#cccc88"
@@ -274,8 +274,7 @@ object Drawing {
             if (pieceName == "city") "#88ffff"
             else "#aaffff"
           case Some(SB) =>
-            if (pieceName == "city") "#ffbbbb"
-            else "ffcccc"
+            "#ff9999"
         }
       fillHex(hexLoc, pieceColor, scale, alpha = alpha)
       strokeHex(hexLoc, "black", scale, alpha = 0.2 * alpha)
@@ -603,6 +602,9 @@ object Drawing {
                 show("Science queue: " + p.scienceQueue.map(u => u.displayName))
                 show("Buildings: " + p.buildings.map(u => u.displayName))
                 show("Population: " + p.population)
+                show("Focus: " + p.focus)
+              }
+              if (p.baseStats.name == "camp") {
                 show("Focus: " + p.focus)
               }
             }

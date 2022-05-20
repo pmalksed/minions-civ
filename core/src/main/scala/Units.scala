@@ -689,6 +689,28 @@ object Units {
     defense = Some(15),
   )
 
+  val camp = createPieceStats(
+    name = "camp",
+    shortDisplayName = "Camp",
+    cost = 0,
+    rebate = 0,
+    moveRange = 0,
+    attackRange = 2,
+    attackEffect = Some(Damage(2)),
+    defense = Some(10),
+  )
+
+  val lair = createPieceStats(
+    name = "lair",
+    shortDisplayName = "Lair",
+    cost = 0,
+    rebate = 0,
+    moveRange = 0,
+    attackRange = 2,
+    attackEffect = Some(Damage(4)),
+    defense = Some(20),
+  )
+
   //All pieces
   val pieces: Array[PieceStats] = Array(
     necromancer,
@@ -703,7 +725,7 @@ object Units {
     salvager, warrior, archer, skirmisher, legionary, snake, sergeant, horseman, berserker,
     trebuchet, general, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hussar,
     horse_archer, kudzu, onager, banshee, knight, giant_frog, khan, godzilla, warlock, dragon, 
-    colossus, city
+    colossus, city, camp, lair,
   )
 
   //Necromancers awarded after a board resets

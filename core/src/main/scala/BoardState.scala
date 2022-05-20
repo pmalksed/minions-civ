@@ -984,15 +984,31 @@ case class BoardState private (
     canMove = canMoveFirstTurn
     turnEndingImmediately = turnEndingImmediatelyAfterReset
 
-    val starts = List(
+    val playerStarts = List(
       (S0, Loc(1,11)),
       (S1, Loc(7,17)),
       (S2, Loc(11,1)),
       (S3, Loc(17,7)),
     )
 
+    val barbarianStarts = List(
+      (externalInfo.pieceMap("lair"), Loc(9,9)),
+      (externalInfo.pieceMap("camp"), Loc(6,12)),
+      (externalInfo.pieceMap("camp"), Loc(12,6)),
+      (externalInfo.pieceMap("camp"), Loc(7,7)),
+      (externalInfo.pieceMap("camp"), Loc(11,11)),
+      (externalInfo.pieceMap("camp"), Loc(2,16)),
+      (externalInfo.pieceMap("camp"), Loc(16,2)),
+      (externalInfo.pieceMap("camp"), Loc(5,5)),
+      (externalInfo.pieceMap("camp"), Loc(13,13)),
+      (externalInfo.pieceMap("camp"), Loc(5,10)),
+      (externalInfo.pieceMap("camp"), Loc(10,5)),
+      (externalInfo.pieceMap("camp"), Loc(8,13)),
+      (externalInfo.pieceMap("camp"), Loc(13,8)),
+    )
+
     //Set up initial pieces
-    starts.foreach { tup =>
+    playerStarts.foreach { tup =>
       val (side, startLoc) = tup;
       val cityStats = externalInfo.pieceMap("city")
       // 4P start
@@ -1022,6 +1038,27 @@ case class BoardState private (
       }      
     }
 
+    // Set up barbarian starts
+    barbarianStarts.foreach { tup =>
+      val (pieceStats, startLoc) = tup;
+      if (locIsValid(startLoc)) {
+        spawnPieceInitial(SB,pieceStats,startLoc,startLoc,0,0,0)
+        val tile = tiles(startLoc)
+        if (pieceStats.name == "camp") {
+          tile.foodYield = 0
+          tile.productionYield = 0
+          tile.scienceYield = 1
+          makeAnomaliesAdjacentToHex(startLoc)
+        }
+        if (pieceStats.name == "lair") {
+          tile.foodYield = 0
+          tile.productionYield = 0
+          tile.scienceYield = 2
+          makeAnomaliesAdjacentToHex(startLoc)
+        }
+      }
+    }
+
     handleStartOfTurn()
   }
 
@@ -1039,6 +1076,10 @@ case class BoardState private (
       case AddToScienceQueue(_,_) => 
           Success(())
     }
+  }
+
+  def makeAnomaliesAdjacentToHex(loc: Loc): Unit = {
+    val _ = loc;
   }
 
   def canFreeBuyPiece(side: Side, pieceName: String) : Boolean = {
@@ -2213,6 +2254,22 @@ case class BoardState private (
         val citiesFoundedBySide = citiesFounded.get(spawnSide).getOrElse(0)
         citiesFounded += (spawnSide -> (citiesFoundedBySide + 1))        
       }
+      if (spawnStats.name == "camp") {
+        val rand = Random
+        val nextInt = rand.nextInt(4)
+        if (nextInt == 0) {
+          piece.focus = "warrior"
+        }
+        if (nextInt == 1) {
+          piece.focus = "archer"
+        }
+        if (nextInt == 2) {
+          piece.focus = "skirmisher"
+        }
+        if (nextInt == 3) {
+          piece.focus = "legionary"
+        }
+      }      
       Some(piece)
     }
   }
@@ -2237,7 +2294,23 @@ case class BoardState private (
         val citiesFoundedBySide = citiesFounded.get(spawnSide).getOrElse(0)
         citiesFounded += (spawnSide -> (citiesFoundedBySide + 1))
         turnsTillNextCityTemporaryModifier += (spawnSide -> (-1 * cityFoundingSlack))
-      }                
+      }   
+      if (spawnStats.name == "camp") {
+        val rand = Random
+        val nextInt = rand.nextInt(4)
+        if (nextInt == 0) {
+          piece.focus = "warrior"
+        }
+        if (nextInt == 1) {
+          piece.focus = "archer"
+        }
+        if (nextInt == 2) {
+          piece.focus = "skirmisher"
+        }
+        if (nextInt == 3) {
+          piece.focus = "legionary"
+        }
+      } 
       Some(piece)
     }
   }
@@ -2256,7 +2329,7 @@ case class BoardState private (
     if (!locIsValid(loc)) {
       return true
     }
-    if (pieces(loc).length > 0 && (pieces(loc).head.baseStats.name == "city"
+    if (pieces(loc).length > 0 && (isCityLike(pieces(loc).head.baseStats)
                                    || getAttackOfPiece(pieces(loc).head) == 0)) {
       return true
     }
@@ -2394,8 +2467,14 @@ case class BoardState private (
 
   private def locIsValid(loc: Loc): Boolean = {
     if (loc.x >= 0 && loc.x < xSize && loc.y >= 0 && loc.y < ySize) {
-      return true
-    }
+      tiles(loc).terrain match {
+        case Water(_) => 
+          return false
+        case Wall | Ground | Water(_) | Graveyard | SorceryNode | Teleporter |
+                 Earthquake(_) | Firestorm(_) | Whirlwind(_) | Mist | Spawner(_) =>
+            return true
+          }
+        }
     return false
   }
 
@@ -2447,6 +2526,10 @@ case class BoardState private (
       case Some(defense) =>
         return defense - piece.damage
       }
+  }
+
+  def isCityLike(pieceStats: PieceStats): Boolean = {
+    return pieceStats.name == "city" || pieceStats.name == "camp" || pieceStats.name == "lair"
   }
 
   private def juiciness(piece: Piece): Double = {
@@ -2552,7 +2635,7 @@ case class BoardState private (
     if (isRanged(piece) && target.baseStats.nimble) {
       damage = damage / 2
     }
-    if (piece.baseStats.name == "trebuchet" && target.baseStats.name == "city") {
+    if (piece.baseStats.name == "trebuchet" && isCityLike(target.baseStats)) {
       damage = damage * 3
     }
     if (piece.baseStats.name == "telekinetic" && target.baseStats.name == "salvager") {
@@ -2568,6 +2651,10 @@ case class BoardState private (
     val damageDealtToTarget = getDamageDealtToTarget(piece, target, mainAttack=mainAttack)
     if (damageDealtToTarget <= 0 && piece.baseStats.poisonous == 0 && !target.baseStats.taunt && piece.baseStats.splash == 0) {
       // Harshly penalize attacks that do nothing so that they don't happen
+      totalScore -= 10000.0
+    }
+    if (isCityLike(piece.baseStats) && isCityLike(target.baseStats)) {
+      // Cities should never want to attack other cities
       totalScore -= 10000.0
     }
 
@@ -2944,10 +3031,10 @@ case class BoardState private (
         val targetLoc = target.loc
         applyEffect(attackEffect,target,externalInfo)
         applyEffect(retaliateAttackEffect,piece,externalInfo)
-        if (piece.baseStats.poisonous > 0 && target.baseStats.name != "city") {
+        if (piece.baseStats.poisonous > 0 && !isCityLike(target.baseStats)) {
           increasePoisonOfPiece(target, piece.baseStats.poisonous)
         }
-        if (target.baseStats.poisonous > 0 && didRetaliate && piece.baseStats.name != "city") {
+        if (target.baseStats.poisonous > 0 && didRetaliate && isCityLike(piece.baseStats)) {
           increasePoisonOfPiece(piece, target.baseStats.poisonous)
         }
         if (piece.baseStats.name == "telekinetic" && totalResourcesCarried(target) > 0.0) {
@@ -3005,6 +3092,18 @@ case class BoardState private (
     }
   }
 
+  private def setRandomTarget(piece: Piece): Unit = {
+    val _ = piece
+    val rand = Random;
+    val possibleTarget = Loc(rand.nextInt(xSize), rand.nextInt(ySize))
+    if (locIsValid(possibleTarget)) {
+      piece.target = possibleTarget
+    }
+    else {
+      setRandomTarget(piece)
+    }
+  }
+
   private def harvestYields(piece: Piece, tile: Tile): Unit = {
     piece.carriedFood = piece.carriedFood + tile.foodYield;          
     piece.carriedProduction = piece.carriedProduction + tile.productionYield;
@@ -3046,6 +3145,61 @@ case class BoardState private (
         piece.carriedProduction = piece.carriedProduction * Constants.PRODUCTION_DECAY_RATE
       }
     }
+    else if (piece.baseStats.name == "camp") {
+      harvestYields(piece, tiles(piece.loc))
+      if (piece.focus == "warrior" && turnNumber % 4 == 3) {
+        setRandomTarget(piece)
+        val _ = buildUnit(piece, externalInfo.pieceMap("warrior"), 2.0, 2.0)
+      }
+      if (piece.focus == "archer" && turnNumber % 6 == 3) {
+        setRandomTarget(piece)
+        val _ = buildUnit(piece, externalInfo.pieceMap("archer"), 3.0, 3.0)
+      }
+      if (piece.focus == "skirmisher" && turnNumber % 6 == 3) {
+        setRandomTarget(piece)
+        val _ = buildUnit(piece, externalInfo.pieceMap("skirmisher"), 3.0, 3.0)
+      }
+      if (piece.focus == "legionary" && turnNumber % 8 == 3) {
+        setRandomTarget(piece)
+        val _ = buildUnit(piece, externalInfo.pieceMap("legionary"), 4.0, 4.0)
+      }
+    }
+    else if (piece.baseStats.name == "lair") {
+      if (turnNumber <= 14 && turnNumber % 4 == 1) {
+        setRandomTarget(piece)
+        val rand = Random;
+        val nextInt = rand.nextInt(4);
+        if (nextInt == 0) {
+          val _ = buildUnit(piece, externalInfo.pieceMap("archer"), 3.0, 3.0)
+        }
+        if (nextInt == 1) {
+          val _ = buildUnit(piece, externalInfo.pieceMap("skirmisher"), 3.0, 3.0)
+        }
+        if (nextInt == 2) {
+          val _ = buildUnit(piece, externalInfo.pieceMap("legionary"), 4.0, 4.0)
+        }
+        if (nextInt == 3) {
+          val _ = buildUnit(piece, externalInfo.pieceMap("snake"), 4.0, 4.0)
+        }  
+      } 
+      if (turnNumber > 14 && turnNumber % 4 == 1) {
+        setRandomTarget(piece)
+        val rand = Random;
+        val nextInt = rand.nextInt(4);
+        if (nextInt == 0) {
+          val _ = buildUnit(piece, externalInfo.pieceMap("horseman"), 6.0, 6.0)
+        }
+        if (nextInt == 1) {
+          val _ = buildUnit(piece, externalInfo.pieceMap("berserker"), 6.0, 6.0)
+        }
+        if (nextInt == 2) {
+          val _ = buildUnit(piece, externalInfo.pieceMap("champion"), 8.0, 8.0)
+        }
+        if (nextInt == 3) {
+          val _ = buildUnit(piece, externalInfo.pieceMap("crossbowman"), 8.0, 8.0)
+        }                
+      }
+    }    
     else {
       // Not a city
       val poison = piece.modifiers._1
