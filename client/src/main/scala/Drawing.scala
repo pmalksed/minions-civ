@@ -940,17 +940,17 @@ object Drawing {
     // }
 
     //Dead pieces
-    {
-      val locsAndContents = ui.DeadPieces.getHexLocsAndContents(board)
-      if(locsAndContents.length > 0) {
-        text("Dead pieces", PixelLoc.ofHexLoc(ui.DeadPieces.descLoc, gridSize), "black")
-      }
-      locsAndContents.foreach { case (hexLoc,_,pieceName,side) =>
-        val label = displayNameOfPieceName(pieceName)
-        drawPiece(hexLoc, pieceScale, Some(side), pieceName)
-        text(label, PixelLoc.ofHexLoc(hexLoc,gridSize), "black")
-      }
-    }
+    // {
+    //   val locsAndContents = ui.DeadPieces.getHexLocsAndContents(board)
+    //   if(locsAndContents.length > 0) {
+    //     text("Dead pieces", PixelLoc.ofHexLoc(ui.DeadPieces.descLoc, gridSize), "black")
+    //   }
+    //   locsAndContents.foreach { case (hexLoc,_,pieceName,side) =>
+    //     val label = displayNameOfPieceName(pieceName)
+    //     drawPiece(hexLoc, pieceScale, Some(side), pieceName)
+    //     text(label, PixelLoc.ofHexLoc(hexLoc,gridSize), "black")
+    //   }
+    // }
 
     //Used spells
     {
@@ -1369,18 +1369,7 @@ object Drawing {
       //First try the current board
       board.findPiece(pieceSpec) match {
         case Some(piece) => Some(piece.loc)
-        case None =>
-          //Then try to see if it was killed or unsummoned
-          board.killedThisTurn.findMap { case (spec,_,_,loc) => if(spec == pieceSpec) Some(loc) else None } match {
-            case Some(loc) => Some(loc)
-            case None =>
-              board.unsummonedThisTurn.findMap { case (spec,_,_,loc) => if(spec == pieceSpec) Some(loc) else None } match {
-                case Some(loc) => Some(loc)
-                case None =>
-                  //Then try the start of turn board
-                  boards(boardIdx).initialStateThisTurn.findPiece(pieceSpec).map { piece => piece.loc }
-              }
-          }
+        case None => None
       }
     }
 

@@ -2128,17 +2128,14 @@ case class BoardState private (
     stats.defense match {
       case None => ()
       case Some(defense) =>
-        if(piece.damage >= defense)
+        if(piece.damage >= defense) {
           killPiece(piece,externalInfo)
+        }
     }
   }
 
   //Perform the rebase and death spawn updates happening after a piece kill
   private def updateAfterPieceKill(pieceSide: Side, pieceStats: PieceStats, loc: Loc, externalInfo: ExternalInfo): Unit = {
-    //Rebate souls
-    soulsThisRound(pieceSide) += pieceStats.rebate
-    totalCosts(pieceSide) -= pieceStats.rebate
-
     //Death spawn
     pieceStats.deathSpawn.foreach { spawnName =>
       val spawnStats = externalInfo.pieceMap(spawnName)

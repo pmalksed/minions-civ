@@ -584,8 +584,8 @@ object SideArray {
 class SideArray[T:ClassTag] private (
   private val arr: Array[T]
 ) {
-  def apply(s:Side): T = arr(s.int)
-  def update(s:Side, elt: T): Unit = arr(s.int) = elt
+  def apply(s:Side): T = arr(Math.min(s.int,1))
+  def update(s:Side, elt: T): Unit = arr(Math.min(s.int,1)) = elt
 
   def copy(): SideArray[T] = new SideArray[T](arr.clone())
 
