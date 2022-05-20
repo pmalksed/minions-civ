@@ -984,6 +984,8 @@ case class BoardState private (
     canMove = canMoveFirstTurn
     turnEndingImmediately = turnEndingImmediatelyAfterReset
 
+    val numAnomalies = 16
+
     val playerStarts = List(
       (S0, Loc(1,11)),
       (S1, Loc(7,17)),
@@ -1006,6 +1008,12 @@ case class BoardState private (
       (externalInfo.pieceMap("camp"), Loc(8,13)),
       (externalInfo.pieceMap("camp"), Loc(13,8)),
     )
+
+    val anomalies = 1 to numAnomalies
+
+    anomalies.foreach { _ =>
+      makeAnomalyWithAdjacentBarrens(getRandomLoc())
+    }
 
     //Set up initial pieces
     playerStarts.foreach { tup =>
@@ -1035,7 +1043,20 @@ case class BoardState private (
           }
           counter += 1
         }
-      }      
+      }
+      val tile = tiles(startLoc)
+      tile.foodYield = 0
+      tile.productionYield = 0
+      tile.scienceYield = 0
+      val rand = Random
+      val nextInt = rand.nextInt(3)
+      if (nextInt == 0) {
+        tile.foodYield = 1
+      } else if (nextInt == 1) {
+        tile.productionYield = 1
+      } else if (nextInt == 1) {
+        tile.scienceYield = 1
+      }
     }
 
     // Set up barbarian starts
@@ -1048,13 +1069,13 @@ case class BoardState private (
           tile.foodYield = 0
           tile.productionYield = 0
           tile.scienceYield = 1
-          makeAnomaliesAdjacentToHex(startLoc)
+          makeAnomaliesAdjacentToHex(startLoc, 2)
         }
         if (pieceStats.name == "lair") {
           tile.foodYield = 0
           tile.productionYield = 0
           tile.scienceYield = 2
-          makeAnomaliesAdjacentToHex(startLoc)
+          makeAnomaliesAdjacentToHex(startLoc, 3)
         }
       }
     }
@@ -1078,8 +1099,54 @@ case class BoardState private (
     }
   }
 
-  def makeAnomaliesAdjacentToHex(loc: Loc): Unit = {
-    val _ = loc;
+  def turnIntoAnomaly(loc: Loc): Unit = {
+    val tile = tiles(loc)
+    if (tile.foodYield > 0) {
+      tile.foodYield = 2;
+    } else if (tile.productionYield > 0) {
+      tile.productionYield = 2;
+    } else if (tile.scienceYield > 0) {
+      tile.scienceYield = 2;
+    } else {
+      val rand = Random
+      val nextInt = rand.nextInt(3)
+      if (nextInt == 0) {
+        tile.foodYield = 2
+      } else if (nextInt == 1) {
+        tile.productionYield = 2
+      } else if (nextInt == 1) {
+        tile.scienceYield = 2
+      }
+    }
+  }
+
+  def makeAnomaliesAdjacentToHex(loc: Loc, numAnomalies: Int, barren: Boolean = false): Unit = {
+    val rand = Random
+    val offsets = tiles.topology.adjOffsets
+    val sampledOffsets = rand.shuffle(offsets).slice(0, numAnomalies)
+
+    sampledOffsets.foreach { vec =>
+      val adjLoc = loc + vec
+      if (locIsValid(adjLoc)) {
+        if (barren) {
+          makeBarren(adjLoc)
+        } else {
+          turnIntoAnomaly(adjLoc)
+        }
+      }
+    }
+  }
+
+  def makeBarren(loc: Loc): Unit = {
+    val tile = tiles(loc)
+    tile.foodYield = 0
+    tile.productionYield = 0
+    tile.scienceYield = 0
+  }
+
+  def makeAnomalyWithAdjacentBarrens(loc: Loc): Unit = {
+    turnIntoAnomaly(loc)
+    makeAnomaliesAdjacentToHex(loc, 2, barren=true)
   }
 
   def canFreeBuyPiece(side: Side, pieceName: String) : Boolean = {
@@ -3092,16 +3159,19 @@ case class BoardState private (
     }
   }
 
-  private def setRandomTarget(piece: Piece): Unit = {
-    val _ = piece
+  private def getRandomLoc(): Loc = {
     val rand = Random;
-    val possibleTarget = Loc(rand.nextInt(xSize), rand.nextInt(ySize))
-    if (locIsValid(possibleTarget)) {
-      piece.target = possibleTarget
+    val possibleLoc = Loc(rand.nextInt(xSize), rand.nextInt(ySize))
+    if (locIsValid(possibleLoc)) {
+      return possibleLoc
     }
     else {
-      setRandomTarget(piece)
+      return getRandomLoc()
     }
+  }
+
+  private def setRandomTarget(piece: Piece): Unit = {
+    piece.target = getRandomLoc()
   }
 
   private def harvestYields(piece: Piece, tile: Tile): Unit = {
