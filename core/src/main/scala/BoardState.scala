@@ -2226,7 +2226,9 @@ case class BoardState private (
         selectedCity.focus = focus
       case PieceSuicide(selectedPieceId) =>
         val selectedPiece = pieceById(selectedPieceId)
-        killPiece(selectedPiece, externalInfo, true)
+        if (!isCityLike(selectedPiece.baseStats)) {
+          killPiece(selectedPiece, externalInfo, true)
+        }
       case FoundCity(side, loc) =>
         foundCity(side, loc, externalInfo)
     }
