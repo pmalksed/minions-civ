@@ -207,6 +207,11 @@ object ServerMain extends App {
     val side: Option[Side] = sideStr match {
       case Some("0") => Some(S0)
       case Some("1") => Some(S1)
+      case Some("2") => Some(S2)
+      case Some("3") => Some(S3)
+      case Some("4") => Some(S4)
+      case Some("5") => Some(S5)
+      case Some("6") => Some(SB)
       case Some(s) => throw new Exception("Invalid side: " + s)
       case None => None
     }
@@ -483,8 +488,8 @@ if(!username || username.length == 0) {
     parameter("tutorial" ? false) { doTutorial =>
       parameter("difficulty" ? 10) { difficulty =>
         val secondsPerTurn = SideArray.create(120.0)
-        val startingSouls = SideArray.createTwo(0, 6)
-        val extraSoulsPerTurn = SideArray.createTwo(0, difficulty)
+        val startingSouls = SideArray.createTwo(0, 6, 0,0,0,0,0)
+        val extraSoulsPerTurn = SideArray.createTwo(0, difficulty, 0,0,0,0,0)
         val targetWins = 1
         val techSouls = 4
         val maps_opt = None
@@ -797,9 +802,9 @@ if(!username || username.length == 0) {
               val seed_opt = if(seed=="") None else Some(seed.toLong)
               val maps_opt = if(maps.isEmpty) None else Some(maps.toList)
               val passwordOpt = if(password == "") None else Some(password)
-              val startingSouls = SideArray.createTwo(blueSouls, redSouls)
-              val secondsPerTurn = SideArray.createTwo(blueSeconds, redSeconds)
-              val extraSoulsPerTurn = SideArray.createTwo(blueSoulsPerTurn, redSoulsPerTurn)
+              val startingSouls = SideArray.createTwo(blueSouls, redSouls, blueSouls,blueSouls,blueSouls,blueSouls,blueSouls)
+              val secondsPerTurn = SideArray.createTwo(blueSeconds, redSeconds, blueSeconds,blueSeconds,blueSeconds,blueSeconds,blueSeconds)
+              val extraSoulsPerTurn = SideArray.createTwo(blueSoulsPerTurn, redSoulsPerTurn,blueSoulsPerTurn,blueSoulsPerTurn,blueSoulsPerTurn,blueSoulsPerTurn,blueSoulsPerTurn)
 
               val blueUnit : Option[PieceStats] = Units.fromForm(blueName, blueAttack, blueHealth, blueSpeed, blueRange, blueCost, blueRebate, blueNumAttacks, blueSwarm, blueLumbering, blueSpawn, bluePersistent, blueFlying, blueBlink, blueAbility)
               val redUnit : Option[PieceStats] = Units.fromForm(redName, redAttack, redHealth, redSpeed, redRange, redCost, redRebate, redNumAttacks, redSwarm, redLumbering, redSpawn, redPersistent, redFlying, redBlink, redAbility)
@@ -889,7 +894,7 @@ if(!username || username.length == 0) {
   } ~ post {
       formFields(('gameid, 'blueSeconds.as[Double], 'redSeconds.as[Double])) { (gameid, blueSeconds, redSeconds) =>
         val (actor, game) = games(gameid)
-        game.secondsPerTurn = SideArray.createTwo(blueSeconds, redSeconds)
+        game.secondsPerTurn = SideArray.createTwo(blueSeconds, redSeconds,blueSeconds,blueSeconds,blueSeconds,blueSeconds,blueSeconds)
         actor ! ResetTime()
         complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,
           s"""
@@ -934,8 +939,8 @@ if(!username || username.length == 0) {
 
   // Create test game
   val secondsPerTurn = SideArray.create(120.0)
-  val startingSouls = SideArray.createTwo(0, 6)
-  val extraSoulsPerTurn = SideArray.createTwo(0, 10)
+  val startingSouls = SideArray.createTwo(0, 6, 0,0,0,0,0)
+  val extraSoulsPerTurn = SideArray.createTwo(0, 10, 0,0,0,0,0)
   val targetWins = 2
   val techSouls = 4
   val maps_opt = Some(List("Civ Map Size 4"))

@@ -68,11 +68,21 @@ case class GameState (
 
   val spellRands = SideArray.createTwo(
     Rand(RandUtils.sha256Long(randSeed + "#spell0")),
-    Rand(RandUtils.sha256Long(randSeed + "#spell1"))
+    Rand(RandUtils.sha256Long(randSeed + "#spell1")),
+    Rand(RandUtils.sha256Long(randSeed + "#spell2")),
+    Rand(RandUtils.sha256Long(randSeed + "#spell3")),
+    Rand(RandUtils.sha256Long(randSeed + "#spell4")),
+    Rand(RandUtils.sha256Long(randSeed + "#spell5")),
+    Rand(RandUtils.sha256Long(randSeed + "#spell6")),
   )
   val necroRands = SideArray.createTwo(
     Rand(RandUtils.sha256Long(randSeed + "#necro0")),
-    Rand(RandUtils.sha256Long(randSeed + "#necro1"))
+    Rand(RandUtils.sha256Long(randSeed + "#necro1")),
+    Rand(RandUtils.sha256Long(randSeed + "#necro2")),
+    Rand(RandUtils.sha256Long(randSeed + "#necro3")),
+    Rand(RandUtils.sha256Long(randSeed + "#necro4")),
+    Rand(RandUtils.sha256Long(randSeed + "#necro5")),
+    Rand(RandUtils.sha256Long(randSeed + "#necro6")),
   )
   def broadcastToSpectators(response: Protocol.Response): Unit = {
     userOuts.foreach { case (sid,out) =>
@@ -102,11 +112,19 @@ case class GameState (
     }
     broadcastToSide(Protocol.Players(playersAndViewedBoards,spectators),S0)
     broadcastToSide(Protocol.Players(playersAndViewedBoards,spectators),S1)
+    broadcastToSide(Protocol.Players(playersAndViewedBoards,spectators),S2)
+    broadcastToSide(Protocol.Players(playersAndViewedBoards,spectators),S3)
+    broadcastToSide(Protocol.Players(playersAndViewedBoards,spectators),S4)
+    broadcastToSide(Protocol.Players(playersAndViewedBoards,spectators),S5)    
     broadcastToSpectators(Protocol.Players(playersAndViewedBoards,spectators))
   }
   def broadcastMessages(): Unit = {
     broadcastToSide(Protocol.Messages(allMessages, teamMessages(S0)), S0)
     broadcastToSide(Protocol.Messages(allMessages, teamMessages(S1)), S1)
+    broadcastToSide(Protocol.Messages(allMessages, teamMessages(S2)), S2)
+    broadcastToSide(Protocol.Messages(allMessages, teamMessages(S3)), S3)
+    broadcastToSide(Protocol.Messages(allMessages, teamMessages(S4)), S4)
+    broadcastToSide(Protocol.Messages(allMessages, teamMessages(S5)), S5)    
     broadcastToSpectators(Protocol.Messages(allMessages, spectatorMessages))
   }
 
@@ -658,7 +676,7 @@ object GameState {
 
       val finalStartingSouls = {
         if(testingSetup) {
-          SideArray.createTwo(startingSouls(S0)+1000, startingSouls(S1))
+          SideArray.createTwo(startingSouls(S0)+1000, startingSouls(S1), startingSouls(S1), startingSouls(S1), startingSouls(S1), startingSouls(S1), startingSouls(S1))
         } else {
           startingSouls
         }
@@ -739,16 +757,16 @@ object GameState {
         displayName = blueUnit.displayName,
         tech = PieceTech(blueUnit.name),
         techNumber = Some(1),
-        level = SideArray.createTwo(TechAcquired, TechLocked),
-        startingLevelThisTurn = SideArray.createTwo(TechAcquired, TechLocked),
+        level = SideArray.createTwo(TechAcquired, TechLocked, TechLocked, TechLocked, TechLocked, TechLocked, TechLocked),
+        startingLevelThisTurn = SideArray.createTwo(TechAcquired, TechLocked, TechLocked, TechLocked, TechLocked, TechLocked, TechLocked),
         ),
       TechState(
         shortDisplayName = redUnit.shortDisplayName,
         displayName = redUnit.displayName,
         tech = PieceTech(redUnit.name),
         techNumber = Some(2),
-        level = SideArray.createTwo(TechLocked, TechAcquired),
-        startingLevelThisTurn = SideArray.createTwo(TechLocked, TechAcquired),
+        level = SideArray.createTwo(TechLocked, TechAcquired, TechLocked, TechLocked, TechLocked, TechLocked, TechLocked),
+        startingLevelThisTurn = SideArray.createTwo(TechLocked, TechAcquired, TechLocked, TechLocked, TechLocked, TechLocked, TechLocked),
         ),
       )
     val pieces = Array(Units.necromancer) ++ Units.specialNecromancers ++ Units.alwaysAcquiredPieces ++ Array(blueUnit, redUnit)

@@ -53,7 +53,6 @@ class Connection private (
 
     socketId = socketId + 1
     val id = socketId
-
     val socket = new WebSocket(uri)
 
     var heartbeatIdx = 0
@@ -73,7 +72,7 @@ class Connection private (
     }
 
     socket.onopen = { (_: Event) => () }
-    socket.onerror = { (event: ErrorEvent) => f(Failure(new Exception(event.message))) }
+    socket.onerror = { (event: ErrorEvent) => f(Failure(new Exception("Error"))) }
     socket.onmessage = { (event: MessageEvent) =>
       val message = Try(Json.fromJson[Protocol.Response](Json.parse(event.data.toString)))
       message match {

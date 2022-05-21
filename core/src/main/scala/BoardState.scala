@@ -398,7 +398,7 @@ case class Piece (
  * The full state of one board of the game.
  */
 object BoardState {
-  def create(terrain: Plane[Terrain], startLocs: SideArray[Loc]): BoardState = {
+  def create(terrain: Plane[Terrain]): BoardState = {
     val board = new BoardState(
       tiles = terrain.map { terrain => {
           val rand = Random;
@@ -422,7 +422,7 @@ object BoardState {
             food,production,science);
         }
       },  
-      startLocs = startLocs,
+      startLocs = SideArray.createTwo(Loc(1,1), Loc(2,2), Loc(3,3), Loc(4,4), Loc(5,5), Loc(6,6), Loc(7,7)),
       pieces = Plane.create(terrain.xSize,terrain.ySize,terrain.topology,Nil),
       pieceById = Map(),
       nextPieceId = 0,

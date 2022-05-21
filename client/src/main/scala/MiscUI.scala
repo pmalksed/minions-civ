@@ -211,7 +211,7 @@ case class UI(val flipDisplay: Boolean, val ourSide: Option[Side], val boardXSiz
       val (loc,_) = getLocAndDelta(hexLoc)
       val idx = loc.x
       if(loc.y == 0 && idx >= 0 && idx < size) {
-        val (spellId, side) = game.resolveSpellChoice(idx, ourSide)
+        val (spellId, side) = game.resolveSpellChoice(idx, Some(S0))
         spellId match {
           case None => MouseNone
           case Some(spellId) => MouseSpellChoice(spellId, side, loc)

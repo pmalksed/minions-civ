@@ -172,13 +172,14 @@ object Protocol {
         JsError("JSON pair expected when parsing side array")
       def reads(json: JsValue): JsResult[SideArray[T]] = json match {
         case JsArray(arr) =>
-          if(arr.length != 2) fail()
+          if(arr.length != 7) fail()
           else mapJsResults(arr)(format.reads).map{ (arr:Array[T]) => SideArray.ofArrayInplace(arr) }
         case _ => fail()
       }
       def writes(sa: SideArray[T]): JsValue = {
         val arr = sa.toArrayInplace
-        JsArray(Array(format.writes(arr(0)),format.writes(arr(1))))
+        JsArray(Array(format.writes(arr(0)),format.writes(arr(1)),format.writes(arr(2)),format.writes(arr(3)),
+          format.writes(arr(4)),format.writes(arr(5)),format.writes(arr(6))))
       }
     }
   }

@@ -78,14 +78,14 @@ object Side {
   def foreach(f: Side => Unit): Unit = {
     f(S0)
     f(S1)
-    // f(S2)
-    // f(S3)
-    // f(S4)
-    // f(S5)
-    // f(SB)
+    f(S2)
+    f(S3)
+    f(S4)
+    f(S5)
+    f(SB)
   }
   def exists(f: Side => Boolean): Boolean = f(S0) || f(S1) || f(S2) || f(S3) || f(S4) || f(S5) || f(SB)
-  val sides = List(S0,S1)//,S2,S3,S4,S5,SB)
+  val sides = List(S0,S1,S2,S3,S4,S5,SB)
 }
 
 /**
@@ -576,16 +576,16 @@ object Loc {
  * Length-two array indexed by Side.
  */
 object SideArray {
-  def create[T:ClassTag](initial: T) = new SideArray[T](Array.fill[T](2)(initial))
-  def createTwo[T:ClassTag](s0:T, s1:T) = new SideArray[T](Array(s0, s1))
-  def createFn[T:ClassTag](fn: Side => T) = new SideArray[T](Array(fn(S0), fn(S1)))
+  def create[T:ClassTag](initial: T) = new SideArray[T](Array.fill[T](7)(initial))
+  def createTwo[T:ClassTag](s0:T, s1:T, s2:T, s3:T, s4:T, s5:T, sb:T) = new SideArray[T](Array(s0, s1, s2, s3, s4, s5, sb))
+  def createFn[T:ClassTag](fn: Side => T) = new SideArray[T](Array(fn(S0), fn(S1), fn(S2), fn(S3), fn(S4), fn(S5), fn(SB)))
   def ofArrayInplace[T:ClassTag](arr: Array[T]) = new SideArray(arr)
 }
 class SideArray[T:ClassTag] private (
   private val arr: Array[T]
 ) {
-  def apply(s:Side): T = arr(Math.min(s.int,1))
-  def update(s:Side, elt: T): Unit = arr(Math.min(s.int,1)) = elt
+  def apply(s:Side): T = arr(s.int)
+  def update(s:Side, elt: T): Unit = arr(s.int) = elt
 
   def copy(): SideArray[T] = new SideArray[T](arr.clone())
 
