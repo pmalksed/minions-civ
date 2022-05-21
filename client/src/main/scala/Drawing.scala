@@ -691,6 +691,9 @@ object Drawing {
               if(moveable)
                 show("This tile can be moved by certain abilities and spells.")
           }
+          show("Food yield: " + tile.foodYield)          
+          show("Production yield: " + tile.productionYield)          
+          show("Science yield: " + tile.scienceYield)          
           show("Food: " + tile.food)
           show("Production: " + tile.production)
           show("Science: " + tile.science)
@@ -879,7 +882,7 @@ object Drawing {
     strokeHex(ui.Options.origin, "#666666", tileScale, lineWidth=1.0)
     val coord_ploc = PixelLoc.ofHexLoc(ui.Options.origin, gridSize)
     text(if(client.showCoords) "Hide" else "Show", coord_ploc + PixelVec(0, -4.0), "black")
-    text("Coords", coord_ploc + PixelVec(0, 7.0), "black")
+    text("Units", coord_ploc + PixelVec(0, 7.0), "black")
 
     //End turn hex
     val endTurn = ui.Actions.hexLoc(0)
@@ -1073,7 +1076,7 @@ object Drawing {
     //Terrain
     board.tiles.foreachi {case (loc, tile) =>
       val hexLoc = ui.MainBoard.hexLoc(loc)
-      drawTile(hexLoc,loc,tile, 1.0,showLoc=client.showCoords)
+      drawTile(hexLoc,loc,tile, 1.0,showLoc=true)
       if (mouseState.foundCityMode) {
         client.ourSide match {
           case None =>
@@ -1091,7 +1094,7 @@ object Drawing {
     preSpawnBoard.tiles.foreachi { case (loc, tile) =>
       if(tile.terrain != board.tiles(loc).terrain && tile.terrain != Ground) {
         val hexLoc = ui.MainBoard.hexLoc(loc)
-        drawTile(hexLoc,loc,tile, 1.0, alpha=0.4,showLoc=client.showCoords)
+        drawTile(hexLoc,loc,tile, 1.0, alpha=0.4,showLoc=true)
       }
     }
 
@@ -1308,9 +1311,11 @@ object Drawing {
       }
     }
 
-    board.pieces.foreach { pieces =>
-      pieces.foreach { piece =>
-        drawBoardPiece(piece,board)
+    if (client.showCoords) {
+      board.pieces.foreach { pieces =>
+        pieces.foreach { piece =>
+          drawBoardPiece(piece,board)
+        }
       }
     }
     preSpawnBoard.pieces.foreachi { case (loc,pieces) =>
