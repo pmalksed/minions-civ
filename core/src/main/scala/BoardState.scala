@@ -2261,11 +2261,11 @@ case class BoardState private (
     }  
   }
 
-  private def applyEffect(effect: TargetEffect, piece: Piece, externalInfo: ExternalInfo): Unit = {
+  private def applyEffect(effect: TargetEffect, piece: Piece, externalInfo: ExternalInfo, instigator: Option[Piece] = None): Unit = {
     effect match {
       case Damage(n) =>
         piece.damage += n
-        killIfEnoughDamage(piece,externalInfo)
+        killIfEnoughDamage(piece,externalInfo,instigator=instigator)
       case Unsummon =>
         unsummonPiece(piece)
       case Kill =>
@@ -2286,13 +2286,13 @@ case class BoardState private (
   }
 
   //Kill a piece if it has enough accumulated damage
-  private def killIfEnoughDamage(piece: Piece, externalInfo: ExternalInfo): Unit = {
+  private def killIfEnoughDamage(piece: Piece, externalInfo: ExternalInfo, instigator: Option[Piece] = None): Unit = {
     val stats = piece.curStats(this)
     stats.defense match {
       case None => ()
       case Some(defense) =>
         if(piece.damage >= defense) {
-          killPiece(piece,externalInfo)
+          killPiece(piece,externalInfo,instigator=instigator)
         }
     }
   }
@@ -2317,11 +2317,98 @@ case class BoardState private (
     }
   }
 
+  private def getTotalResourcesWithinRange2BySide(centralLoc: Loc): Map[Side, Double] = {
+    var result: Map[Side, Double] = Map()
+    tiles.topology.forEachAdjRange2(centralLoc) { loc =>
+      if (locIsValid(loc)) {
+        val piecesOnLoc = pieces(loc)
+        if (piecesOnLoc.length > 0) {
+          val piece = piecesOnLoc.head
+          val side = piece.side
+          val currentSideResult = result.get(side).getOrElse(0.0)
+          result += (side -> (currentSideResult + piece.food + piece.production))
+        }
+      }
+    }
+    return result
+  }
+
+  private def distributeRewardsBySide(rewardsBySide: Map[Side, Int]): Unit = {
+    Side.foreach { side =>
+      val rewardToDistribute = rewardsBySide.get(side).getOrElse(0)
+      turnsTillNextCityPermanentModifier += (side -> (-1 * rewardToDistribute))
+    }
+  }
+
+  private def distributeCampRewards(loc: Loc, instigator: Option[Piece]): Unit = {
+    val resourcesBySide = getTotalResourcesWithinRange2BySide(loc)
+    var rewardsBySide: Map[Side, Int] = Map()
+    Side.foreach { side => 
+      val resources = resourcesBySide.get(side).getOrElse(0.0)
+      if (resources > 0.0) {
+        rewardsBySide = rewardsBySide + (side -> 1)
+      }
+    }
+    instigator match {
+      case None =>
+      case Some(piece) =>
+        rewardsBySide = rewardsBySide + (piece.side -> 1)
+    }
+    distributeRewardsBySide(rewardsBySide)
+  }
+
+  private def distributeLairRewards(loc: Loc, instigator: Option[Piece]): Unit = {
+    val resourcesBySide = getTotalResourcesWithinRange2BySide(loc)
+    var rewardsBySide: Map[Side, Int] = Map()
+    Side.foreach { side => 
+      val resources = resourcesBySide.get(side).getOrElse(0.0)
+      if (resources > 20.0) {
+        rewardsBySide = rewardsBySide + (side -> 3)
+      } else if (resources > 10.0) {
+        rewardsBySide = rewardsBySide + (side -> 2)
+      } else if (resources > 0.0) {
+        rewardsBySide = rewardsBySide + (side -> 1)
+      }
+    }
+    instigator match {
+      case None =>
+      case Some(piece) =>
+        rewardsBySide = rewardsBySide + (piece.side -> 3)
+    }
+    distributeRewardsBySide(rewardsBySide)
+  }  
+
+  private def distributeCityRewards(lostCitySide: Side, loc: Loc, instigator: Option[Piece]): Unit = {
+    val resourcesBySide = getTotalResourcesWithinRange2BySide(loc)
+    var rewardsBySide: Map[Side, Int] = Map()
+    Side.foreach { side => 
+      if (side != lostCitySide) {
+        val resources = resourcesBySide.get(side).getOrElse(0.0)
+        if (resources > 20.0) {
+          rewardsBySide = rewardsBySide + (side -> 3)
+        } else if (resources > 10.0) {
+          rewardsBySide = rewardsBySide + (side -> 2)
+        } else if (resources > 0.0) {
+          rewardsBySide = rewardsBySide + (side -> 1)
+        }
+      }
+    }
+    instigator match {
+      case None =>
+      case Some(piece) =>
+        rewardsBySide = rewardsBySide + (piece.side -> 3)
+    }
+    rewardsBySide = rewardsBySide + (lostCitySide -> 5)
+    distributeRewardsBySide(rewardsBySide)
+  }
+
   //Kill a piece, for any reason
-  private def killPiece(piece: Piece, externalInfo: ExternalInfo, suicide: Boolean = false): Unit = {
+  private def killPiece(piece: Piece, externalInfo: ExternalInfo, suicide: Boolean = false, instigator: Option[Piece] = None): Unit = {
     if(piece.curStats(this).isSoulbound) {
       unsummonPiece(piece)
     } else {
+      val currentLoc = piece.loc
+      val lostCitySide = piece.side
       removeFromBoard(piece)
       killedThisTurn = killedThisTurn :+ ((piece.spec, piece.baseStats.name, piece.side, piece.loc))
       updateAfterPieceKill(piece.side,piece.curStats(this),piece.loc,externalInfo)
@@ -2343,6 +2430,16 @@ case class BoardState private (
       piece.carriedFood = 0.0
       piece.carriedProduction = 0.0
       piece.carriedScience = 0.0
+
+      if (piece.baseStats.name == "camp") {
+        distributeCampRewards(currentLoc, instigator)
+      }
+      if (piece.baseStats.name == "lair") {
+        distributeLairRewards(currentLoc, instigator)
+      }
+      if (piece.baseStats.name == "city") {
+        distributeCityRewards(lostCitySide, currentLoc, instigator)
+      }
     }
   }
 
@@ -3162,8 +3259,8 @@ case class BoardState private (
         val damageWouldBeDealt = getDamageWouldBeDealt(piece, target)
         val killingBlow = targetRemainingHealth <= damageWouldBeDealt
         val targetLoc = target.loc
-        applyEffect(attackEffect,target,externalInfo)
-        applyEffect(retaliateAttackEffect,piece,externalInfo)
+        applyEffect(attackEffect,target,externalInfo,instigator=Some(piece))
+        applyEffect(retaliateAttackEffect,piece,externalInfo,instigator=Some(piece))
         if (piece.baseStats.poisonous > 0 && !isCityLike(target.baseStats)) {
           increasePoisonOfPiece(target, piece.baseStats.poisonous)
         }
