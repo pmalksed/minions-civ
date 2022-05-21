@@ -244,6 +244,8 @@ object Tile {
       terrain, 
       terrain, 
       List(), 0,0,0,0,0,0,
+      Map(),
+      Map(),
     ) 
   }
 }
@@ -257,6 +259,8 @@ case class Tile(
   var food: Double,  
   var production: Double,
   var science: Double,
+  var hasNearbyEnemy: Map[Side, Boolean],
+  var hasNearbyFriendly: Map[Side, Boolean],
 )
 
 /**
@@ -419,7 +423,7 @@ object BoardState {
             scienceYield = scienceYield + 1;
           }    
           Tile(terrain = terrain, terrain, modsWithDuration = Nil, foodYield, productionYield, scienceYield,
-            food,production,science);
+            food,production,science, Map(), Map());
         }
       },  
       startLocs = SideArray.createTwo(Loc(1,1), Loc(2,2), Loc(3,3), Loc(4,4), Loc(5,5), Loc(6,6), Loc(7,7)),
@@ -854,6 +858,7 @@ case class BoardState private (
           }
         }
       }
+      resetHasNearbyFriendlyAndEnemy(loc)
     }
     //Heal damage, reset piece state, decay modifiers
     pieceById.values.foreach { piece =>
@@ -865,6 +870,11 @@ case class BoardState private (
     pieceById.values.foreach { piece =>
       if (piece.baseStats.leadership) {
         setTargetsOfFollowers(piece)
+      }
+      piece.side match {
+        case SB =>
+        case (S0 | S1 | S2 | S3 | S4 | S5) =>
+          setNearbyTileCityFoundingData(piece)
       }
     }
 
@@ -963,7 +973,7 @@ case class BoardState private (
         if(randomFloat >= 0.8) {
           scienceYield = scienceYield + 1;
         }    
-        Tile(tile.startingTerrain, tile.startingTerrain, List(), foodYield,productionYield,scienceYield,food,production,science)
+        Tile(tile.startingTerrain, tile.startingTerrain, List(), foodYield,productionYield,scienceYield,food,production,science, Map(), Map())
       } 
     }
 
@@ -1147,6 +1157,49 @@ case class BoardState private (
   def makeAnomalyWithAdjacentBarrens(loc: Loc): Unit = {
     turnIntoAnomaly(loc)
     makeAnomaliesAdjacentToHex(loc, 2, barren=true)
+  }
+
+  def resetHasNearbyFriendlyAndEnemy(loc: Loc): Unit = {
+    val tile = tiles(loc)
+    Side.foreach { side => 
+      tile.hasNearbyFriendly = tile.hasNearbyFriendly + (side -> false)
+      tile.hasNearbyEnemy = tile.hasNearbyEnemy + (side -> false)
+    }
+  }
+
+  def setNearbyTileHasNearbyFriendly(piece: Piece): Unit = {
+    tiles.topology.forEachAdj(piece.loc) { loc =>
+      if (locIsValid(loc)) {
+        val tile = tiles(loc)
+        tile.hasNearbyFriendly = tile.hasNearbyFriendly + (piece.side -> true)
+      }
+    }
+    val pieceTile = tiles(piece.loc)
+    pieceTile.hasNearbyFriendly = pieceTile.hasNearbyFriendly + (piece.side -> true)
+  }
+
+  def setNearbyTileHasNearbyEnemy(piece: Piece): Unit = {
+    tiles.topology.forEachAdjRange2(piece.loc) { loc =>
+      if (locIsValid(loc)) {
+        val tile = tiles(loc)
+        Side.foreach { side =>
+          if (side != piece.side) {
+            tile.hasNearbyEnemy = tile.hasNearbyEnemy + (side -> true)
+          }
+        }
+      }
+    }
+    val pieceTile = tiles(piece.loc)
+    Side.foreach { side =>
+      if (side != piece.side) {
+        pieceTile.hasNearbyEnemy = pieceTile.hasNearbyEnemy + (side -> true)
+      }
+    }
+  }  
+
+  def setNearbyTileCityFoundingData(piece: Piece): Unit = {
+    setNearbyTileHasNearbyFriendly(piece)
+    setNearbyTileHasNearbyEnemy(piece)
   }
 
   def canFreeBuyPiece(side: Side, pieceName: String) : Boolean = {
@@ -1702,12 +1755,12 @@ case class BoardState private (
   def moveTerrain(terrain: Terrain, loc: Loc) = {
     tiles.transform { tile =>
       if(tile.terrain == terrain) {
-        Tile(Ground, tile.startingTerrain, modsWithDuration = tile.modsWithDuration,0,0,0,0,0,0)
+        Tile(Ground, tile.startingTerrain, modsWithDuration = tile.modsWithDuration,0,0,0,0,0,0,Map(),Map())
       } else {
         tile
       }
     }
-    tiles(loc) = Tile(terrain, tiles(loc).startingTerrain, modsWithDuration = tiles(loc).modsWithDuration,0,0,0,0,0,0)
+    tiles(loc) = Tile(terrain, tiles(loc).startingTerrain, modsWithDuration = tiles(loc).modsWithDuration,0,0,0,0,0,0,Map(),Map())
   }
 
   private def killAttackingWailingUnits(externalInfo: ExternalInfo, otherThan: Option[PieceSpec] = None): Unit = {
@@ -2298,6 +2351,7 @@ case class BoardState private (
   }
   private def removeFromBoard(piece: Piece): Unit = {
     pieces(piece.loc) = pieces(piece.loc).filterNot { p => p.id == piece.id }
+    cities = cities.filterNot { p => p.id == piece.id }
     pieceById = pieceById - piece.id
   }
 
@@ -2322,6 +2376,7 @@ case class BoardState private (
         citiesFounded += (spawnSide -> (citiesFoundedBySide + 1))        
       }
       if (spawnStats.name == "camp") {
+        cities = cities :+ piece
         val rand = Random
         val nextInt = rand.nextInt(4)
         if (nextInt == 0) {
@@ -2336,6 +2391,9 @@ case class BoardState private (
         if (nextInt == 3) {
           piece.focus = "legionary"
         }
+      }      
+      if (spawnStats.name == "lair") {
+        cities = cities :+ piece
       }      
       Some(piece)
     }
@@ -2363,6 +2421,7 @@ case class BoardState private (
         turnsTillNextCityTemporaryModifier += (spawnSide -> (-1 * cityFoundingSlack))
       }   
       if (spawnStats.name == "camp") {
+        cities = cities :+ piece
         val rand = Random
         val nextInt = rand.nextInt(4)
         if (nextInt == 0) {
@@ -2378,6 +2437,9 @@ case class BoardState private (
           piece.focus = "legionary"
         }
       } 
+      if (spawnStats.name == "lair") {
+        cities = cities :+ piece
+      }      
       Some(piece)
     }
   }
@@ -2816,7 +2878,9 @@ case class BoardState private (
   def canFoundCityAtLoc(side: Side, loc: Loc): Boolean = {
     val (distanceToNearestFriendlyCity, distanceToNearestAnyCity) = distanceToNearestCity(side, loc);
     return (distanceToNearestFriendlyCity <= maximumFoundCityDistanceFromFriendlyCity(side)
-            && distanceToNearestAnyCity >= minimumFoundCityDistanceFromCity())
+            && distanceToNearestAnyCity >= minimumFoundCityDistanceFromCity()
+            && tiles(loc).hasNearbyFriendly.get(side).getOrElse(false)
+            && !tiles(loc).hasNearbyEnemy.get(side).getOrElse(false))
   }
 
   def nearestFriendlyCity(side: Side, loc: Loc): Option[Piece] = {
@@ -2839,7 +2903,7 @@ case class BoardState private (
     cities.foreach(city => {
       val distance = tiles.topology.distance(city.loc, loc)
       distanceToNearestAnyCity = java.lang.Math.min(distanceToNearestAnyCity, distance)
-      if (city.side == side) {
+      if (city.side == side || city.side == SB) {
         distanceToNearestFriendlyCity = java.lang.Math.min(distanceToNearestFriendlyCity, distance)
       }
     })

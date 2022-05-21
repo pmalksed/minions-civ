@@ -697,6 +697,13 @@ object Drawing {
           show("Food: " + tile.food)
           show("Production: " + tile.production)
           show("Science: " + tile.science)
+          client.ourSide match {
+            case None => 
+            case Some(side) => {
+              show("Near friendly unit: " + tile.hasNearbyFriendly.get(side).getOrElse(false))
+              show("Near enemy unit: " + tile.hasNearbyEnemy.get(side).getOrElse(false))
+            }
+          }
       }
       spell match {
         case None => ()
