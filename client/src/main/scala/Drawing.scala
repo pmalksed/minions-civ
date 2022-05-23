@@ -665,7 +665,7 @@ object Drawing {
               show("Terrain: Ground")
             case Water(moveable) =>
               show("Terrain: Water")
-              show("Only passable by flying units.")
+              show("Impassable")
               if(moveable)
                 show("This tile can be moved by certain abilities and spells.")
 
