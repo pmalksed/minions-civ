@@ -284,8 +284,8 @@ object Drawing {
             if (pieceName == "city") "#bbbb66"
             else "#cccc88"
           case Some(S5) =>
-            if (pieceName == "city") "#88ffff"
-            else "#aaffff"
+            if (pieceName == "city") "#ccccff"
+            else "#eeeeff"
           case Some(SB) =>
             "#ff9999"
         }
@@ -895,7 +895,7 @@ object Drawing {
           val timeStr =
             if(seconds < 0) "-" + ((-seconds) / 60).toString + ":" + "%02d".format((-seconds) % 60)
             else (seconds / 60).toString + ":" + "%02d".format(seconds % 60)
-          val clockStr = board.side.toColorName + " Team Time left: " + timeStr
+          val clockStr = "Time left: " + timeStr
           text(clockStr, ui.Clock.origin + HexVec(1,0), textColorOfSide(board.side), textAlign="left", style = "bold", fontSize=16)
       }
     }
@@ -1700,7 +1700,7 @@ object Drawing {
                 if (!fog || board.isBarbarianEncampment(piece.baseStats)) {
                   val (loc,scale) = locAndScaleOfPiece(board,piece)
                   strokeHex(loc, "black", scale, alpha=0.5)
-                  drawSidebar(piece=Some(piece), stats=Some(piece.curStats(board)), side=Some(piece.side), tile=Some(board.tiles(piece.loc)))
+                  drawSidebar(piece=Some(piece), stats=Some(piece.curStats(board)), side=Some(piece.side), tile=Some(board.tiles(piece.loc)), fog=fog)
                 } else {
                   drawSidebar(tile=Some(tile), fog=fog)
                 }

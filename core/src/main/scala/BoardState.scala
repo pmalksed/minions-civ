@@ -404,7 +404,7 @@ case class Piece (
  * The full state of one board of the game.
  */
 object BoardState {
-  def create(terrain: Plane[Terrain]): BoardState = {
+  def create(terrain: Plane[Terrain], numPlayers: Int): BoardState = {
     val board = new BoardState(
       tiles = terrain.map { terrain => {
           val rand = Random;
@@ -457,6 +457,7 @@ object BoardState {
       turnsTillNextCityPermanentModifier = Map(),
       citiesFounded = Map(),
       salvagerBuildingsBuilt = Map(),
+      numPlayers = numPlayers,
     )
     board
   }
@@ -511,6 +512,7 @@ case class BoardStateFragment1 (
   val soulsThisRound: SideArray[Int],
   val totalSouls: SideArray[Int],
   val totalCosts: SideArray[Int],
+  val numPlayers: Int,
 )
 
 object BoardStateOfFragments {
@@ -545,7 +547,8 @@ object BoardStateOfFragments {
       turnEndingImmediately = f1.turnEndingImmediately,
       soulsThisRound = f1.soulsThisRound,
       totalSouls = f1.totalSouls,
-      totalCosts = f1.totalCosts
+      totalCosts = f1.totalCosts,
+      numPlayers = f1.numPlayers,
     )
   }
 }
@@ -618,6 +621,7 @@ case class BoardState private (
   var turnsTillNextCityPermanentModifier: Map[Side, Int],
   var citiesFounded: Map[Side, Int],
   var salvagerBuildingsBuilt: Map[Side, Int],
+  val numPlayers: Int,
 ) {
   val xSize: Int = tiles.xSize
   val ySize: Int = tiles.ySize
@@ -658,6 +662,7 @@ case class BoardState private (
         soulsThisRound = soulsThisRound,
         totalSouls = totalSouls,
         totalCosts = totalCosts,
+        numPlayers = numPlayers,
       )
     )
   }
@@ -694,6 +699,7 @@ case class BoardState private (
       turnsTillNextCityPermanentModifier = turnsTillNextCityPermanentModifier,
       citiesFounded = citiesFounded,
       salvagerBuildingsBuilt = salvagerBuildingsBuilt,
+      numPlayers = numPlayers,
     )
     val newPieceById = pieceById.transform({ (_k, piece) => piece.copy() })
     val newPiecesSpawnedThisTurn = piecesSpawnedThisTurn.transform { (_k, piece) => newPieceById(piece.id) }
@@ -996,30 +1002,129 @@ case class BoardState private (
     canMove = canMoveFirstTurn
     turnEndingImmediately = turnEndingImmediatelyAfterReset
 
-    val numAnomalies = 16
+    val numAnomalies = 4 * numPlayers
 
-    val playerStarts = List(
-      (S0, Loc(1,11)),
-      (S1, Loc(7,17)),
-      (S2, Loc(11,1)),
-      (S3, Loc(17,7)),
-    )
+    var playerStarts: List[(Side, Loc)] = List()
+    var barbarianStarts: List[(PieceStats, Loc)] = List()
 
-    val barbarianStarts = List(
-      (externalInfo.pieceMap("lair"), Loc(9,9)),
-      (externalInfo.pieceMap("camp"), Loc(6,12)),
-      (externalInfo.pieceMap("camp"), Loc(12,6)),
-      (externalInfo.pieceMap("camp"), Loc(7,7)),
-      (externalInfo.pieceMap("camp"), Loc(11,11)),
-      (externalInfo.pieceMap("camp"), Loc(2,16)),
-      (externalInfo.pieceMap("camp"), Loc(16,2)),
-      (externalInfo.pieceMap("camp"), Loc(5,5)),
-      (externalInfo.pieceMap("camp"), Loc(13,13)),
-      (externalInfo.pieceMap("camp"), Loc(5,10)),
-      (externalInfo.pieceMap("camp"), Loc(10,5)),
-      (externalInfo.pieceMap("camp"), Loc(8,13)),
-      (externalInfo.pieceMap("camp"), Loc(13,8)),
-    )
+    if (numPlayers == 2) {
+      playerStarts = List(
+        (S0, Loc(1,6)),
+        (S1, Loc(11,6)),
+      )      
+      barbarianStarts = List(
+        (externalInfo.pieceMap("lair"), Loc(6,6)),
+        (externalInfo.pieceMap("camp"), Loc(2,9)),
+        (externalInfo.pieceMap("camp"), Loc(5,10)),
+        (externalInfo.pieceMap("camp"), Loc(7,2)),
+        (externalInfo.pieceMap("camp"), Loc(10,3)),
+      )      
+    }
+
+    if (numPlayers == 3) {
+      playerStarts = List(
+        (S0, Loc(1,7)),
+        (S1, Loc(13,1)),
+        (S2, Loc(7,13)),
+      )
+      barbarianStarts = List(
+        (externalInfo.pieceMap("lair"), Loc(7,7)),
+        (externalInfo.pieceMap("camp"), Loc(7,2)),
+        (externalInfo.pieceMap("camp"), Loc(4,7)),
+        (externalInfo.pieceMap("camp"), Loc(2,12)),
+        (externalInfo.pieceMap("camp"), Loc(7,10)),
+        (externalInfo.pieceMap("camp"), Loc(12,7)),
+        (externalInfo.pieceMap("camp"), Loc(10,4)),
+      )
+    }
+
+    if (numPlayers == 4) {
+      playerStarts = List(
+        (S0, Loc(1,11)),
+        (S1, Loc(7,17)),
+        (S2, Loc(11,1)),
+        (S3, Loc(17,7)),
+      )
+
+      barbarianStarts = List(
+        (externalInfo.pieceMap("lair"), Loc(9,9)),
+        (externalInfo.pieceMap("camp"), Loc(6,12)),
+        (externalInfo.pieceMap("camp"), Loc(12,6)),
+        (externalInfo.pieceMap("camp"), Loc(7,7)),
+        (externalInfo.pieceMap("camp"), Loc(11,11)),
+        (externalInfo.pieceMap("camp"), Loc(2,16)),
+        (externalInfo.pieceMap("camp"), Loc(16,2)),
+        (externalInfo.pieceMap("camp"), Loc(5,5)),
+        (externalInfo.pieceMap("camp"), Loc(13,13)),
+        (externalInfo.pieceMap("camp"), Loc(5,10)),
+        (externalInfo.pieceMap("camp"), Loc(10,5)),
+        (externalInfo.pieceMap("camp"), Loc(8,13)),
+        (externalInfo.pieceMap("camp"), Loc(13,8)),
+      )
+    }
+
+    if (numPlayers == 5) {
+      playerStarts = List(
+        (S0, Loc(9,2)),
+        (S1, Loc(19,2)),
+        (S2, Loc(16,13)),
+        (S3, Loc(6,18)),
+        (S4, Loc(1,13)),
+      )
+
+      barbarianStarts = List(
+        (externalInfo.pieceMap("lair"), Loc(10,10)),
+        (externalInfo.pieceMap("camp"), Loc(14,2)),
+        (externalInfo.pieceMap("camp"), Loc(12,6)),
+        (externalInfo.pieceMap("camp"), Loc(10,5)),
+        (externalInfo.pieceMap("camp"), Loc(15,5)),
+        (externalInfo.pieceMap("camp"), Loc(14,8)),
+        (externalInfo.pieceMap("camp"), Loc(18,7)),
+        (externalInfo.pieceMap("camp"), Loc(14,11)),
+        (externalInfo.pieceMap("camp"), Loc(11,13)),
+        (externalInfo.pieceMap("camp"), Loc(11,17)),
+        (externalInfo.pieceMap("camp"), Loc(8,14)),
+        (externalInfo.pieceMap("camp"), Loc(2,17)),
+        (externalInfo.pieceMap("camp"), Loc(6,13)),
+        (externalInfo.pieceMap("camp"), Loc(5,11)),
+        (externalInfo.pieceMap("camp"), Loc(8,8)),
+        (externalInfo.pieceMap("camp"), Loc(5,7)),
+      )
+    }    
+
+    if (numPlayers == 6) {
+      playerStarts = List(
+        (S0, Loc(11,1)),
+        (S1, Loc(21,1)),
+        (S2, Loc(21,11)),
+        (S3, Loc(11,21)),
+        (S4, Loc(1,21)),
+        (S5, Loc(1,11)),        
+      )
+
+      barbarianStarts = List(
+        (externalInfo.pieceMap("lair"), Loc(11,11)),
+        (externalInfo.pieceMap("camp"), Loc(16,1)),
+        (externalInfo.pieceMap("camp"), Loc(13,7)),
+        (externalInfo.pieceMap("camp"), Loc(11,5)),
+        (externalInfo.pieceMap("camp"), Loc(15,9)),
+        (externalInfo.pieceMap("camp"), Loc(21,6)),
+        (externalInfo.pieceMap("camp"), Loc(17,5)),
+        (externalInfo.pieceMap("camp"), Loc(17,11)),
+        (externalInfo.pieceMap("camp"), Loc(13,13)),
+        (externalInfo.pieceMap("camp"), Loc(16,16)),
+        (externalInfo.pieceMap("camp"), Loc(11,17)),
+        (externalInfo.pieceMap("camp"), Loc(9,15)),
+        (externalInfo.pieceMap("camp"), Loc(6,21)),
+        (externalInfo.pieceMap("camp"), Loc(5,17)),
+        (externalInfo.pieceMap("camp"), Loc(7,13)),
+        (externalInfo.pieceMap("camp"), Loc(1,16)),
+        (externalInfo.pieceMap("camp"), Loc(5,11)),
+        (externalInfo.pieceMap("camp"), Loc(9,9)),
+        (externalInfo.pieceMap("camp"), Loc(6,6)),
+      )
+    }    
+
 
     val anomalies = 1 to numAnomalies
 
