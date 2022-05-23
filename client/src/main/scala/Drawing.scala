@@ -235,11 +235,11 @@ object Drawing {
           maybeDrawMoveableBorder(moveable)
       }
       if(showLoc) {
+        text(loc.toString, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/2.0), "black")
         if (!fog) {
-          text(loc.toString, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/2.0), "black")
-          text("" + tile.foodYield + "/" + tile.productionYield + "/" + tile.scienceYield, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/6.0), "black")
+          text("" + tile.foodYield + "/" + tile.productionYield + "/" + tile.scienceYield, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/8.0), "black", fontSize=14)
           if (tile.food != 0.0 || tile.production != 0.0 || tile.science != 0.0) {
-            text("" + tile.food + "/" + tile.production + "/" + tile.science, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/6.0), "blue")
+            text("" + tile.food + "/" + tile.production + "/" + tile.science, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/4.0), "blue", fontSize=14)
           }
         }
         mouseState.selectedPiece match {
@@ -248,11 +248,11 @@ object Drawing {
             client.ourSide match {
               case None =>
                 if (piece.target == loc) {
-                  text("TARGET", PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/2.0), "red")
+                  text("TARGET", PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, 3.0*gridSize/5.0), "red")
                 }
               case Some(side) =>
                 if (piece.target == loc && side == piece.side) {
-                  text("TARGET", PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/2.0), "red")
+                  text("TARGET", PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, 3.0*gridSize/5.0), "red")
                 }
             }
           }
