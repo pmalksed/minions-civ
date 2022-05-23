@@ -246,6 +246,7 @@ object Tile {
       List(), 0,0,0,0,0,0,
       Map(),
       Map(),
+      Map(),
     ) 
   }
 }
@@ -261,6 +262,7 @@ case class Tile(
   var science: Double,
   var hasNearbyEnemy: Map[Side, Boolean],
   var hasNearbyFriendly: Map[Side, Boolean],
+  var isVisible: Map[Side, Boolean],
 )
 
 /**
@@ -423,7 +425,7 @@ object BoardState {
             scienceYield = scienceYield + 1;
           }    
           Tile(terrain = terrain, terrain, modsWithDuration = Nil, foodYield, productionYield, scienceYield,
-            food,production,science, Map(), Map());
+            food,production,science, Map(), Map(), Map());
         }
       },  
       startLocs = SideArray.createTwo(Loc(1,1), Loc(2,2), Loc(3,3), Loc(4,4), Loc(5,5), Loc(6,6), Loc(7,7)),
@@ -973,7 +975,7 @@ case class BoardState private (
         if(randomFloat >= 0.8) {
           scienceYield = scienceYield + 1;
         }    
-        Tile(tile.startingTerrain, tile.startingTerrain, List(), foodYield,productionYield,scienceYield,food,production,science, Map(), Map())
+        Tile(tile.startingTerrain, tile.startingTerrain, List(), foodYield,productionYield,scienceYield,food,production,science, Map(), Map(), Map())
       } 
     }
 
@@ -1066,6 +1068,15 @@ case class BoardState private (
         tile.productionYield = 1
       } else if (nextInt == 1) {
         tile.scienceYield = 1
+      }
+    }
+
+    // Unfog of war
+    pieceById.values.foreach { piece =>
+      piece.side match {
+        case SB =>
+        case (S0 | S1 | S2 | S3 | S4 | S5) =>
+          setNearbyTileCityFoundingData(piece)
       }
     }
 
@@ -1164,6 +1175,7 @@ case class BoardState private (
     Side.foreach { side => 
       tile.hasNearbyFriendly = tile.hasNearbyFriendly + (side -> false)
       tile.hasNearbyEnemy = tile.hasNearbyEnemy + (side -> false)
+      tile.isVisible = tile.isVisible + (side -> false)
     }
   }
 
@@ -1174,8 +1186,15 @@ case class BoardState private (
         tile.hasNearbyFriendly = tile.hasNearbyFriendly + (piece.side -> true)
       }
     }
+    tiles.topology.forEachAdjRange3(piece.loc) { loc =>
+      if (locIsValid(loc)) {
+        val tile = tiles(loc)
+        tile.isVisible = tile.isVisible + (piece.side -> true)
+      }
+    }
     val pieceTile = tiles(piece.loc)
     pieceTile.hasNearbyFriendly = pieceTile.hasNearbyFriendly + (piece.side -> true)
+    pieceTile.isVisible = pieceTile.isVisible + (piece.side -> true)
   }
 
   def setNearbyTileHasNearbyEnemy(piece: Piece): Unit = {
@@ -1755,12 +1774,12 @@ case class BoardState private (
   def moveTerrain(terrain: Terrain, loc: Loc) = {
     tiles.transform { tile =>
       if(tile.terrain == terrain) {
-        Tile(Ground, tile.startingTerrain, modsWithDuration = tile.modsWithDuration,0,0,0,0,0,0,Map(),Map())
+        Tile(Ground, tile.startingTerrain, modsWithDuration = tile.modsWithDuration,0,0,0,0,0,0,Map(),Map(),Map())
       } else {
         tile
       }
     }
-    tiles(loc) = Tile(terrain, tiles(loc).startingTerrain, modsWithDuration = tiles(loc).modsWithDuration,0,0,0,0,0,0,Map(),Map())
+    tiles(loc) = Tile(terrain, tiles(loc).startingTerrain, modsWithDuration = tiles(loc).modsWithDuration,0,0,0,0,0,0,Map(),Map(),Map())
   }
 
   private def killAttackingWailingUnits(externalInfo: ExternalInfo, otherThan: Option[PieceSpec] = None): Unit = {
@@ -2021,6 +2040,10 @@ case class BoardState private (
     pieces(src) = pieces(src).filterNot { p => p.id == piece.id }
     pieces(dest) = pieces(dest) :+ piece
     piece.loc = dest
+  }
+
+  def isBarbarianEncampment(stats: PieceStats): Boolean = {
+    return stats.name == "camp" || stats.name == "lair"
   }
 
   private def doActionSingleAssumeLegal(action:PlayerAction, externalInfo: ExternalInfo): Unit = {

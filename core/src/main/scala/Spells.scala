@@ -414,7 +414,7 @@ case object Spells {
         }
     ),
     effect = { (board: BoardState, loc: Loc) =>
-      board.tiles(loc) = Tile(Ground, board.tiles(loc).startingTerrain, modsWithDuration = board.tiles(loc).modsWithDuration, 0,0,0,0,0,0, Map(),Map())
+      board.tiles(loc) = Tile(Ground, board.tiles(loc).startingTerrain, modsWithDuration = board.tiles(loc).modsWithDuration, 0,0,0,0,0,0, Map(),Map(),Map())
     }
   )
 

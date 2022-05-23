@@ -164,7 +164,9 @@ object Drawing {
       ((h % n) + n) % n
     }
 
-    def drawTile(hexLoc: HexLoc, loc: Loc, tile: Tile, scaleBy: Double, alpha: Double = 1.0, showLoc: Boolean = false) : Unit = {
+    def drawTile(hexLoc: HexLoc, loc: Loc, tile: Tile, scaleBy: Double, alpha: Double = 1.0, 
+        showLoc: Boolean = false, fog: Boolean = false) : Unit = {
+
       val scale = scaleBy*tileScale
 
       def moveableAlpha(moveable: Boolean): Double = { if(moveable) 0.8 else 1.0 }
@@ -178,7 +180,11 @@ object Drawing {
         case Wall => fillHex(hexLoc, "white", scale, alpha=alpha)
         case Ground =>
           val texture = BoardMaps.groundImage(boardNames(boardIdx))
-          fillHexWithTexture(hexLoc, texture, scale, alpha=alpha)
+          if (fog) {
+            fillHexWithTexture(hexLoc, texture, scale, alpha=alpha*0.8)
+          } else {
+            fillHexWithTexture(hexLoc, texture, scale, alpha=alpha)
+          }
           //fillHex(hexLoc, "green", scale)
         case Water(moveable) =>
           val texture = BoardMaps.waterImage(boardNames(boardIdx))
@@ -229,18 +235,25 @@ object Drawing {
           maybeDrawMoveableBorder(moveable)
       }
       if(showLoc) {
-        text(loc.toString, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/2.0), "black")
-        text("" + tile.foodYield + "/" + tile.productionYield + "/" + tile.scienceYield, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/6.0), "black")
-        if (tile.food != 0.0 || tile.production != 0.0 || tile.science != 0.0) {
-          text("" + tile.food + "/" + tile.production + "/" + tile.science, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/6.0), "blue")
+        if (!fog) {
+          text(loc.toString, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/2.0), "black")
+          text("" + tile.foodYield + "/" + tile.productionYield + "/" + tile.scienceYield, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/6.0), "black")
+          if (tile.food != 0.0 || tile.production != 0.0 || tile.science != 0.0) {
+            text("" + tile.food + "/" + tile.production + "/" + tile.science, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/6.0), "blue")
+          }
         }
         mouseState.selectedPiece match {
           case None => 
           case Some(piece) => {
-            if (piece.target == loc) {
-              text("TARGET", PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/2.0), "red")
-            } else {
-              text(board.smartDistance(piece.loc, loc).toString(), PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/2.0), "black")
+            client.ourSide match {
+              case None =>
+                if (piece.target == loc) {
+                  text("TARGET", PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/2.0), "red")
+                }
+              case Some(side) =>
+                if (piece.target == loc && side == piece.side) {
+                  text("TARGET", PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/2.0), "red")
+                }
             }
           }
         }
@@ -331,6 +344,7 @@ object Drawing {
       spell: Option[Int] = None,
       freeform: Option[List[String]] = None,
       spellTargets: Option[Option[SpellOrAbilityTargets]] = None,
+      fog: Boolean = false,
     ) = {
       val hexLoc = ui.Sidebar.origin
       tile match {
@@ -691,17 +705,19 @@ object Drawing {
               if(moveable)
                 show("This tile can be moved by certain abilities and spells.")
           }
-          show("Food yield: " + tile.foodYield)          
-          show("Production yield: " + tile.productionYield)          
-          show("Science yield: " + tile.scienceYield)          
-          show("Food: " + tile.food)
-          show("Production: " + tile.production)
-          show("Science: " + tile.science)
-          client.ourSide match {
-            case None => 
-            case Some(side) => {
-              show("Near friendly unit: " + tile.hasNearbyFriendly.get(side).getOrElse(false))
-              show("Near enemy unit: " + tile.hasNearbyEnemy.get(side).getOrElse(false))
+          if (!fog) {
+            show("Food yield: " + tile.foodYield)          
+            show("Production yield: " + tile.productionYield)          
+            show("Science yield: " + tile.scienceYield)          
+            show("Food: " + tile.food)
+            show("Production: " + tile.production)
+            show("Science: " + tile.science)
+            client.ourSide match {
+              case None => 
+              case Some(side) => {
+                show("Near friendly unit: " + tile.hasNearbyFriendly.get(side).getOrElse(false))
+                show("Near enemy unit: " + tile.hasNearbyEnemy.get(side).getOrElse(false))
+              }
             }
           }
       }
@@ -1083,7 +1099,16 @@ object Drawing {
     //Terrain
     board.tiles.foreachi {case (loc, tile) =>
       val hexLoc = ui.MainBoard.hexLoc(loc)
-      drawTile(hexLoc,loc,tile, 1.0,showLoc=true)
+      var fog = false
+      client.ourSide match {
+        case None =>
+        case Some(side) =>
+          if (!tile.isVisible.get(side).getOrElse(false)) {
+            fog = true
+
+          }
+      }
+      drawTile(hexLoc,loc,tile, 1.0, fog=fog, showLoc=true)
       if (mouseState.foundCityMode) {
         client.ourSide match {
           case None =>
@@ -1321,7 +1346,14 @@ object Drawing {
     if (client.showCoords) {
       board.pieces.foreach { pieces =>
         pieces.foreach { piece =>
-          drawBoardPiece(piece,board)
+          client.ourSide match { 
+            case None =>
+              drawBoardPiece(piece,board)
+            case Some(side) =>
+              if (board.tiles(piece.loc).isVisible.get(side).getOrElse(false) || board.isBarbarianEncampment(piece.baseStats)) {
+                drawBoardPiece(piece,board)
+              }
+          }
         }
       }
     }
@@ -1562,7 +1594,14 @@ object Drawing {
                 }
             }
           case MouseTile(loc) =>
-            drawSidebar(tile=Some(board.tiles(loc)))
+            val tile = board.tiles(loc)
+            client.ourSide match {
+              case None => 
+                drawSidebar(tile=Some(tile))
+              case Some(side) => 
+                val fog = !tile.isVisible.get(side).getOrElse(false)
+                drawSidebar(tile=Some(tile), fog=fog)
+            }
           case MouseExtraTechAndSpell(_) =>
             strokeHex(ui.ExtraTechAndSpell.origin, "black", tileScale, alpha=0.5)
           case MouseEndTurn(_) =>
@@ -1647,13 +1686,24 @@ object Drawing {
                 val stats = externalInfo.pieceMap(name)
                 drawSidebar(stats=Some(stats), side=Some(side))
             }
-          case MousePiece(spec,_) =>
+          case MousePiece(spec,loc) =>
+            val tile = board.tiles(loc)
+            var fog = false
+            client.ourSide match {
+              case None => 
+              case Some(side) => 
+                fog = !tile.isVisible.get(side).getOrElse(false)
+            }            
             board.findPiece(spec) match {
               case None => ()
               case Some(piece) =>
-                val (loc,scale) = locAndScaleOfPiece(board,piece)
-                strokeHex(loc, "black", scale, alpha=0.5)
-                drawSidebar(piece=Some(piece), stats=Some(piece.curStats(board)), side=Some(piece.side), tile=Some(board.tiles(piece.loc)))
+                if (!fog || board.isBarbarianEncampment(piece.baseStats)) {
+                  val (loc,scale) = locAndScaleOfPiece(board,piece)
+                  strokeHex(loc, "black", scale, alpha=0.5)
+                  drawSidebar(piece=Some(piece), stats=Some(piece.curStats(board)), side=Some(piece.side), tile=Some(board.tiles(piece.loc)))
+                } else {
+                  drawSidebar(tile=Some(tile), fog=fog)
+                }
             }
 
             if(undoing)
