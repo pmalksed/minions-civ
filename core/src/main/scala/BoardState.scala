@@ -58,7 +58,8 @@ package object Constants {
                         "Jimboomba", "The Hive", "Bunker 118", "Braavos", "Uskdarler", "Ingulath", "Cairo", "Montreal",
                         "Ontario", "Atlanta", "Nairobi", "Noah's Rainbow", "Tokyo", "Hong Kong", "Chongqing", "Lagos",
                         "Sunspear", "Moscow", "Jakarta", "Tehran", "Wuhan", "Riyadh", "Miami", "Khartoum", "Delhi",
-                        "Baikonur", "Pune", "Dardogar", "Meereen", "Oldtown", "Lannisport", "Oslo", "Venice", "Barcelona")
+                        "Baikonur", "Pune", "Dardogar", "Meereen", "Oldtown", "Lannisport", "Oslo", "Venice", "Barcelona",
+                        "Tikal", "Palenque")
 }
 
 /**
@@ -2402,8 +2403,10 @@ case class BoardState private (
         val piecesOnLoc = pieces(loc)
         if (piecesOnLoc.length > 0) {
           val pieceOnLoc = piecesOnLoc.head
-          if (pieceOnLoc.side == leader.side && !pieceOnLoc.baseStats.leadership) {
-            pieceOnLoc.target = leader.target
+          if (!isDead(pieceOnLoc)) {
+            if (pieceOnLoc.side == leader.side && !pieceOnLoc.baseStats.leadership) {
+              pieceOnLoc.target = leader.target
+            }
           }
         }
       }
@@ -2473,9 +2476,11 @@ case class BoardState private (
         val piecesOnLoc = pieces(loc)
         if (piecesOnLoc.length > 0) {
           val piece = piecesOnLoc.head
-          val side = piece.side
-          val currentSideResult = result.get(side).getOrElse(0.0)
-          result += (side -> (currentSideResult + piece.food + piece.production))
+          if (!isDead(piece)) {
+            val side = piece.side
+            val currentSideResult = result.get(side).getOrElse(0.0)
+            result += (side -> (currentSideResult + piece.food + piece.production))
+          }
         }
       }
     }
@@ -2579,6 +2584,7 @@ case class BoardState private (
       piece.carriedFood = 0.0
       piece.carriedProduction = 0.0
       piece.carriedScience = 0.0
+      makeDead(piece)
 
       if (piece.baseStats.name == "camp") {
         distributeCampRewards(currentLoc, instigator)
@@ -2819,6 +2825,15 @@ case class BoardState private (
     return piece.modifiers._3
   }
 
+  private def makeDead(piece: Piece): Unit = {
+    val (poison, other, cityName, _) = piece.modifiers
+    piece.modifiers = (poison, other, cityName, true)
+  }
+
+  def isDead(piece: Piece): Boolean = {
+    return piece.modifiers._4
+  }
+
   private def totalResourcesOnLoc(tile: Tile): Double = {
     return tile.food + tile.production + tile.science
   }
@@ -2875,14 +2890,16 @@ case class BoardState private (
         val piecesOnLoc = pieces(loc)
         if (piecesOnLoc.length > 0) {
           val pieceOnLoc = piecesOnLoc.head
-          if (pieceOnLoc.baseStats.name == "general" && pieceOnLoc.side == piece.side) {
-            isGeneral = true
-          }
-          if (pieceOnLoc.baseStats.name == "khan" && pieceOnLoc.side == piece.side) {
-            isKhan = true
-          }          
-          if (pieceOnLoc.baseStats.name == "banshee" && pieceOnLoc.side != piece.side) {
-            isBanshee = true
+          if (!isDead(pieceOnLoc)) {
+            if (pieceOnLoc.baseStats.name == "general" && pieceOnLoc.side == piece.side) {
+              isGeneral = true
+            }
+            if (pieceOnLoc.baseStats.name == "khan" && pieceOnLoc.side == piece.side) {
+              isKhan = true
+            }          
+            if (pieceOnLoc.baseStats.name == "banshee" && pieceOnLoc.side != piece.side) {
+              isBanshee = true
+            }
           }
         }
       }
@@ -2929,8 +2946,10 @@ case class BoardState private (
         val piecesOnLoc = pieces(loc)
         if (piecesOnLoc.length > 0) {
           val pieceOnLoc = piecesOnLoc.head
-          if (pieceOnLoc.baseStats.attackRange == 1 && pieceOnLoc.side != side) {
-            return true
+          if (!isDead(pieceOnLoc)) {
+            if (pieceOnLoc.baseStats.attackRange == 1 && pieceOnLoc.side != side) {
+              return true
+            }
           }
         }
       }
@@ -3081,12 +3100,14 @@ case class BoardState private (
         val piecesOnLoc = pieces(loc)
         if (piecesOnLoc.length > 0) {
           val splashTarget = piecesOnLoc.head
-          if (splashTarget.side != piece.side) {
-            totalScore = totalScore + getScoreForAttack(piece, target, mainAttack=false)
+          if (!isDead(splashTarget)) { 
+            if (splashTarget.side != piece.side) {
+              totalScore = totalScore + getScoreForAttack(piece, target, mainAttack=false)
+            }
+            if (splashTarget.side == piece.side) {
+              totalScore = totalScore - getScoreForAttack(piece, target, mainAttack=false, ignoreTaunt=true)
+            }          
           }
-          if (splashTarget.side == piece.side) {
-            totalScore = totalScore - getScoreForAttack(piece, target, mainAttack=false, ignoreTaunt=true)
-          }          
         }
       }
     }
@@ -3118,11 +3139,13 @@ case class BoardState private (
           val piecesOnLoc = pieces(loc)
           if (piecesOnLoc.length > 0) {
             val target = piecesOnLoc.head
-            if (target.side != piece.side && (!ignoresMelee(piece) || target.baseStats.attackRange > 1)) {
-              val score = getScoreForAttackAccountingForSplash(piece, target)
-              if (score > bestScore) {
-                bestScore = score
-                bestTarget = Some(target)
+            if (!isDead(target)) {
+              if (target.side != piece.side && (!ignoresMelee(piece) || target.baseStats.attackRange > 1)) {
+                val score = getScoreForAttackAccountingForSplash(piece, target)
+                if (score > bestScore) {
+                  bestScore = score
+                  bestTarget = Some(target)
+                }
               }
             }
           }
@@ -3214,11 +3237,13 @@ case class BoardState private (
         val piecesOnLoc = pieces(loc)
         if (piecesOnLoc.length > 0) {
           val target = piecesOnLoc.head
-          if (target.side != piece.side && (!ignoresMelee(piece) || target.baseStats.attackRange > 1)) {
-            val score = getScoreForMoveTowards(piece, target)
-            if (score > bestScore) {
-              bestScore = score
-              bestTarget = Some(target)
+          if (!isDead(target)) {
+            if (target.side != piece.side && (!ignoresMelee(piece) || target.baseStats.attackRange > 1)) {
+              val score = getScoreForMoveTowards(piece, target)
+              if (score > bestScore) {
+                bestScore = score
+                bestTarget = Some(target)
+              }
             }
           }
         }
@@ -3435,8 +3460,10 @@ case class BoardState private (
               val piecesOnLoc = pieces(loc)
               if (piecesOnLoc.length > 0) {
                 val splashTarget = piecesOnLoc.head
-                val splashEffect = Damage(piece.baseStats.splash)
-                applyEffect(splashEffect, splashTarget, externalInfo)
+                if (!isDead(splashTarget)) {
+                  val splashEffect = Damage(piece.baseStats.splash)
+                  applyEffect(splashEffect, splashTarget, externalInfo)
+                }
               }
             }            
           }
