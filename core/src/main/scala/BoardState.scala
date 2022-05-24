@@ -53,6 +53,12 @@ package object Constants {
   val SCIENCE_DECAY_RATE = 0.75
   val SUICIDE_TAX = 0.75
   val SCIENCE_FOR_NEW_CITY = 5.0
+  val CITY_NAMES = List("Marseilles", "Pyongyang", "Karakorum", "Addis Ababa", "Merv", "Dublin", "Los Angeles", 
+                        "Leningrad", "Munich", "Bern", "Aleppo", "Lothlorien", "Winterfell", "Qarth", "Osgiliath",
+                        "Jimboomba", "The Hive", "Bunker 118", "Braavos", "Uskdarler", "Ingulath", "Cairo", "Montreal",
+                        "Ontario", "Atlanta", "Nairobi", "Noah's Rainbow", "Tokyo", "Hong Kong", "Chongqing", "Lagos",
+                        "Sunspear", "Moscow", "Jakarta", "Tehran", "Wuhan", "Riyadh", "Miami", "Khartoum", "Delhi",
+                        "Baikonur", "Pune", "Dardogar", "Meereen", "Oldtown", "Lannisport", "Oslo", "Venice", "Barcelona")
 }
 
 /**
@@ -296,7 +302,7 @@ object Piece {
       buildings = List(),
       population = 0,
       focus = "food",
-      modifiers = (0, 0),
+      modifiers = (0, 0, "", false),
     )
   }
   def createInternal(side: Side, pieceStats: PieceStats, id: Int, loc: Loc, nthAtLoc: Int, target: Loc,
@@ -323,7 +329,7 @@ object Piece {
       buildings = List(),
       population = 0,
       focus = "food",  
-      modifiers = (0, 0),
+      modifiers = (0, 0, "", false),
     )
   }  
 }
@@ -357,7 +363,7 @@ case class Piece (
   var focus: String,
 
   // Modifiers are poison, 
-  var modifiers: (Int, Int),
+  var modifiers: (Int, Int, String, Boolean),
 ) {
   def copy() = {
     new Piece(
@@ -405,6 +411,7 @@ case class Piece (
  */
 object BoardState {
   def create(terrain: Plane[Terrain], numPlayers: Int): BoardState = {
+    val rand = Random
     val board = new BoardState(
       tiles = terrain.map { terrain => {
           val rand = Random;
@@ -458,6 +465,7 @@ object BoardState {
       citiesFounded = Map(),
       salvagerBuildingsBuilt = Map(),
       numPlayers = numPlayers,
+      randomizedCityNames = rand.shuffle(Constants.CITY_NAMES),
     )
     board
   }
@@ -513,6 +521,7 @@ case class BoardStateFragment1 (
   val totalSouls: SideArray[Int],
   val totalCosts: SideArray[Int],
   val numPlayers: Int,
+  val randomizedCityNames: List[String],
 )
 
 object BoardStateOfFragments {
@@ -549,6 +558,7 @@ object BoardStateOfFragments {
       totalSouls = f1.totalSouls,
       totalCosts = f1.totalCosts,
       numPlayers = f1.numPlayers,
+      randomizedCityNames = f1.randomizedCityNames,
     )
   }
 }
@@ -622,6 +632,7 @@ case class BoardState private (
   var citiesFounded: Map[Side, Int],
   var salvagerBuildingsBuilt: Map[Side, Int],
   val numPlayers: Int,
+  val randomizedCityNames: List[String],
 ) {
   val xSize: Int = tiles.xSize
   val ySize: Int = tiles.ySize
@@ -663,6 +674,7 @@ case class BoardState private (
         totalSouls = totalSouls,
         totalCosts = totalCosts,
         numPlayers = numPlayers,
+        randomizedCityNames = randomizedCityNames,
       )
     )
   }
@@ -700,6 +712,7 @@ case class BoardState private (
       citiesFounded = citiesFounded,
       salvagerBuildingsBuilt = salvagerBuildingsBuilt,
       numPlayers = numPlayers,
+      randomizedCityNames = randomizedCityNames,
     )
     val newPieceById = pieceById.transform({ (_k, piece) => piece.copy() })
     val newPiecesSpawnedThisTurn = piecesSpawnedThisTurn.transform { (_k, piece) => newPieceById(piece.id) }
@@ -714,6 +727,14 @@ case class BoardState private (
   //Check whether an action would be legal
   def tryLegality(action: PlayerAction, externalInfo: ExternalInfo): Try[Unit] = {
     tryLegalitySingle(action,externalInfo)
+  }
+
+  def numCitiesFounded(): Int = {
+    var total = 0
+    Side.foreach { side =>
+      total += citiesFounded.get(side).getOrElse(0)
+    }
+    return total
   }
 
   //Check whether a sequence of actions would be legal
@@ -2646,6 +2667,7 @@ case class BoardState private (
         val citiesFoundedBySide = citiesFounded.get(spawnSide).getOrElse(0)
         citiesFounded += (spawnSide -> (citiesFoundedBySide + 1))
         turnsTillNextCityTemporaryModifier += (spawnSide -> (-1 * cityFoundingSlack))
+        setCityName(piece, randomizedCityNames(numCitiesFounded))
       }   
       if (spawnStats.name == "camp") {
         cities = cities :+ piece
@@ -2784,8 +2806,17 @@ case class BoardState private (
   }
 
   private def increasePoisonOfPiece(piece: Piece, extraPoison: Int): Unit = {
-    val (poison, other) = piece.modifiers
-    piece.modifiers = (poison + extraPoison, other)
+    val (poison, other, cityName, dead) = piece.modifiers
+    piece.modifiers = (poison + extraPoison, other, cityName, dead)
+  }
+
+  private def setCityName(piece: Piece, cityName: String): Unit = {
+    val (poison, other, _, dead) = piece.modifiers
+    piece.modifiers = (poison, other, cityName, dead)
+  }
+
+  def getCityName(piece: Piece): String = {
+    return piece.modifiers._3
   }
 
   private def totalResourcesOnLoc(tile: Tile): Double = {

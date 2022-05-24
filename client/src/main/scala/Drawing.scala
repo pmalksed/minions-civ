@@ -1280,7 +1280,10 @@ object Drawing {
       val (loc,scale) = locAndScaleOfPiece(board,piece)
       val baseStats = piece.baseStats
       val curStats = piece.curStats(board)
-      val label = baseStats.shortDisplayName
+      var label = baseStats.shortDisplayName
+      if (baseStats.name == "city") {
+        label = board.getCityName(piece)
+      }
 
       drawPiece(loc, scale, Some(piece.side), curStats.name, alpha = alpha)
 
