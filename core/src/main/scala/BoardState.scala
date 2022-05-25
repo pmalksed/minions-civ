@@ -56,10 +56,12 @@ package object Constants {
   val CITY_NAMES = List("Marseilles", "Pyongyang", "Karakorum", "Addis Ababa", "Merv", "Dublin", "Los Angeles", 
                         "Leningrad", "Munich", "Bern", "Aleppo", "Lothlorien", "Winterfell", "Qarth", "Osgiliath",
                         "Jimboomba", "The Hive", "Bunker 118", "Braavos", "Uskdarler", "Ingulath", "Cairo", "Montreal",
-                        "Ontario", "Atlanta", "Nairobi", "Noah's Rainbow", "Tokyo", "Hong Kong", "Chongqing", "Lagos",
+                        "Toronto", "Atlanta", "Nairobi", "Noah's Rainbow", "Tokyo", "Hong Kong", "Chongqing", "Lagos",
                         "Sunspear", "Moscow", "Jakarta", "Tehran", "Wuhan", "Riyadh", "Miami", "Khartoum", "Delhi",
                         "Baikonur", "Pune", "Dardogar", "Meereen", "Oldtown", "Lannisport", "Oslo", "Venice", "Barcelona",
-                        "Tikal", "Palenque")
+                        "Tikal", "Palenque", "Riga", "Carthag", "Arrakeen", "Mos Eisely", "Coruscant", "Theed", "Nineveh",
+                        "Nimrud", "Tel Aviv", "New Jericho", "Myr", "Ankara", "White Harbor", "Nassau", "Berkeley",
+                        "Boston", "Tijuana", "Cape Town", "Kinshasa", "Calgary")
 }
 
 /**

@@ -381,7 +381,16 @@ object Drawing {
       stats match {
         case None => ()
         case Some(stats) =>
-          show(stats.displayName)
+          if (stats.name == "city") {
+            piece match {
+              case None =>
+                show(stats.displayName)
+              case Some(piece) =>    
+                show(board.getCityName(piece))
+            }
+          } else {
+            show(stats.displayName)
+          }
           if(stats.isNecromancer && stats.defense.isEmpty) {
             // Immortal necromancer cannot be killed
           } else if(stats.isNecromancer) {
