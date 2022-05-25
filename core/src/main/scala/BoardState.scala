@@ -62,6 +62,7 @@ package object Constants {
                         "Tikal", "Palenque", "Riga", "Carthag", "Arrakeen", "Mos Eisely", "Coruscant", "Theed", "Nineveh",
                         "Nimrud", "Tel Aviv", "New Jericho", "Myr", "Ankara", "White Harbor", "Nassau", "Berkeley",
                         "Boston", "Tijuana", "Cape Town", "Kinshasa", "Calgary")
+  val WONDER_INDEX_BY_NAME = Map("statue of zeus" -> 0, "fast food chains" -> 1, "the dream twister" -> 2, "junkotron" -> 3)
 }
 
 /**
@@ -469,6 +470,8 @@ object BoardState {
       salvagerBuildingsBuilt = Map(),
       numPlayers = numPlayers,
       randomizedCityNames = rand.shuffle(Constants.CITY_NAMES),
+      wondersUnderConstruction = List(Map(), Map(), Map(), Map()),
+      wondersBuilt = List(Map(), Map(), Map(), Map()),
     )
     board
   }
@@ -525,6 +528,8 @@ case class BoardStateFragment1 (
   val totalCosts: SideArray[Int],
   val numPlayers: Int,
   val randomizedCityNames: List[String],
+  var wondersUnderConstruction: List[Map[Side, Boolean]],
+  var wondersBuilt: List[Map[Side, Boolean]],
 )
 
 object BoardStateOfFragments {
@@ -562,6 +567,8 @@ object BoardStateOfFragments {
       totalCosts = f1.totalCosts,
       numPlayers = f1.numPlayers,
       randomizedCityNames = f1.randomizedCityNames,
+      wondersUnderConstruction = f1.wondersUnderConstruction,
+      wondersBuilt = f1.wondersBuilt,
     )
   }
 }
@@ -636,6 +643,8 @@ case class BoardState private (
   var salvagerBuildingsBuilt: Map[Side, Int],
   val numPlayers: Int,
   val randomizedCityNames: List[String],
+  var wondersUnderConstruction: List[Map[Side, Boolean]],
+  var wondersBuilt: List[Map[Side, Boolean]],
 ) {
   val xSize: Int = tiles.xSize
   val ySize: Int = tiles.ySize
@@ -678,6 +687,8 @@ case class BoardState private (
         totalCosts = totalCosts,
         numPlayers = numPlayers,
         randomizedCityNames = randomizedCityNames,
+        wondersUnderConstruction = wondersUnderConstruction,
+        wondersBuilt = wondersBuilt,
       )
     )
   }
@@ -716,6 +727,8 @@ case class BoardState private (
       salvagerBuildingsBuilt = salvagerBuildingsBuilt,
       numPlayers = numPlayers,
       randomizedCityNames = randomizedCityNames,
+      wondersUnderConstruction = wondersUnderConstruction,
+      wondersBuilt = wondersBuilt,
     )
     val newPieceById = pieceById.transform({ (_k, piece) => piece.copy() })
     val newPiecesSpawnedThisTurn = piecesSpawnedThisTurn.transform { (_k, piece) => newPieceById(piece.id) }
@@ -761,6 +774,56 @@ case class BoardState private (
         }
         loop(list)
     }
+  }
+
+  def wonderUnderConstructionBySide(wonderName: String, side: Side): Boolean = {
+    return wondersUnderConstruction(Constants.WONDER_INDEX_BY_NAME(wonderName)).get(side).getOrElse(false))
+  }
+
+  def wonderBuiltBySide(wonderName: String, side: Side): Boolean = {
+    return wondersUnderConstruction(Constants.WONDER_INDEX_BY_NAME(wonderName)).get(side).getOrElse(false))
+  }
+
+  def wonderBuilt(wonderName: String): Boolean = {
+    Sides.foreach { side =>
+      if (wonderBuiltBySide(wonderName, side)) {
+        return true
+      }
+    }
+    return false
+  }
+
+  def markWonderUnderConstructionBySide(wonderName: String, side: Side, underConstruction: Boolean = true): Unit = {
+    val mapIndex = Constants.WONDER_INDEX_BY_NAME(wonderName)
+    var map = wondersUnderConstruction(mapIndex)
+    map = map + (side -> underConstruction)
+    val beginning = wondersUnderConstruction.slice(0, mapIndex)
+    val end = wondersUnderConstruction.slice(mapIndex + 1, wondersUnderConstruction.length)
+    wondersUnderConstruction = beginning ::: List(map)
+    wondersUnderConstruction = wondersUnderConstruction ::: end
+  }
+
+  def markWonderBuiltBySide(wonderName: String, side: Side): Unit = {
+    val mapIndex = Constants.WONDER_INDEX_BY_NAME(wonderName)
+    var map = wondersBuilt(mapIndex)
+    map = map + (side -> underConstruction)
+    val beginning = wondersBuilt.slice(0, mapIndex)
+    val end = wondersBuilt.slice(mapIndex + 1, wondersBuilt.length)
+    wondersBuilt = beginning ::: List(map)
+    wondersBuilt = wondersBuilt ::: end
+  }
+
+  def clearWonderFromQueues(wonderName: String): Unit = {
+    cities.foreach { city => 
+      if (city.scienceQueue.length > 0) {
+        val scienceQueueNotFirst = city.scienceQueue.slice(1, city.scienceQueue.length)
+        city.scienceQueue = List(city.scienceQueue.head) ::: scienceQueueNotFirst.filterNot { p => p.name == wonderName }
+      }
+    }
+  }
+
+  def isWonder(name: String): Boolean = {
+    return Constants.WONDER_INDEX_BY_NAME.contains(name)
   }
 
   //Perform an action
@@ -2336,10 +2399,19 @@ case class BoardState private (
       case AddToQueue(pieceName, selectedCityId, isScience) => 
         val selectedCity = pieceById(selectedCityId)
         if (isScience) {
-          selectedCity.scienceQueue = selectedCity.scienceQueue :+ externalInfo.pieceMap(pieceName)
+          if isWonder(pieceName) {
+            if (!wonderBuilt(pieceName)) {
+              selectedCity.scienceQueue = selectedCity.scienceQueue :+ externalInfo.pieceMap(pieceName)
+            }
+          }
+          else {
+            selectedCity.scienceQueue = selectedCity.scienceQueue :+ externalInfo.pieceMap(pieceName)
+          }
         }
         else {
-          selectedCity.productionQueue = selectedCity.productionQueue :+ externalInfo.pieceMap(pieceName)
+          if (!isWonder(pieceName)) {
+            selectedCity.productionQueue = selectedCity.productionQueue :+ externalInfo.pieceMap(pieceName)
+          }
         }
       case ClearQueue(selectedCityId, isScience, clearEntireQueue) =>
         val selectedCity = pieceById(selectedCityId)
@@ -2807,6 +2879,11 @@ case class BoardState private (
               piece.damage -= 1
             }
           })
+        }
+        if (isWonder(nextScienceUnit.name)) {
+          val name = nextScienceUnit.name
+          markWonderBuiltBySide(name, city.side)
+          clearWonderFromQueues(name)
         }
         buildBuildings(city);
       }

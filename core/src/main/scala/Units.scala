@@ -675,7 +675,7 @@ object Units {
     robust = 2,
     retaliate = true,
     productionCost = 32,
-    scienceCost = 30,
+    scienceCost = 45,
   )
 
   val city = createPieceStats(
@@ -692,8 +692,6 @@ object Units {
   val camp = createPieceStats(
     name = "camp",
     shortDisplayName = "Camp",
-    cost = 0,
-    rebate = 0,
     moveRange = 0,
     attackRange = 2,
     attackEffect = Some(Damage(2)),
@@ -703,12 +701,50 @@ object Units {
   val lair = createPieceStats(
     name = "lair",
     shortDisplayName = "Lair",
-    cost = 0,
-    rebate = 0,
     moveRange = 0,
     attackRange = 2,
     attackEffect = Some(Damage(4)),
     defense = Some(20),
+  )
+
+  val statue_of_zeus = createPieceStats(
+    name = "statue of zeus",
+    shortDisplayName = "Statue of Zeus",
+    moveRange = 0,
+    attackRange = 0,
+    attackEffect = Some(Damage(0)),
+    defense = Some(1),
+    scienceCost = 25,
+  )
+
+  val fast_food_chains = createPieceStats(
+    name = "fast food chains",
+    shortDisplayName = "Fast Food Chains",
+    moveRange = 0,
+    attackRange = 0,
+    attackEffect = Some(Damage(0)),
+    defense = Some(1),
+    scienceCost = 30,
+  )
+
+  val dream_twister = createPieceStats(
+    name = "dream twister",
+    shortDisplayName = "Dream Twister",
+    moveRange = 0,
+    attackRange = 0,
+    attackEffect = Some(Damage(0)),
+    defense = Some(1),
+    scienceCost = 50,    
+  )
+
+  val junkotron = createPieceStats(
+    name = "junkotron",
+    shortDisplayName = "Junkotron",
+    moveRange = 0,
+    attackRange = 0,
+    attackEffect = Some(Damage(0)),
+    defense = Some(1),
+    scienceCost = 65,
   )
 
   //All pieces
@@ -725,7 +761,7 @@ object Units {
     salvager, warrior, archer, skirmisher, legionary, snake, sergeant, horseman, berserker,
     trebuchet, general, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hussar,
     horse_archer, kudzu, onager, banshee, knight, giant_frog, khan, godzilla, warlock, dragon, 
-    colossus, city, camp, lair,
+    colossus, city, camp, lair, statue_of_zeus, fast_food_chains, dream_twister, junkotron,
   )
 
   //Necromancers awarded after a board resets
@@ -778,6 +814,10 @@ object Units {
     warlock,
     dragon,
     colossus,
+    statue_of_zeus,
+    fast_food_chains,
+    dream_twister,
+    junkotron,
   )
 
   //Given a piece, get its index within the pieces array
