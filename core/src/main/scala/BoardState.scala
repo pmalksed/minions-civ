@@ -61,7 +61,9 @@ package object Constants {
                         "Baikonur", "Pune", "Dardogar", "Meereen", "Oldtown", "Lannisport", "Oslo", "Venice", "Barcelona",
                         "Tikal", "Palenque", "Riga", "Carthag", "Arrakeen", "Mos Eisely", "Coruscant", "Theed", "Nineveh",
                         "Nimrud", "Tel Aviv", "New Jericho", "Myr", "Ankara", "White Harbor", "Nassau", "Berkeley",
-                        "Boston", "Tijuana", "Cape Town", "Kinshasa", "Calgary")
+                        "Boston", "Tijuana", "Cape Town", "Kinshasa", "Calgary", "Tenochtitlan", "Cuzco", "Tar Valon",
+                        "Caemlyn", "Kistel", "Temesvar", "Kaposvar", "Zirc", "Sarvar", "Wakanda", "Ravnica", "New Capenna",
+                      )
   val WONDER_INDEX_BY_NAME = Map("statue of zeus" -> 0, "fast food chains" -> 1, "dream twister" -> 2, "junkotron" -> 3,
                                  "cloning vats" -> 4)
 }
@@ -2867,6 +2869,12 @@ case class BoardState private (
           city.carriedProduction = city.carriedProduction - productionCost;
           city.population = city.population - 1;
           city.food = city.food - foodCost;
+          val stats = city.curStats(this)
+          stats.defense match {
+            case None => ()
+            case Some(defense) =>
+              city.damage = Math.min(defense - 1, city.damage + 2)
+          }
           buildUnits(city);
         } else {
           // Decay the city's excess production if the build failed
@@ -3037,6 +3045,9 @@ case class BoardState private (
     }
     if (wonderBuiltBySide("dream twister", piece.side)) {
       attack += 1
+    }
+    if (piece.baseStats.name == "city") {
+      attack += piece.population / 5
     }
     return attack
   }
@@ -3640,6 +3651,7 @@ case class BoardState private (
       piece.carriedFood = piece.carriedFood - costOfNextPopulation;
       piece.food = piece.food + costOfNextPopulation;
       piece.population = piece.population + 1;
+      piece.damage -= 2;
     }
   }
 
@@ -3668,12 +3680,16 @@ case class BoardState private (
     piece.carriedScience = piece.carriedScience + tile.scienceYield;
   }
 
+  private def getCityGetExtraMaxHealth(city: Piece): Int = {
+    return 2 * city.population
+  }
+
   private def refreshPieceForStartOfTurn(piece: Piece, externalInfo: ExternalInfo): Unit = {
     piece.actState = Moving(0)
     piece.hasMoved = false
 
     if (piece.baseStats.name == "city") {
-      piece.damage = (piece.damage - 1).max(0);
+      piece.damage = (piece.damage - 1).max(-1 * getCityGetExtraMaxHealth(piece));
       // Collect yields
       tiles.topology.forEachAdj(piece.loc) {
         loc => {

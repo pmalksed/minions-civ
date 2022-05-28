@@ -637,7 +637,7 @@ object Units {
     attackEffect = Some(Damage(6)),
     defense = Some(9),
     productionCost = 22,
-    scienceCost = 16,
+    scienceCost = 18,
     notes = "Deals triple damage to cities"
   )    
 
@@ -729,7 +729,7 @@ object Units {
     moveRange = 0,
     attackRange = 2,
     attackEffect = Some(Damage(4)),
-    defense = Some(20),
+    defense = Some(25),
   )
 
   val statue_of_zeus = createPieceStats(
