@@ -1662,7 +1662,6 @@ object Drawing {
                   "Set your city's focus to science.",
                   "Each citizen will produce one science each turn.",
                 )))
-
             }
 
           case MouseReinforcement(pieceNameOpt,side,loc) =>

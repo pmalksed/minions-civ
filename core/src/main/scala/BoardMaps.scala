@@ -106,7 +106,7 @@ val civMapSize5 = make(21,21, 5, """
                   . . . . . . . . . . . . . . w w w w w w w
                    . . . . . . . . . . . . . w w w w w w w w
                     . . . . . . . . . . . . w w w w w w w w w
-                     . . . . . . . . . . . w w w w w w w w w w
+                     w w w w w w w w w w w w w w w w w w w w w
 """)    
 
 

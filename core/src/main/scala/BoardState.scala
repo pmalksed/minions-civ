@@ -2566,7 +2566,7 @@ case class BoardState private (
     Side.foreach { side =>
       val rewardToDistribute = rewardsBySide.get(side).getOrElse(0)
       var extraReward = 0
-      if (wonderBuiltBySide("status of zeus", side) && rewardToDistribute > 0) {
+      if (wonderBuiltBySide("statue of zeus", side) && rewardToDistribute > 0) {
         extraReward = 1
       }
       turnsTillNextCityPermanentModifier += (side -> (-1 * (rewardToDistribute + extraReward)))

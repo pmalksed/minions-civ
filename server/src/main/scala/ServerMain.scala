@@ -74,7 +74,7 @@ object ServerMain extends App {
     val reportTimePeriod = 5.0
     var now: Double = getNow()
     var endTurnJob: Option[Cancellable] = None
-    var turnTimeLeft: Double = state.currentSideSecondsPerTurn()
+    var turnTimeLeft: Double = state.currentSideSecondsPerTurn() + state.game.turnNumber
 
     def updateTime(): Unit = {
       val newNow = getNow()
@@ -117,7 +117,7 @@ object ServerMain extends App {
       updateTime()
       reason match {
         case NewTurn | NewLimits =>
-          turnTimeLeft = state.currentSideSecondsPerTurn()
+          turnTimeLeft = state.currentSideSecondsPerTurn() + state.game.turnNumber
         case Pause(isPaused) =>
           state.isPaused = isPaused
           state.broadcastAll(Protocol.ReportPause(state.isPaused))
@@ -487,7 +487,7 @@ if(!username || username.length == 0) {
   path("ai") {
     parameter("tutorial" ? false) { doTutorial =>
       parameter("difficulty" ? 10) { difficulty =>
-        val secondsPerTurn = SideArray.create(120.0)
+        val secondsPerTurn = SideArray.create(20.0)
         val startingSouls = SideArray.createTwo(0, 6, 0,0,0,0,0)
         val extraSoulsPerTurn = SideArray.createTwo(0, difficulty, 0,0,0,0,0)
         val targetWins = 1
@@ -938,7 +938,7 @@ if(!username || username.length == 0) {
   // }
 
   // Create test game
-  val secondsPerTurn = SideArray.create(120.0)
+  val secondsPerTurn = SideArray.create(20.0)
   val startingSouls = SideArray.createTwo(0, 6, 0,0,0,0,0)
   val extraSoulsPerTurn = SideArray.createTwo(0, 10, 0,0,0,0,0)
   val targetWins = 2
