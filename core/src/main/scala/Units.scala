@@ -587,7 +587,7 @@ object Units {
     robust = 1,
     productionCost = 12,
     scienceCost = 13,
-    notes = "Enemies within range 2 have -2 attack"
+    notes = "Enemies within range 2 have -2 attack (does not stack)"
   )
 
   val knight = createPieceStats(
@@ -714,7 +714,9 @@ object Units {
     attackRange = 0,
     attackEffect = Some(Damage(0)),
     defense = Some(1),
-    scienceCost = 25,
+    scienceCost = 20,
+    notes = "Wonder: Whenever you would receive rewards from the destruction of a city",
+    notes2 = "(including your own), receive one more",
   )
 
   val fast_food_chains = createPieceStats(
@@ -725,6 +727,8 @@ object Units {
     attackEffect = Some(Damage(0)),
     defense = Some(1),
     scienceCost = 30,
+    notes = "Wonder: Your cities on food focus receive double food from yields",
+    notes2 = "and citizens",
   )
 
   val dream_twister = createPieceStats(
@@ -735,6 +739,7 @@ object Units {
     attackEffect = Some(Damage(0)),
     defense = Some(1),
     scienceCost = 50,    
+    notes = "Wonder: Your units have +1 attack",
   )
 
   val junkotron = createPieceStats(
@@ -745,6 +750,18 @@ object Units {
     attackEffect = Some(Damage(0)),
     defense = Some(1),
     scienceCost = 65,
+    notes = "Wonder: Your salvagers have double speed, range, health, and capacity",
+  )
+
+  val cloning_vats = createPieceStats(
+    name = "cloning vats",
+    shortDisplayName = "Cloning Vats",
+    moveRange = 0,
+    attackRange = 0,
+    attackEffect = Some(Damage(0)),
+    defense = Some(1),
+    scienceCost = 75,       
+    notes = "Wonder: You can build cities at range 1 from your other cities",
   )
 
   //All pieces

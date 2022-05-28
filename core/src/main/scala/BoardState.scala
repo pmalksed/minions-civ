@@ -62,7 +62,8 @@ package object Constants {
                         "Tikal", "Palenque", "Riga", "Carthag", "Arrakeen", "Mos Eisely", "Coruscant", "Theed", "Nineveh",
                         "Nimrud", "Tel Aviv", "New Jericho", "Myr", "Ankara", "White Harbor", "Nassau", "Berkeley",
                         "Boston", "Tijuana", "Cape Town", "Kinshasa", "Calgary")
-  val WONDER_INDEX_BY_NAME = Map("statue of zeus" -> 0, "fast food chains" -> 1, "the dream twister" -> 2, "junkotron" -> 3)
+  val WONDER_INDEX_BY_NAME = Map("statue of zeus" -> 0, "fast food chains" -> 1, "dream twister" -> 2, "junkotron" -> 3,
+                                 "cloning vats" -> 4)
 }
 
 /**
@@ -470,8 +471,8 @@ object BoardState {
       salvagerBuildingsBuilt = Map(),
       numPlayers = numPlayers,
       randomizedCityNames = rand.shuffle(Constants.CITY_NAMES),
-      wondersUnderConstruction = List(Map(), Map(), Map(), Map()),
-      wondersBuilt = List(Map(), Map(), Map(), Map()),
+      wondersUnderConstruction = List(Map(), Map(), Map(), Map(),Map()),
+      wondersBuilt = List(Map(), Map(), Map(), Map(),Map()),
     )
     board
   }
@@ -777,15 +778,15 @@ case class BoardState private (
   }
 
   def wonderUnderConstructionBySide(wonderName: String, side: Side): Boolean = {
-    return wondersUnderConstruction(Constants.WONDER_INDEX_BY_NAME(wonderName)).get(side).getOrElse(false))
+    return wondersUnderConstruction(Constants.WONDER_INDEX_BY_NAME(wonderName)).get(side).getOrElse(false)
   }
 
   def wonderBuiltBySide(wonderName: String, side: Side): Boolean = {
-    return wondersUnderConstruction(Constants.WONDER_INDEX_BY_NAME(wonderName)).get(side).getOrElse(false))
+    return wondersUnderConstruction(Constants.WONDER_INDEX_BY_NAME(wonderName)).get(side).getOrElse(false)
   }
 
   def wonderBuilt(wonderName: String): Boolean = {
-    Sides.foreach { side =>
+    Side.foreach { side =>
       if (wonderBuiltBySide(wonderName, side)) {
         return true
       }
@@ -803,10 +804,10 @@ case class BoardState private (
     wondersUnderConstruction = wondersUnderConstruction ::: end
   }
 
-  def markWonderBuiltBySide(wonderName: String, side: Side): Unit = {
+  def markWonderBuiltBySide(wonderName: String, side: Side, built: Boolean = true): Unit = {
     val mapIndex = Constants.WONDER_INDEX_BY_NAME(wonderName)
     var map = wondersBuilt(mapIndex)
-    map = map + (side -> underConstruction)
+    map = map + (side -> built)
     val beginning = wondersBuilt.slice(0, mapIndex)
     val end = wondersBuilt.slice(mapIndex + 1, wondersBuilt.length)
     wondersBuilt = beginning ::: List(map)
@@ -2399,7 +2400,7 @@ case class BoardState private (
       case AddToQueue(pieceName, selectedCityId, isScience) => 
         val selectedCity = pieceById(selectedCityId)
         if (isScience) {
-          if isWonder(pieceName) {
+          if (isWonder(pieceName)) {
             if (!wonderBuilt(pieceName)) {
               selectedCity.scienceQueue = selectedCity.scienceQueue :+ externalInfo.pieceMap(pieceName)
             }
@@ -2564,7 +2565,11 @@ case class BoardState private (
   private def distributeRewardsBySide(rewardsBySide: Map[Side, Int]): Unit = {
     Side.foreach { side =>
       val rewardToDistribute = rewardsBySide.get(side).getOrElse(0)
-      turnsTillNextCityPermanentModifier += (side -> (-1 * rewardToDistribute))
+      var extraReward = 0
+      if (wonderBuiltBySide("status of zeus", side) && rewardToDistribute > 0) {
+        extraReward = 1
+      }
+      turnsTillNextCityPermanentModifier += (side -> (-1 * (rewardToDistribute + extraReward)))
     }
   }
 
@@ -2668,6 +2673,15 @@ case class BoardState private (
       }
       if (piece.baseStats.name == "city") {
         distributeCityRewards(lostCitySide, currentLoc, instigator)
+        piece.buildings.foreach { building =>
+          if (isWonder(building.name)) {
+            markWonderBuiltBySide(building.name, piece.side, false);
+          }
+          if (building.name == "salvager") {
+            val salvagerBuildingsBuiltBySide = salvagerBuildingsBuilt.get(piece.side).getOrElse(0)
+            salvagerBuildingsBuilt += (piece.side -> (salvagerBuildingsBuiltBySide - 1))
+          }
+        }
       }
     }
   }
@@ -2822,6 +2836,9 @@ case class BoardState private (
     if (unit.name == "salvager") {
       extraHealth = salvagerBuildingsBuilt.get(city.side).getOrElse(0)
     }
+    if (wonderBuiltBySide("junkotron", city.side)) {
+      extraHealth = extraHealth * 2 + 5  // 5 should be equal to salvager base health
+    }
     tiles.topology.forEachAdjRange2(city.loc) { loc =>
       currentDistance = tiles.topology.distance(city.loc, loc) + 0.01 * smartDistance(city.target, loc)
       if (!locIsOccupied(loc) && currentDistance < bestDistance) {
@@ -2876,7 +2893,11 @@ case class BoardState private (
           pieceById.keySet.foreach(pieceId => {
             val piece = pieceById(pieceId)
             if (piece.baseStats.name == "salvager" && piece.side == city.side) {
-              piece.damage -= 1
+              if (wonderBuiltBySide("junkotron", city.side)) {
+                piece.damage -= 2
+              } else {
+                piece.damage -= 1
+              }
             }
           })
         }
@@ -2884,6 +2905,18 @@ case class BoardState private (
           val name = nextScienceUnit.name
           markWonderBuiltBySide(name, city.side)
           clearWonderFromQueues(name)
+        }
+        if (nextScienceUnit.name == "junkotron") {
+          val citySide = city.side
+          val salvagerBuildingsBuiltBySide = salvagerBuildingsBuilt.get(citySide).getOrElse(0)
+          salvagerBuildingsBuilt += (citySide -> (salvagerBuildingsBuiltBySide + 1))
+          pieceById.keySet.foreach(pieceId => {
+            val piece = pieceById(pieceId)
+            if (piece.baseStats.name == "salvager" && piece.side == city.side) {
+              piece.damage -= salvagerBuildingsBuiltBySide 
+              piece.damage -= 5
+            }
+          })          
         }
         buildBuildings(city);
       }
@@ -2918,7 +2951,11 @@ case class BoardState private (
   }
 
   private def capacity(salvager: Piece): Int = {
-    return 5 + salvagerBuildingsBuilt.get(salvager.side).getOrElse(0)
+    var multiplier = 1
+    if (wonderBuiltBySide("junkotron", salvager.side)) {
+      multiplier = 2
+    }
+    return (5 + salvagerBuildingsBuilt.get(salvager.side).getOrElse(0)) * multiplier
   }
 
   private def totalResourcesCarried(salvager: Piece): Double = {
@@ -2997,6 +3034,9 @@ case class BoardState private (
     }
     if (isBanshee) {
       attack -= 2
+    }
+    if (wonderBuiltBySide("dream twister", piece.side)) {
+      attack += 1
     }
     return attack
   }
@@ -3238,7 +3278,7 @@ case class BoardState private (
   def canFoundCityAtLoc(side: Side, loc: Loc): Boolean = {
     val (distanceToNearestFriendlyCity, distanceToNearestAnyCity) = distanceToNearestCity(side, loc);
     return (distanceToNearestFriendlyCity <= maximumFoundCityDistanceFromFriendlyCity(side)
-            && distanceToNearestAnyCity >= minimumFoundCityDistanceFromCity()
+            && distanceToNearestAnyCity >= minimumFoundCityDistanceFromCity(side)
             && tiles(loc).hasNearbyFriendly.get(side).getOrElse(false)
             && !tiles(loc).hasNearbyEnemy.get(side).getOrElse(false))
   }
@@ -3270,7 +3310,10 @@ case class BoardState private (
     return (distanceToNearestFriendlyCity, distanceToNearestAnyCity)
   }
 
-  private def minimumFoundCityDistanceFromCity(): Int = {
+  private def minimumFoundCityDistanceFromCity(side: Side): Int = {
+    if (wonderBuiltBySide("cloning vats", side)) {
+      return 1
+    }
     return 3
   }
 
@@ -3502,7 +3545,10 @@ case class BoardState private (
       }
       else {
         // Try to pick up
-        val offsets = tiles.topology.adjOffsets ::: List(Vec(0,0));
+        var offsets = tiles.topology.adjOffsets ::: List(Vec(0,0));
+        if (wonderBuiltBySide("junkotron", piece.side)) {
+          offsets = tiles.topology.adjOffsetsRange2 ::: List(Vec(0,0));
+        }
         var adjLocs = offsets.map({vec => piece.loc + vec})
         adjLocs = adjLocs.filter(loc => locIsValid(loc))
         adjLocs = adjLocs.sortWith(smartDistance(_, piece.loc) < smartDistance(_, piece.loc))
@@ -3566,6 +3612,9 @@ case class BoardState private (
       if (isKhan) {
         extraMovement += 1
       }
+      if (piece.baseStats.name == "salvager" && wonderBuiltBySide("junkotron", piece.side)) {
+        extraMovement += 1
+      }
       attackMoveInner(piece, externalInfo, piece.baseStats.moveRange + extraMovement)
     }
   }
@@ -3603,7 +3652,11 @@ case class BoardState private (
   }
 
   private def harvestYields(piece: Piece, tile: Tile): Unit = {
-    piece.carriedFood = piece.carriedFood + tile.foodYield;          
+    var foodMultiplier = 1;
+    if (wonderBuiltBySide("fast food chains", piece.side)) {
+      foodMultiplier = 2
+    }
+    piece.carriedFood = piece.carriedFood + foodMultiplier * tile.foodYield;
     piece.carriedProduction = piece.carriedProduction + tile.productionYield;
     piece.carriedScience = piece.carriedScience + tile.scienceYield;
   }
@@ -3623,8 +3676,12 @@ case class BoardState private (
         }
       }
       harvestYields(piece, tiles(piece.loc))
+      var foodMultiplier = 1;
+      if (wonderBuiltBySide("fast food chains", piece.side)) {
+        foodMultiplier = 2
+      }      
       if (piece.focus == "food") {
-        piece.carriedFood = piece.carriedFood + piece.population;
+        piece.carriedFood = piece.carriedFood + foodMultiplier * piece.population;
       } else if (piece.focus == "production") {
         piece.carriedProduction = piece.carriedProduction + piece.population;
       } else {
