@@ -59,7 +59,7 @@ package object Constants {
                         "Toronto", "Atlanta", "Nairobi", "Noah's Rainbow", "Tokyo", "Hong Kong", "Chongqing", "Lagos",
                         "Sunspear", "Moscow", "Jakarta", "Tehran", "Wuhan", "Riyadh", "Miami", "Khartoum", "Delhi",
                         "Baikonur", "Pune", "Dardogar", "Meereen", "Oldtown", "Lannisport", "Oslo", "Venice", "Barcelona",
-                        "Tikal", "Palenque", "Riga", "Carthag", "Arrakeen", "Mos Eisely", "Coruscant", "Theed", "Nineveh",
+                        "Tikal", "Palenque", "Riga", "Carthag", "Arrakeen", "Mos Eisley", "Coruscant", "Theed", "Nineveh",
                         "Nimrud", "Tel Aviv", "New Jericho", "Myr", "Ankara", "White Harbor", "Nassau", "Berkeley",
                         "Boston", "Tijuana", "Cape Town", "Kinshasa", "Calgary", "Tenochtitlan", "Cuzco", "Tar Valon",
                         "Caemlyn", "Kistel", "Temesvar", "Kaposvar", "Zirc", "Sarvar", "Wakanda", "Ravnica", "New Capenna",
