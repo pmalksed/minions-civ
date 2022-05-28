@@ -467,10 +467,16 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
           mouseState.selectedPiece match {
             case None => ()
             case Some(selectedPiece) => 
-              def makeAction() = {
-                PieceSuicide(selectedPiece.id)
-              }
-              mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+              mouseState.client.ourSide match {
+                case None =>
+                case Some(side) =>
+                  if (side == selectedPiece.side) {              
+                    def makeAction() = {
+                      PieceSuicide(selectedPiece.id)
+                    }
+                    mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+                  }
+                }
             }
           }
 
@@ -502,10 +508,16 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
           mouseState.selectedPiece match {
             case None => ()
             case Some(selectedPiece) => 
-              def makeAction() = {
-                SetTarget(selectedPiece.id,loc)
-              }
-              mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+              mouseState.client.ourSide match {
+                case None =>
+                case Some(side) =>
+                  if (side == selectedPiece.side) {                    
+                    def makeAction() = {
+                      SetTarget(selectedPiece.id,loc)
+                    }
+                    mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+                  }
+                }
             }
         }  
 
@@ -529,37 +541,61 @@ case class NormalMouseMode(val mouseState: MouseState) extends MouseMode {
               mouseState.selectedCity match {
                 case None => ()
                 case Some(selectedCity) => 
-                  def makeAction() = {
-                    AddToQueue(pieceName,selectedCity.id,undo)
+                  mouseState.client.ourSide match {
+                    case None =>
+                    case Some(side) =>
+                      if (side == selectedCity.side) {
+                        def makeAction() = {
+                          AddToQueue(pieceName,selectedCity.id,undo)
+                        }
+                        mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+                      }
                   }
-                  mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
             }
             case Copycat => 
               mouseState.selectedCity match {
                 case None => ()
                 case Some(selectedCity) =>
-                  def makeAction() = {
-                    SetFocus(selectedCity.id,"food")
-                  }
-                  mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+                  mouseState.client.ourSide match {
+                    case None =>
+                    case Some(side) =>
+                      if (side == selectedCity.side) {              
+                        def makeAction() = {
+                          SetFocus(selectedCity.id,"food")
+                        }
+                        mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+                      }
+                    }
               }
             case TechSeller => 
               mouseState.selectedCity match {
                 case None => ()
                 case Some(selectedCity) =>
-                  def makeAction() = {
-                    SetFocus(selectedCity.id,"production")
-                  }
-                  mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+                  mouseState.client.ourSide match {
+                    case None =>
+                    case Some(side) =>
+                      if (side == selectedCity.side) {                  
+                        def makeAction() = {
+                          SetFocus(selectedCity.id,"production")
+                        }
+                        mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+                      }
+                    }
               }   
             case Metamagic => 
               mouseState.selectedCity match {
                 case None => ()
                 case Some(selectedCity) =>
-                  def makeAction() = {
-                    SetFocus(selectedCity.id,"science")
-                  }
-                  mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+                  mouseState.client.ourSide match {
+                    case None =>
+                    case Some(side) =>
+                      if (side == selectedCity.side) {                  
+                        def makeAction() = {
+                          SetFocus(selectedCity.id,"science")
+                        }
+                        mouseState.client.doActionOnCurBoard(PlayerActions(List(makeAction()), makeActionId()))
+                      }
+                    }
               }                              
           }
         }
