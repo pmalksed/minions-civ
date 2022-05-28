@@ -149,7 +149,7 @@ case class UI(val flipDisplay: Boolean, val ourSide: Option[Side], val boardXSiz
   }
 
   object Sidebar extends UI.Component {
-    val origin = HexLoc(27.5,-0.5)
+    val origin = HexLoc(27.5,1.0)
     val gridSizeScale = 1
   }
 

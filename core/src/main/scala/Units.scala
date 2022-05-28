@@ -447,8 +447,8 @@ object Units {
     attackRange = 3,
     attackEffect = Some(Damage(2)),
     defense = Some(4),
-    productionCost = 6,
-    scienceCost = 3,
+    productionCost = 4,
+    scienceCost = 11,
     notes = "Deals triple damage to cities"
   )
 
@@ -460,7 +460,7 @@ object Units {
     defense = Some(8),
     leadership = true,
     productionCost = 8,
-    scienceCost = 6,
+    scienceCost = 10,
     notes = "Nearby friendly units get +1 attack (does not stack)"
   )
 
@@ -835,10 +835,11 @@ object Units {
     skirmisher,
     legionary,
     snake,
+    sergeant,
     horseman,
     berserker,
     trebuchet,
-    sergeant,
+    general,
     champion,
     telekinetic,
     stalwart,

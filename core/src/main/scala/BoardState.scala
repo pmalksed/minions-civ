@@ -52,7 +52,7 @@ package object Constants {
   val PRODUCTION_DECAY_RATE = 0.75;
   val SCIENCE_DECAY_RATE = 0.75
   val SUICIDE_TAX = 0.75
-  val SCIENCE_FOR_NEW_CITY = 5.0
+  val SCIENCE_FOR_NEW_CITY = 2.0
   val CITY_NAMES = List("Marseilles", "Pyongyang", "Karakorum", "Addis Ababa", "Merv", "Dublin", "Los Angeles", 
                         "Leningrad", "Munich", "Bern", "Aleppo", "Lothlorien", "Winterfell", "Qarth", "Osgiliath",
                         "Jimboomba", "The Hive", "Bunker 118", "Braavos", "Uskdarler", "Ingulath", "Cairo", "Montreal",
@@ -794,7 +794,7 @@ case class BoardState private (
   }
 
   def wonderBuiltBySide(wonderName: String, side: Side): Boolean = {
-    return wondersUnderConstruction(Constants.WONDER_INDEX_BY_NAME(wonderName)).get(side).getOrElse(false)
+    return wondersBuilt(Constants.WONDER_INDEX_BY_NAME(wonderName)).get(side).getOrElse(false)
   }
 
   def wonderBuilt(wonderName: String): Boolean = {
@@ -1271,7 +1271,7 @@ case class BoardState private (
         tile.foodYield = 1
       } else if (nextInt == 1) {
         tile.productionYield = 1
-      } else if (nextInt == 1) {
+      } else if (nextInt == 2) {
         tile.scienceYield = 1
       }
     }
@@ -2417,12 +2417,12 @@ case class BoardState private (
               selectedCity.scienceQueue = selectedCity.scienceQueue :+ externalInfo.pieceMap(pieceName)
             }
           }
-          else {
+          else if (pieceName != "warrior") {
             selectedCity.scienceQueue = selectedCity.scienceQueue :+ externalInfo.pieceMap(pieceName)
           }
         }
         else {
-          if (!isWonder(pieceName)) {
+          if (!isWonder(pieceName) && (selectedCity.buildings.contains(externalInfo.pieceMap(pieceName)) || pieceName == "warrior")) {
             selectedCity.productionQueue = selectedCity.productionQueue :+ externalInfo.pieceMap(pieceName)
           }
         }
@@ -2444,7 +2444,8 @@ case class BoardState private (
               // The below is equivalent to just applying Constants.PRODUCTION_DECAY_RATE to the carriedProduction,
               // unless you have an unbuild unit sitting around, in which case it's applied only to the cost of the
               // unbuilt unit
-              selectedCity.carriedProduction = selectedCity.carriedProduction 
+              val newCarriedProduction = selectedCity.carriedProduction - java.lang.Math.min(selectedCity.carriedProduction, selectedCity.productionQueue.head.productionCost.asInstanceOf[Double]) * (1 - Constants.PRODUCTION_DECAY_RATE)
+              selectedCity.carriedProduction = newCarriedProduction
                 - java.lang.Math.min(selectedCity.carriedProduction, selectedCity.productionQueue.head.productionCost.asInstanceOf[Double]) * (1 - Constants.PRODUCTION_DECAY_RATE)
               selectedCity.productionQueue = List()
             }
@@ -2479,7 +2480,7 @@ case class BoardState private (
     val maximumPossibleDistance = maximumFoundCityDistanceFromFriendlyCity(side);
     val cityFoundingSlack = maximumPossibleDistance - distanceToNearestFriendlyCity
     if (canFoundCityAtLoc(side, loc)) {
-      val _ = spawnPieceInternal(side, externalInfo.pieceMap("city"), loc, loc, 0, 0, Constants.SCIENCE_FOR_NEW_CITY, 
+      val _ = spawnPieceInternal(side, externalInfo.pieceMap("city"), loc, loc, 0, 0, Constants.SCIENCE_FOR_NEW_CITY * citiesFounded.get(side).getOrElse(0), 
         cityFoundingSlack=cityFoundingSlack)
     }
   }
@@ -2774,6 +2775,9 @@ case class BoardState private (
         citiesFounded += (spawnSide -> (citiesFoundedBySide + 1))
         turnsTillNextCityTemporaryModifier += (spawnSide -> (-1 * cityFoundingSlack))
         setCityName(piece, randomizedCityNames(numCitiesFounded))
+        piece.food += Constants.POPULATION_BASE_COST
+        piece.population += 1
+        piece.damage -= 2
       }   
       if (spawnStats.name == "camp") {
         cities = cities :+ piece
@@ -3052,6 +3056,9 @@ case class BoardState private (
     }
     val (isGeneral, isBanshee, _) = getModifiersInRange(piece)
     var attack = getBaseAttackOfPiece(piece)
+    if (attack == 0) {
+      return 0
+    }
     if (isGeneral) {
       attack += 1
     }
@@ -3760,7 +3767,7 @@ case class BoardState private (
     }
     else if (piece.baseStats.name == "camp") {
       harvestYields(piece, tiles(piece.loc))
-      if (piece.focus == "warrior" && turnNumber % 4 == 3) {
+      if (piece.focus == "warrior" && turnNumber % 4 == 2) {
         setRandomTarget(piece)
         val _ = buildUnit(piece, externalInfo.pieceMap("warrior"), 2.0, 2.0)
       }
@@ -3772,7 +3779,7 @@ case class BoardState private (
         setRandomTarget(piece)
         val _ = buildUnit(piece, externalInfo.pieceMap("skirmisher"), 3.0, 3.0)
       }
-      if (piece.focus == "legionary" && turnNumber % 8 == 3) {
+      if (piece.focus == "legionary" && turnNumber % 8 == 4) {
         setRandomTarget(piece)
         val _ = buildUnit(piece, externalInfo.pieceMap("legionary"), 4.0, 4.0)
       }

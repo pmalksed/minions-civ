@@ -239,7 +239,7 @@ object Drawing {
         if (!fog) {
           text("" + tile.foodYield + "/" + tile.productionYield + "/" + tile.scienceYield, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, -gridSize/8.0), "black", fontSize=14)
           if (tile.food != 0.0 || tile.production != 0.0 || tile.science != 0.0) {
-            text("" + tile.food + "/" + tile.production + "/" + tile.science, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/4.0), "blue", fontSize=14)
+            text("" + tile.food.round + "/" + tile.production.round + "/" + tile.science.round, PixelLoc.ofHexLoc(hexLoc, gridSize)+PixelVec(0, gridSize/4.0), "blue", fontSize=14)
           }
         }
         mouseState.selectedPiece match {
@@ -1331,6 +1331,9 @@ object Drawing {
           val poison = piece.modifiers._1
           if (poison > 0) {
             text("" + poison, PixelLoc.ofHexLoc(loc,gridSize) + PixelVec(0.0,18.0), "green", alpha = alpha)
+          }
+          if (baseStats.name == "city") {
+            text("" + piece.population, PixelLoc.ofHexLoc(loc,gridSize) + PixelVec(0.0,18.0), "blue", alpha = alpha)
           }
         }
       }
