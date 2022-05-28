@@ -66,6 +66,16 @@ package object Constants {
                       )
   val WONDER_INDEX_BY_NAME = Map("statue of zeus" -> 0, "fast food chains" -> 1, "dream twister" -> 2, "junkotron" -> 3,
                                  "cloning vats" -> 4)
+  val POPULATION_BASE_COST = 3
+
+  // At what population does the rate of food cost/city strength growth halve? 
+  val CITY_POPULATION_KINK_1 = 7
+
+  // At what population does the rate of food cost/city strength growth stop? 
+  val CITY_POPULATION_KINK_2 = 27
+
+  // Implied by the values above it
+  val MAX_POPULATION_COST: Int = (CITY_POPULATION_KINK_2 - CITY_POPULATION_KINK_1) / 2 + CITY_POPULATION_KINK_1 + POPULATION_BASE_COST
 }
 
 /**
@@ -2873,7 +2883,12 @@ case class BoardState private (
           stats.defense match {
             case None => ()
             case Some(defense) =>
-              city.damage = Math.min(defense - 1, city.damage + 2)
+              if (city.population < Constants.CITY_POPULATION_KINK_1) {
+                city.damage = Math.min(defense - 1, city.damage + 2)
+              }
+              else if (city.population >= Constants.CITY_POPULATION_KINK_1 && city.population >= Constants.CITY_POPULATION_KINK_2) {
+                city.damage = Math.min(defense - 1, city.damage + 1)
+              }              
           }
           buildUnits(city);
         } else {
@@ -3047,7 +3062,15 @@ case class BoardState private (
       attack += 1
     }
     if (piece.baseStats.name == "city") {
-      attack += piece.population / 5
+      if (piece.population >= 5) {
+        attack += 1
+      }
+      if (piece.population >= 13) {
+        attack += 1
+      }
+      if (piece.population >= 23) {
+        attack += 1
+      }
     }
     return attack
   }
@@ -3637,12 +3660,19 @@ case class BoardState private (
     }
   }
 
+  private def getCostOfNextPopulationForGivenCurrentPopulation(population: Int): Double = {
+    var total: Int = Constants.POPULATION_BASE_COST
+    total += Math.min(population, Constants.CITY_POPULATION_KINK_1)
+    total += Math.max((population - Constants.CITY_POPULATION_KINK_1)/2, 0)
+    return Math.min(total, Constants.MAX_POPULATION_COST).asInstanceOf[Double]
+  }
+
   private def getCostOfLastPopulation(piece: Piece): Double = {
-    return (piece.population + 2).asInstanceOf[Double];
+    getCostOfNextPopulationForGivenCurrentPopulation(piece.population - 1);
   }
 
   private def getCostOfNextPopulation(piece: Piece): Double = {
-    return (piece.population + 3).asInstanceOf[Double];
+    getCostOfNextPopulationForGivenCurrentPopulation(piece.population);
   }
 
   private def growPopulation(piece: Piece): Unit = {
@@ -3651,7 +3681,11 @@ case class BoardState private (
       piece.carriedFood = piece.carriedFood - costOfNextPopulation;
       piece.food = piece.food + costOfNextPopulation;
       piece.population = piece.population + 1;
-      piece.damage -= 2;
+      if (piece.population <= Constants.CITY_POPULATION_KINK_1) {
+        piece.damage -= 2;
+      } else if (piece.population > Constants.CITY_POPULATION_KINK_1 && piece.population <= Constants.CITY_POPULATION_KINK_2) {
+        piece.damage -= 1;
+      }
     }
   }
 
@@ -3681,7 +3715,8 @@ case class BoardState private (
   }
 
   private def getCityGetExtraMaxHealth(city: Piece): Int = {
-    return 2 * city.population
+    return Math.min(2 * Math.min(city.population, Constants.CITY_POPULATION_KINK_1) 
+      + Math.max(city.population - Constants.CITY_POPULATION_KINK_1, 0), 34)
   }
 
   private def refreshPieceForStartOfTurn(piece: Piece, externalInfo: ExternalInfo): Unit = {
