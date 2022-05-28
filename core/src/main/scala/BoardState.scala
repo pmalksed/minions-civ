@@ -3055,6 +3055,10 @@ case class BoardState private (
     return pieceStats.name == "city" || pieceStats.name == "camp" || pieceStats.name == "lair"
   }
 
+  def immuneToPoison(pieceStats: PieceStats): Boolean = {
+    return isCityLike(pieceStats) || pieceStats.name == "giant frog" || pieceStats.name == "cobra car"
+  }
+
   private def juiciness(piece: Piece): Double = {
     return (piece.food + piece.production) / (getRemainingHealthOfPiece(piece))
   }
@@ -3160,7 +3164,7 @@ case class BoardState private (
     if (isRanged(piece) && target.baseStats.nimble) {
       damage = damage / 2
     }
-    if (piece.baseStats.name == "trebuchet" && isCityLike(target.baseStats)) {
+    if ((piece.baseStats.name == "trebuchet" || piece.baseStats.name == "cannon") && isCityLike(target.baseStats)) {
       damage = damage * 3
     }
     if (piece.baseStats.name == "telekinetic" && target.baseStats.name == "salvager") {
@@ -3199,6 +3203,9 @@ case class BoardState private (
     // is already poisoned
     if (piece.baseStats.poisonous > 0) {
       totalScore = totalScore + getRemainingHealthOfPiece(target) - 2.0 * poisonOnTarget.asInstanceOf[Double]
+      if (immuneToPoison(target.baseStats)) {
+        totalScore -= 4.0 * piece.baseStats.poisonous
+      }
     }
 
     // Prioritize attacking taunt units
@@ -3470,7 +3477,7 @@ case class BoardState private (
   }
 
   private def attackMoveInner(piece: Piece, externalInfo: ExternalInfo, remainingMovement: Int): Unit = {
-    if (remainingMovement > 1 && piece.baseStats.name == "horse archer") {
+    if (remainingMovement > 1 && (piece.baseStats.name == "horse archer" || piece.baseStats.name == "cobra car")) {
       val locToFleeTo = adjacentUnoccupiedHex(piece, notAdjacentToEnemyMeleeUnit=true)
       locToFleeTo match { 
         case None =>
@@ -3570,10 +3577,10 @@ case class BoardState private (
         val targetLoc = target.loc
         applyEffect(attackEffect,target,externalInfo,instigator=Some(piece))
         applyEffect(retaliateAttackEffect,piece,externalInfo,instigator=Some(piece))
-        if (piece.baseStats.poisonous > 0 && !isCityLike(target.baseStats)) {
+        if (piece.baseStats.poisonous > 0 && !immuneToPoison(target.baseStats)) {
           increasePoisonOfPiece(target, piece.baseStats.poisonous)
         }
-        if (target.baseStats.poisonous > 0 && didRetaliate && isCityLike(piece.baseStats)) {
+        if (target.baseStats.poisonous > 0 && didRetaliate && !immuneToPoison(piece.baseStats)) {
           increasePoisonOfPiece(piece, target.baseStats.poisonous)
         }
         if (piece.baseStats.name == "telekinetic" && totalResourcesCarried(target) > 0.0) {

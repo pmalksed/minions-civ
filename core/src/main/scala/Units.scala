@@ -613,7 +613,7 @@ object Units {
     productionCost = 14,
     scienceCost = 22,
     notes = "Jumps next to ranged enemies that are up to 3 hexes away",
-    notes2 = "Doesn't attack enemy melee units",
+    notes2 = "Doesn't attack enemy melee units; immune to poison",
   )
 
   val khan = createPieceStats(
@@ -629,6 +629,17 @@ object Units {
     leadership = true,
     notes = "Nearby friendly units get +1 movement (does not stack)"
   )
+
+  val cannon = createPieceStats(
+    name = "cannon",
+    moveRange = 1,
+    attackRange = 3,
+    attackEffect = Some(Damage(6)),
+    defense = Some(9),
+    productionCost = 22,
+    scienceCost = 16,
+    notes = "Deals triple damage to cities"
+  )    
 
   val godzilla = createPieceStats(
     name = "godzilla",
@@ -649,8 +660,8 @@ object Units {
     attackEffect = Some(Damage(5)),
     poisonous = 5,
     defense = Some(8),
-    productionCost = 18,
-    scienceCost = 33,
+    productionCost = 22,
+    scienceCost = 36,
   )
 
   val dragon = createPieceStats(
@@ -676,6 +687,20 @@ object Units {
     retaliate = true,
     productionCost = 32,
     scienceCost = 45,
+  )
+
+  val cobra_car = createPieceStats(
+    name = "cobra car",
+    moveRange = 2,
+    attackRange = 2,
+    attackEffect = Some(Damage(10)),
+    defense = Some(25),
+    charge = true,
+    nimble = true,
+    productionCost = 50,
+    scienceCost = 80,
+    notes = "Kites enemy melee units",
+    notes2 = "Immune to poison"
   )
 
   val city = createPieceStats(
@@ -777,8 +802,9 @@ object Units {
     zombie, acolyte,
     salvager, warrior, archer, skirmisher, legionary, snake, sergeant, horseman, berserker,
     trebuchet, general, champion, telekinetic, stalwart, crossbowman, mule, longbowman, hussar,
-    horse_archer, kudzu, onager, banshee, knight, giant_frog, khan, godzilla, warlock, dragon, 
-    colossus, city, camp, lair, statue_of_zeus, fast_food_chains, dream_twister, junkotron,
+    horse_archer, kudzu, onager, banshee, knight, giant_frog, khan, cannon, godzilla, warlock, 
+    dragon, colossus, cobra_car, city, camp, lair, statue_of_zeus, fast_food_chains, dream_twister, 
+    junkotron, cloning_vats,
   )
 
   //Necromancers awarded after a board resets
@@ -827,14 +853,17 @@ object Units {
     knight,
     giant_frog,
     khan,
+    cannon,
     godzilla,
     warlock,
     dragon,
     colossus,
+    cobra_car,
     statue_of_zeus,
     fast_food_chains,
     dream_twister,
     junkotron,
+    cloning_vats,
   )
 
   //Given a piece, get its index within the pieces array

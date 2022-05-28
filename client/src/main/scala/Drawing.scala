@@ -1646,24 +1646,21 @@ object Drawing {
                 drawSidebar(stats=Some(stats))
               case Copycat =>
                 drawSidebar(freeform=Some(List(
-                  "Copycat",
-                  "You may acquire techs",
-                  "that are already owned by the other team",
-                  "",
-                  "Both teams may acquire this"
+                  "Food focus",
+                  "Set your city's focus to food.",
+                  "Each citizen will produce one food each turn.",
                 )))
               case TechSeller =>
                 drawSidebar(freeform=Some(List(
-                  "Thaumaturgy",
-                  "You may sell your starting tech each turn",
-                  "for " + game.numBoards + " "  + (if(game.numBoards == 1) "soul" else "souls"),
-                  "(by clicking this hex; right-click to undo)"
+                  "Production focus",
+                  "Set your city's focus to production.",
+                  "Each citizen will produce one production each turn.",
                 )))
               case Metamagic =>
                 drawSidebar(freeform=Some(List(
-                  "Metamagic",
-                  "Each board may take multiple spells per turn",
-                  "(but your team can't take more than " + game.numBoards + " per turn total)"
+                  "Science focus",
+                  "Set your city's focus to science.",
+                  "Each citizen will produce one science each turn.",
                 )))
 
             }
