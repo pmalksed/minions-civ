@@ -62,7 +62,8 @@ package object Constants {
                         "Tikal", "Palenque", "Riga", "Carthag", "Arrakeen", "Mos Eisley", "Coruscant", "Theed", "Nineveh",
                         "Nimrud", "Tel Aviv", "New Jericho", "Myr", "Ankara", "White Harbor", "Nassau", "Berkeley",
                         "Boston", "Tijuana", "Cape Town", "Kinshasa", "Calgary", "Tenochtitlan", "Cuzco", "Tar Valon",
-                        "Caemlyn", "Kistel", "Temesvar", "Kaposvar", "Zirc", "Sarvar", "Wakanda", "Ravnica", "New Capenna",
+                        "Caemlyn", "Kistel", "Temesvar", "Kaposvar", "Zirc", "Sarvahr", "Wakanda", "Ravnica", 
+                        "New Capenna", "Zigatvar", "Caracas", "Santiago", "Havana",
                       )
   val WONDER_INDEX_BY_NAME = Map("statue of zeus" -> 0, "fast food chains" -> 1, "dream twister" -> 2, "junkotron" -> 3,
                                  "cloning vats" -> 4)
@@ -427,11 +428,10 @@ case class Piece (
  * The full state of one board of the game.
  */
 object BoardState {
-  def create(terrain: Plane[Terrain], numPlayers: Int): BoardState = {
-    val rand = Random
+  def create(terrain: Plane[Terrain], numPlayers: Int, seed: Int): BoardState = {
+    val rand = new Random(seed)
     val board = new BoardState(
       tiles = terrain.map { terrain => {
-          val rand = Random;
           val randomFloat = rand.nextFloat;
           var foodYield: Int = 0;
           var productionYield: Int = 0;
@@ -485,6 +485,7 @@ object BoardState {
       randomizedCityNames = rand.shuffle(Constants.CITY_NAMES),
       wondersUnderConstruction = List(Map(), Map(), Map(), Map(),Map()),
       wondersBuilt = List(Map(), Map(), Map(), Map(),Map()),
+      seed = seed,
     )
     board
   }
@@ -543,6 +544,7 @@ case class BoardStateFragment1 (
   val randomizedCityNames: List[String],
   var wondersUnderConstruction: List[Map[Side, Boolean]],
   var wondersBuilt: List[Map[Side, Boolean]],
+  var seed: Int,
 )
 
 object BoardStateOfFragments {
@@ -582,6 +584,7 @@ object BoardStateOfFragments {
       randomizedCityNames = f1.randomizedCityNames,
       wondersUnderConstruction = f1.wondersUnderConstruction,
       wondersBuilt = f1.wondersBuilt,
+      seed = f1.seed,
     )
   }
 }
@@ -658,6 +661,7 @@ case class BoardState private (
   val randomizedCityNames: List[String],
   var wondersUnderConstruction: List[Map[Side, Boolean]],
   var wondersBuilt: List[Map[Side, Boolean]],
+  var seed: Int,
 ) {
   val xSize: Int = tiles.xSize
   val ySize: Int = tiles.ySize
@@ -702,6 +706,7 @@ case class BoardState private (
         randomizedCityNames = randomizedCityNames,
         wondersUnderConstruction = wondersUnderConstruction,
         wondersBuilt = wondersBuilt,
+        seed = seed,
       )
     )
   }
@@ -742,6 +747,7 @@ case class BoardState private (
       randomizedCityNames = randomizedCityNames,
       wondersUnderConstruction = wondersUnderConstruction,
       wondersBuilt = wondersBuilt,
+      seed = seed,
     )
     val newPieceById = pieceById.transform({ (_k, piece) => piece.copy() })
     val newPiecesSpawnedThisTurn = piecesSpawnedThisTurn.transform { (_k, piece) => newPieceById(piece.id) }
@@ -969,20 +975,26 @@ case class BoardState private (
       resetHasNearbyFriendlyAndEnemy(loc)
     }
     //Heal damage, reset piece state, decay modifiers
-    pieceById.values.foreach { piece =>
-      refreshPieceForStartOfTurnWithAttackMove(piece, externalInfo)
-      piece.modsWithDuration = piece.modsWithDuration.flatMap(_.decay)
+    pieceById.keySet.toList.sorted.foreach { pieceId =>
+      if (pieceById.contains(pieceId)) {
+        val piece = pieceById(pieceId)
+        refreshPieceForStartOfTurnWithAttackMove(piece, externalInfo)
+        piece.modsWithDuration = piece.modsWithDuration.flatMap(_.decay)
+      }
     }
 
     // Set targets from leadership units; must happen after all the moving is finished
-    pieceById.values.foreach { piece =>
-      if (piece.baseStats.leadership) {
-        setTargetsOfFollowers(piece)
-      }
-      piece.side match {
-        case SB =>
-        case (S0 | S1 | S2 | S3 | S4 | S5) =>
-          setNearbyTileCityFoundingData(piece)
+    pieceById.keySet.toList.sorted.foreach { pieceId =>
+      if (pieceById.contains(pieceId)) {
+        val piece = pieceById(pieceId)
+        if (piece.baseStats.leadership) {
+          setTargetsOfFollowers(piece)
+        }
+        piece.side match {
+          case SB =>
+          case (S0 | S1 | S2 | S3 | S4 | S5) =>
+            setNearbyTileCityFoundingData(piece)
+          }
       }
     }
 
@@ -1064,7 +1076,8 @@ case class BoardState private (
 
     // Reset terrain and remove tile modifiers
     tiles.transform { tile => {
-        val rand = Random;
+        val rand = new Random(seed);
+        seed = rand.nextInt(100000)
         val randomFloat = rand.nextFloat;
         var foodYield: Int = 0;
         var productionYield: Int = 0;
@@ -1265,7 +1278,8 @@ case class BoardState private (
       tile.foodYield = 0
       tile.productionYield = 0
       tile.scienceYield = 0
-      val rand = Random
+      val rand = new Random(seed)
+      seed = rand.nextInt(100000)
       val nextInt = rand.nextInt(3)
       if (nextInt == 0) {
         tile.foodYield = 1
@@ -1334,7 +1348,8 @@ case class BoardState private (
     } else if (tile.scienceYield > 0) {
       tile.scienceYield = 2;
     } else {
-      val rand = Random
+      val rand = new Random(seed)
+      seed = rand.nextInt(100000)
       val nextInt = rand.nextInt(3)
       if (nextInt == 0) {
         tile.foodYield = 2
@@ -1347,7 +1362,8 @@ case class BoardState private (
   }
 
   def makeAnomaliesAdjacentToHex(loc: Loc, numAnomalies: Int, barren: Boolean = false): Unit = {
-    val rand = Random
+    val rand = new Random(seed)
+    seed = rand.nextInt(100000)
     val offsets = tiles.topology.adjOffsets
     val sampledOffsets = rand.shuffle(offsets).slice(0, numAnomalies)
 
@@ -2732,7 +2748,8 @@ case class BoardState private (
       }
       if (spawnStats.name == "camp") {
         cities = cities :+ piece
-        val rand = Random
+        val rand = new Random(seed)
+        seed = rand.nextInt(100000)
         val nextInt = rand.nextInt(4)
         if (nextInt == 0) {
           piece.focus = "warrior"
@@ -2781,7 +2798,8 @@ case class BoardState private (
       }   
       if (spawnStats.name == "camp") {
         cities = cities :+ piece
-        val rand = Random
+        val rand = new Random(seed)
+        seed = rand.nextInt(100000)
         val nextInt = rand.nextInt(4)
         if (nextInt == 0) {
           piece.focus = "warrior"
@@ -3697,7 +3715,8 @@ case class BoardState private (
   }
 
   private def getRandomLoc(): Loc = {
-    val rand = Random;
+    val rand = new Random(seed);
+    seed = rand.nextInt(100000)
     val possibleLoc = Loc(rand.nextInt(xSize), rand.nextInt(ySize))
     if (locIsValid(possibleLoc)) {
       return possibleLoc
@@ -3787,7 +3806,8 @@ case class BoardState private (
     else if (piece.baseStats.name == "lair") {
       if (turnNumber <= 14 && turnNumber % 4 == 1) {
         setRandomTarget(piece)
-        val rand = Random;
+        val rand = new Random(seed);
+        seed = rand.nextInt(100000)
         val nextInt = rand.nextInt(4);
         if (nextInt == 0) {
           val _ = buildUnit(piece, externalInfo.pieceMap("archer"), 3.0, 3.0)
@@ -3804,7 +3824,8 @@ case class BoardState private (
       } 
       if (turnNumber > 14 && turnNumber % 4 == 1) {
         setRandomTarget(piece)
-        val rand = Random;
+        val rand = new Random(seed);
+        seed = rand.nextInt(100000)
         val nextInt = rand.nextInt(4);
         if (nextInt == 0) {
           val _ = buildUnit(piece, externalInfo.pieceMap("horseman"), 6.0, 6.0)

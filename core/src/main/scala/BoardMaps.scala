@@ -1,5 +1,7 @@
 package minionsgame.core
 
+import scala.util.Random
+
 object BoardMaps {
   private def make(xSize: Int, ySize: Int, numPlayers: Int, s: String): (() => BoardState) = { () =>
     val map: Array[Terrain] =
@@ -23,7 +25,8 @@ object BoardMaps {
         case _ => None
       }
     val plane = new Plane(xSize,ySize,HexTopology,map)
-    BoardState.create(plane, numPlayers)
+    val rand = Random
+    BoardState.create(plane, numPlayers, rand.nextInt(100000))
   }
 
 
