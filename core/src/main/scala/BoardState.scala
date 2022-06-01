@@ -63,7 +63,7 @@ package object Constants {
                         "Nimrud", "Tel Aviv", "New Jericho", "Myr", "Ankara", "White Harbor", "Nassau", "Berkeley",
                         "Boston", "Tijuana", "Cape Town", "Kinshasa", "Calgary", "Tenochtitlan", "Cuzco", "Tar Valon",
                         "Caemlyn", "Kistel", "Temesvar", "Kaposvar", "Zirc", "Sarvahr", "Wakanda", "Ravnica", 
-                        "New Capenna", "Zigatvar", "Caracas", "Santiago", "Havana",
+                        "New Capenna", "Zigatvar", "Caracas", "Santiago", "Havana", "Almaty", "Chichen Itza",
                       )
   val WONDER_INDEX_BY_NAME = Map("statue of zeus" -> 0, "fast food chains" -> 1, "dream twister" -> 2, "junkotron" -> 3,
                                  "cloning vats" -> 4)

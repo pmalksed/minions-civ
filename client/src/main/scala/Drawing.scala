@@ -1011,10 +1011,33 @@ object Drawing {
       val alpha = 1.0
 
       val hexLoc = techLocs(i)
-      val (fillColor, strokeColor) = ("#aaaaaa", "#888888")
+      val strokeColor = "#888888"
+      var fillColor = "#aaaaaa"
+
+      mouseState.selectedCity match {
+        case None =>
+        case Some(city) => 
+          client.ourSide match {
+            case None =>
+            case Some(ourSide) =>
+              if (city.side == ourSide) {
+                val techState = game.techLine(i)
+                techState.tech match {
+                  case PieceTech(pieceName) =>
+                    val pieceStats = externalInfo.pieceMap(pieceName)
+                    if (city.buildings.contains(pieceStats) || pieceName == "warrior") {
+                      fillColor = "#aaffaa"
+                    }
+                  case Copycat | TechSeller | Metamagic =>
+                    fillColor = "#aaffaa"
+                }
+              }
+          }
+      }
 
       fillHex(hexLoc, fillColor, techScale, alpha=alpha)
       strokeHex(hexLoc, strokeColor, techScale, lineWidth=2.0, alpha=alpha)
+
     }
     for(i <- 0 until game.techLine.length) {
       val techState = game.techLine(i)
