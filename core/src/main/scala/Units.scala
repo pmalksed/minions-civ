@@ -381,7 +381,7 @@ object Units {
     attackEffect = Some(Damage(2)),
     defense = Some(5),
     productionCost = 1,
-    scienceCost = 5,
+    scienceCost = 4,
   )
 
   val legionary = createPieceStats(
@@ -391,8 +391,8 @@ object Units {
     attackRange = 1,
     attackEffect = Some(Damage(3)),
     defense = Some(9),
-    productionCost = 5,
-    scienceCost = 5,
+    productionCost = 3,
+    scienceCost = 3,
   )
 
   val sergeant = createPieceStats(
@@ -402,7 +402,7 @@ object Units {
     attackEffect = Some(Damage(1)),
     defense = Some(7),
     leadership = true,
-    productionCost = 3,
+    productionCost = 2,
     scienceCost = 2,
   )  
 
@@ -415,7 +415,7 @@ object Units {
     numAttacks = 5,
     defense = Some(4),
     productionCost = 4,
-    scienceCost = 6,
+    scienceCost = 8,
   )
 
   val horseman = createPieceStats(
@@ -425,8 +425,8 @@ object Units {
     attackRange = 1,
     attackEffect = Some(Damage(4)),
     defense = Some(7),
-    productionCost = 6,
-    scienceCost = 8,
+    productionCost = 5,
+    scienceCost = 10,
   )
 
   val berserker = createPieceStats(
@@ -438,7 +438,7 @@ object Units {
     defense = Some(6),
     robust = 1,
     productionCost = 5,
-    scienceCost = 10,
+    scienceCost = 12,
   )
 
   val trebuchet = createPieceStats(
@@ -447,8 +447,8 @@ object Units {
     attackRange = 3,
     attackEffect = Some(Damage(2)),
     defense = Some(4),
-    productionCost = 4,
-    scienceCost = 11,
+    productionCost = 5,
+    scienceCost = 13,
     notes = "Deals triple damage to cities"
   )
 
@@ -459,8 +459,8 @@ object Units {
     attackEffect = Some(Damage(2)),
     defense = Some(8),
     leadership = true,
-    productionCost = 8,
-    scienceCost = 10,
+    productionCost = 9,
+    scienceCost = 16,
     notes = "Nearby friendly units get +1 attack (does not stack)"
   )
 
@@ -469,10 +469,10 @@ object Units {
     moveRange = 1,
     attackRange = 1,
     attackEffect = Some(Damage(7)),
-    defense = Some(9),
+    defense = Some(10),
     retaliate = true,
     productionCost = 7,
-    scienceCost = 12,
+    scienceCost = 14,
   )
 
   val telekinetic = createPieceStats(
@@ -482,7 +482,7 @@ object Units {
     attackEffect = Some(Damage(2)),
     defense = Some(5),
     productionCost = 8,    
-    scienceCost = 8,
+    scienceCost = 10,
     notes = "Does triple damage to salvagers",
     notes2 = "Steals stored resources equal to damage dealt and drops them",
   )
@@ -496,7 +496,7 @@ object Units {
     robust = 1,
     taunt = true,
     productionCost = 6,
-    scienceCost = 8,
+    scienceCost = 12,
   )
 
   val crossbowman = createPieceStats(
@@ -505,8 +505,8 @@ object Units {
     attackRange = 2,
     attackEffect = Some(Damage(5)),
     defense = Some(6),
-    productionCost = 6,
-    scienceCost = 10,
+    productionCost = 7,
+    scienceCost = 14,
   )
 
   val mule = createPieceStats(
@@ -527,8 +527,8 @@ object Units {
     attackEffect = Some(Damage(3)),
     defense = Some(5),
     nimble = true,
-    productionCost = 7,
-    scienceCost = 14,
+    productionCost = 9,
+    scienceCost = 18,
   )
 
   val hussar = createPieceStats(
@@ -539,7 +539,7 @@ object Units {
     defense = Some(7),
     nimble = true,
     productionCost = 7,
-    scienceCost = 12,
+    scienceCost = 14,
     notes = "Doesn't attack enemy melee units",
   )
 
@@ -549,8 +549,8 @@ object Units {
     attackRange = 2,
     attackEffect = Some(Damage(4)),
     defense = Some(6),
-    productionCost = 8,
-    scienceCost = 18,
+    productionCost = 10,
+    scienceCost = 20,
     notes = "Kites enemy melee units",
   )
 
@@ -564,7 +564,7 @@ object Units {
     taunt = true,
     retaliate = true,
     productionCost = 10,
-    scienceCost = 16,
+    scienceCost = 18,
   )
 
   val onager = createPieceStats(
@@ -575,7 +575,7 @@ object Units {
     splash = 2,
     defense = Some(5),
     productionCost = 11,
-    scienceCost = 15,
+    scienceCost = 18,
   )
 
   val banshee = createPieceStats(
@@ -585,8 +585,8 @@ object Units {
     attackEffect = Some(Damage(0)),
     defense = Some(12),
     robust = 1,
-    productionCost = 12,
-    scienceCost = 13,
+    productionCost = 11,
+    scienceCost = 12,
     notes = "Enemies within range 2 have -2 attack (does not stack)"
   )
 
@@ -625,7 +625,7 @@ object Units {
     defense = Some(12),
     nimble = true,
     productionCost = 18,
-    scienceCost = 15,
+    scienceCost = 18,
     leadership = true,
     notes = "Nearby friendly units get +1 movement (does not stack)"
   )
@@ -637,7 +637,7 @@ object Units {
     attackEffect = Some(Damage(6)),
     defense = Some(9),
     productionCost = 22,
-    scienceCost = 18,
+    scienceCost = 22,
     notes = "Deals triple damage to cities"
   )    
 
@@ -648,8 +648,8 @@ object Units {
     charge = true,
     attackEffect = Some(Damage(18)),
     defense = Some(30),
-    productionCost = 17,
-    scienceCost = 28,
+    productionCost = 19,
+    scienceCost = 34,
     notes = "Enters the hex of enemy units that it kills"
   )
 
@@ -660,8 +660,8 @@ object Units {
     attackEffect = Some(Damage(5)),
     poisonous = 5,
     defense = Some(8),
-    productionCost = 22,
-    scienceCost = 36,
+    productionCost = 24,
+    scienceCost = 40,
   )
 
   val dragon = createPieceStats(
@@ -697,8 +697,8 @@ object Units {
     defense = Some(25),
     charge = true,
     nimble = true,
-    productionCost = 50,
-    scienceCost = 80,
+    productionCost = 45,
+    scienceCost = 75,
     notes = "Kites enemy melee units",
     notes2 = "Immune to poison"
   )
@@ -739,7 +739,7 @@ object Units {
     attackRange = 0,
     attackEffect = Some(Damage(0)),
     defense = Some(1),
-    scienceCost = 20,
+    scienceCost = 25,
     notes = "Wonder: Whenever you would receive rewards from the destruction of a city",
     notes2 = "(including your own), receive one more",
   )
@@ -763,7 +763,7 @@ object Units {
     attackRange = 0,
     attackEffect = Some(Damage(0)),
     defense = Some(1),
-    scienceCost = 50,    
+    scienceCost = 55,    
     notes = "Wonder: Your units have +1 attack",
   )
 
@@ -774,7 +774,7 @@ object Units {
     attackRange = 0,
     attackEffect = Some(Damage(0)),
     defense = Some(1),
-    scienceCost = 65,
+    scienceCost = 70,
     notes = "Wonder: Your salvagers have double speed, range, health, and capacity",
   )
 
@@ -785,7 +785,7 @@ object Units {
     attackRange = 0,
     attackEffect = Some(Damage(0)),
     defense = Some(1),
-    scienceCost = 75,       
+    scienceCost = 60,       
     notes = "Wonder: You can build cities at range 1 from your other cities",
   )
 
