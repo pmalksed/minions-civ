@@ -1012,10 +1012,11 @@ object Drawing {
 
       val hexLoc = techLocs(i)
       val strokeColor = "#888888"
-      var fillColor = "#aaaaaa"
+      var fillColor = "#aaeeff"
 
       mouseState.selectedCity match {
-        case None =>
+        case None => 
+          fillColor = "#aaaaaa"
         case Some(city) => 
           client.ourSide match {
             case None =>
@@ -1025,11 +1026,14 @@ object Drawing {
                 techState.tech match {
                   case PieceTech(pieceName) =>
                     val pieceStats = externalInfo.pieceMap(pieceName)
-                    if (city.buildings.contains(pieceStats) || pieceName == "warrior") {
-                      fillColor = "#aaffaa"
+                    if (board.isWonder(pieceName) && board.wonderBuilt(pieceName)) {
+                      fillColor = "#aaaaaa"
+                    }
+                    else if (city.buildings.contains(pieceStats) || pieceName == "warrior") {
+                      fillColor = "#ffccaa"
                     }
                   case Copycat | TechSeller | Metamagic =>
-                    fillColor = "#aaffaa"
+                    fillColor = "#ffaaff"
                 }
               }
           }
@@ -1060,8 +1064,6 @@ object Drawing {
       techState.techNumber.foreach { techNumber =>
         text("#" + techNumber, PixelLoc.ofHexLoc(hexLoc, gridSize) + PixelVec(0,10), "black", alpha=alpha)
       }
-      text(techState.level(S0).toUnicodeSymbol, PixelLoc.ofHexLoc(hexLoc + HexVec.corners(4) * techInteriorScale, gridSize), "blue", alpha=alpha)
-      text(techState.level(S1).toUnicodeSymbol, PixelLoc.ofHexLoc(hexLoc + HexVec.corners(0) * techInteriorScale, gridSize), "red", alpha=alpha)
     }
 
     // def techMidLoc(i: Int): HexLoc = {
@@ -1619,8 +1621,7 @@ object Drawing {
             }
           case MouseSpellHand(spellId,side,_) =>
             drawSidebar(side=Some(side), spell=Some(spellId))
-          case MouseSpellChoice(spellId,side,_) =>
-            drawSidebar(side=side, spell=Some(spellId))
+          case MouseSpellChoice(_,_,_) =>
           case MouseSpellPlayed(infoOpt, _) =>
             infoOpt match {
               case None => ()

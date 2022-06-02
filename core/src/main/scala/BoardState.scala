@@ -2792,8 +2792,8 @@ case class BoardState private (
         citiesFounded += (spawnSide -> (citiesFoundedBySide + 1))
         turnsTillNextCityTemporaryModifier += (spawnSide -> (-1 * cityFoundingSlack))
         setCityName(piece, randomizedCityNames(numCitiesFounded))
-        piece.food += Constants.POPULATION_BASE_COST
-        piece.population += 1
+        piece.food += 2*Constants.POPULATION_BASE_COST + 1
+        piece.population += 2
         piece.damage -= 2
       }   
       if (spawnStats.name == "camp") {
@@ -2894,23 +2894,28 @@ case class BoardState private (
       val productionQueue = city.productionQueue;
       val nextProductionUnit = productionQueue.head
       val productionCost = nextProductionUnit.productionCost.asInstanceOf[Double];
-      if ((productionCost <= city.carriedProduction) && (city.population > 0)) {
-        val foodCost = getCostOfLastPopulation(city)
+      if ((productionCost <= city.carriedProduction) && (city.population > 1)) {
+        var foodCost = getCostOfLastPopulation(city)
+        if (nextProductionUnit.name == "warrior") {
+          foodCost = 0
+        }
         if (buildUnit(city, nextProductionUnit, foodCost, productionCost)) {
           city.productionQueue = productionQueue.slice(1, productionQueue.size);
           city.carriedProduction = city.carriedProduction - productionCost;
-          city.population = city.population - 1;
-          city.food = city.food - foodCost;
-          val stats = city.curStats(this)
-          stats.defense match {
-            case None => ()
-            case Some(defense) =>
-              if (city.population < Constants.CITY_POPULATION_KINK_1) {
-                city.damage = Math.min(defense - 1, city.damage + 2)
-              }
-              else if (city.population >= Constants.CITY_POPULATION_KINK_1 && city.population >= Constants.CITY_POPULATION_KINK_2) {
-                city.damage = Math.min(defense - 1, city.damage + 1)
-              }              
+          if (nextProductionUnit.name != "warrior") {
+            city.population = city.population - 1;
+            city.food = city.food - foodCost;
+            val stats = city.curStats(this)
+            stats.defense match {
+              case None => ()
+              case Some(defense) =>
+                if (city.population < Constants.CITY_POPULATION_KINK_1) {
+                  city.damage = Math.min(defense - 1, city.damage + 2)
+                }
+                else if (city.population >= Constants.CITY_POPULATION_KINK_1 && city.population >= Constants.CITY_POPULATION_KINK_2) {
+                  city.damage = Math.min(defense - 1, city.damage + 1)
+                }       
+            }       
           }
           buildUnits(city);
         } else {

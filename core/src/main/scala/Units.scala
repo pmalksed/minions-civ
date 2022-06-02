@@ -357,9 +357,10 @@ object Units {
     attackRange = 1,
     attackEffect = Some(Damage(3)),
     defense = Some(6),
-    productionCost = 2,
+    productionCost = 4,
     scienceCost = 0,
-    notes = "Can be built without a corresponding building"
+    notes = "Can be built without a corresponding building",
+    notes2 = "Does not cost a population to build",
   )
 
   val archer = createPieceStats(
@@ -823,8 +824,6 @@ object Units {
 
   //Pieces that start off buyable
   val alwaysAcquiredPieces: Array[PieceStats] = Array(
-    zombie,
-    acolyte,
   )
 
   //Pieces that need to be unlocked, in order
