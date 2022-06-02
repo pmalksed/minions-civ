@@ -2894,7 +2894,7 @@ case class BoardState private (
       val productionQueue = city.productionQueue;
       val nextProductionUnit = productionQueue.head
       val productionCost = nextProductionUnit.productionCost.asInstanceOf[Double];
-      if ((productionCost <= city.carriedProduction) && (city.population > 1)) {
+      if ((productionCost <= city.carriedProduction) && (city.population > 1 || nextProductionUnit.name == "warrior")) {
         var foodCost = getCostOfLastPopulation(city)
         if (nextProductionUnit.name == "warrior") {
           foodCost = 0
