@@ -357,7 +357,7 @@ object Units {
     attackRange = 1,
     attackEffect = Some(Damage(3)),
     defense = Some(6),
-    productionCost = 5,
+    productionCost = 4,
     scienceCost = 0,
     notes = "Can be built without a corresponding building",
     notes2 = "Does not cost a population to build",
