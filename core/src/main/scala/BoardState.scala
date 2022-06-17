@@ -2598,7 +2598,8 @@ case class BoardState private (
       if (wonderBuiltBySide("statue of zeus", side) && rewardToDistribute > 0) {
         extraReward = 1
       }
-      turnsTillNextCityPermanentModifier += (side -> (-1 * (rewardToDistribute + extraReward)))
+      val turnsTillNextCityPermanentModifierCurrent = turnsTillNextCityPermanentModifier.get(side).getOrElse(0)
+      turnsTillNextCityPermanentModifier += (side -> (turnsTillNextCityPermanentModifierCurrent + (-1 * (rewardToDistribute + extraReward))))
     }
   }
 
@@ -2869,9 +2870,9 @@ case class BoardState private (
     var extraHealth = 0
     if (unit.name == "salvager") {
       extraHealth = salvagerBuildingsBuilt.get(city.side).getOrElse(0)
-    }
-    if (wonderBuiltBySide("junkotron", city.side)) {
-      extraHealth = extraHealth * 2 + 5  // 5 should be equal to salvager base health
+      if (wonderBuiltBySide("junkotron", city.side)) {
+        extraHealth = extraHealth * 2 + 5  // 5 should be equal to salvager base health
+      }      
     }
     tiles.topology.forEachAdjRange2(city.loc) { loc =>
       currentDistance = tiles.topology.distance(city.loc, loc) + 0.01 * smartDistance(city.target, loc)
