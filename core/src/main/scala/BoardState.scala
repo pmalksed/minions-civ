@@ -2832,6 +2832,25 @@ case class BoardState private (
     return false
   }
 
+  private def getPieceType(pieceStats: PieceStats): String = {
+    if (isCityLike(pieceStats)) return "city"
+    if (pieceStats.leadership) return "leader"
+    if (getBaseAttackOfPiece(pieceStats) == 0) return "civilian"
+    return "military"
+  }
+
+  private def locIsOccupiedForPiece(loc: Loc, pieceStats: PieceStats) = {
+    if (!locIsValid(loc)) {
+      return true
+    }
+    val pieceType = getPieceType(pieceStats)
+    pieces(loc).foreach ( occupyingPiece => {
+      val occupyingPieceType = getPieceType(occupyingPiece.baseStats)
+      if (occupyingPieceType == "city") return true
+      if (pieceType == occupyingPieceType) return true
+    })
+  }
+
   private def locIsOccupiedByCityOrCivilian(loc: Loc): Boolean = {
     if (!locIsValid(loc)) {
       return true
@@ -3017,8 +3036,8 @@ case class BoardState private (
     return capacity(salvager) - totalResourcesCarried(salvager)
   }
 
-  private def getBaseAttackOfPiece(piece: Piece): Int = {
-    piece.baseStats.attackEffect match {
+  private def getBaseAttackOfPiece(pieceStats: PieceStats): Int = {
+    pieceStats.attackEffect match {
       case None =>
         return 0
       case Some(Damage(n)) =>
@@ -3079,7 +3098,7 @@ case class BoardState private (
       return piece.baseStats.splash
     }
     val (isGeneral, isBanshee, _) = getModifiersInRange(piece)
-    var attack = getBaseAttackOfPiece(piece)
+    var attack = getBaseAttackOfPiece(piece.baseStats)
     if (attack == 0) {
       return 0
     }
