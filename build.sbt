@@ -118,4 +118,4 @@ copyStuffTask := {
 }
 
 //Custom alias that builds everything and copies it
-addCommandAlias("buildEverything", ";project minions;compile;fastOptJS;copyStuffTask")
+addCommandAlias("buildEverything", ";project minions-civ;compile;fastOptJS;copyStuffTask")
